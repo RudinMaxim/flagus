@@ -12,7 +12,7 @@ The project is designed for use in a single Docker container, without the need t
 | Component            | Technology        |
 |----------------------|-------------------|
 | HTTP-server          | Fastify          |
-| PL                   | TypeScript       |
+| Language             | TypeScript       |
 | Database             | SQLite           |
 | Client side          | HTMX             |
 | Containerization     | Docker           |
