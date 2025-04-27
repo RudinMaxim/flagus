@@ -1,0 +1,15 @@
+<div class="flag-toggle">
+  <div class="flag-header">
+    <h3>{{name}}</h3>
+    <button class="toggle-btn {{#if enabled}}enabled{{else}}disabled{{/if}}"
+            hx-post="/api/flags/{{id}}/toggle"
+            hx-swap="outerHTML"
+            hx-target="closest .flag-toggle">
+      {{#if enabled}}Enabled{{else}}Disabled{{/if}}
+    </button>
+  </div>
+  <p>{{description}}</p>
+  <div class="flag-meta">
+    <span>Key: {{key}}</span>
+  </div>
+</div>

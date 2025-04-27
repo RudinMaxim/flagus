@@ -1,0 +1,62 @@
+{
+  "name": "flagus",
+  "version": "1.0.0",
+  "description": "A tiny open source service for managing feature flags.",
+  "homepage": "https://github.com/RudinMaxim/flagus#readme",
+  "main": "dist/index.js",
+  "author": "Maxim Rudin",
+  "license": "MIT",
+  "keywords": [
+    "Feature Flags"
+  ],
+  "bugs": {
+    "url": "https://github.com/RudinMaxim/flagus/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RudinMaxim/flagus.git"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "dev": "nodemon --watch 'src/**/*.ts' --exec \"npx ts-node\" src/index.ts",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "format": "prettier --write \"src/**/*.{ts,js,json}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,js,json}\"",
+    "prepare": "husky install"
+  },
+  "dependencies": {
+    "@fastify/static": "^6.10.2",
+    "@fastify/view": "^8.0.0",
+    "fastify": "^4.19.0",
+    "handlebars": "^4.7.8",
+    "htmx.org": "^1.9.4",
+    "reflect-metadata": "^0.2.2",
+    "sqlite3": "^5.1.6",
+    "tsyringe": "^4.10.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.4.2",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.44.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-prettier": "^5.0.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^13.2.3",
+    "nodemon": "^3.0.1",
+    "prettier": "^3.0.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.6"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  }
+}
