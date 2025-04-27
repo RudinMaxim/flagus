@@ -1,0 +1,12 @@
+services:
+  flagus:
+    build: .
+    image: rudinmaxim/flagus:latest
+    container_name: flagus-service
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "${PORT:-3000}:3000"
+    volumes:
+      - ./data:/usr/src/app/data:rw
