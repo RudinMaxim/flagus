@@ -1,9 +1,8 @@
 # 🏗️ Flagus - Feature Flags Service
 
-A tiny open source service for managing feature flags.  
-**The goal** is to provide an easy and fast way to manage enabling/disabling application functionality without having to deploy new versions.
-
-The project is designed for use in a single Docker container, without the need to set up separate databases or front-end applications.
+Flagus is a lightweight, open-source feature flag management service designed for simplicity and speed.
+It provides a minimalistic web UI and API to create, edit, and toggle feature flags without the need for a separate frontend or database.
+Easily deployable in a single Docker container, Flagus is ideal for small to medium-sized projects looking for a hassle-free way to manage feature rollouts
 
 ---
 
