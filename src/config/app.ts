@@ -3,6 +3,7 @@ import fastifyStatic from '@fastify/static';
 import fastifyView from '@fastify/view';
 import handlebars from 'handlebars';
 import path from 'path';
+import { DatabaseType, databasePlugin } from '../infrastructure/database';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -20,6 +21,15 @@ export async function buildApp(): Promise<FastifyInstance> {
     },
     templates: path.join(__dirname, '../ui/templates'),
     layout: 'layout',
+  });
+
+  await app.register(databasePlugin, {
+    type: DatabaseType.SQLITE,
+    connectionName: 'flagus',
+    autoInitialize: true,
+    sqlite: {
+      path: path.join(__dirname, '../data/flagus.db'),
+    },
   });
 
   app.get('/', async (_, reply) => {
