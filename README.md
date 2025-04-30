@@ -1,4 +1,4 @@
-# 🏗️ Flagus - Feature Flags Service
+то# 🏗️ Flagus - Feature Flags Service
 
 A tiny open source service for managing feature flags.  
 **The goal** is to provide an easy and fast way to manage enabling/disabling application functionality without having to deploy new versions.
@@ -15,7 +15,6 @@ The project is designed for use in a single Docker container, without the need t
 | Language             | TypeScript       |
 | Database             | SQLite           |
 | Client side          | HTMX             |
-| Containerization     | Docker           |
 
 ---
 
