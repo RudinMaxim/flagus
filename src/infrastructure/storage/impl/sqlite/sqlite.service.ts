@@ -1,6 +1,6 @@
 import { injectable, inject } from 'inversify';
 import sqlite3 from 'sqlite3';
-import { Database, RunResult } from 'sqlite3';
+import { Database } from 'sqlite3';
 import { DataGateway, OnDestroy, OnInit } from '../../abstract';
 import { ConfigService } from '@shared/config';
 import { TYPES } from '@infrastructure/di';
@@ -8,7 +8,7 @@ import { LoggerService } from '@shared/logger';
 
 @injectable()
 export class SQLiteServiceImpl extends DataGateway<Database> implements OnInit, OnDestroy {
-  private db: Database;
+  private db!: Database;
 
   constructor(
     @inject(TYPES.LoggerService) private readonly logger: LoggerService,
@@ -22,8 +22,8 @@ export class SQLiteServiceImpl extends DataGateway<Database> implements OnInit, 
   }
 
   public async onInit(): Promise<void> {
-    await this.connect();
     this.initialize();
+    await this.connect();
   }
 
   public async onDestroy(): Promise<void> {
@@ -42,7 +42,7 @@ export class SQLiteServiceImpl extends DataGateway<Database> implements OnInit, 
     });
   }
 
-  public async execute(sql: string, params: any[] = []): Promise<RunResult> {
+  public async execute<T, P = any>(sql: string, params: P[] = []): Promise<T> {
     return new Promise((resolve, reject) => {
       this.db.run(sql, params, function (err) {
         if (err) {
@@ -51,7 +51,7 @@ export class SQLiteServiceImpl extends DataGateway<Database> implements OnInit, 
           resolve({
             lastID: this.lastID,
             changes: this.changes,
-          });
+          } as unknown as T);
         }
       });
     });
@@ -84,7 +84,14 @@ export class SQLiteServiceImpl extends DataGateway<Database> implements OnInit, 
 
   protected initialize(): void {
     const { database } = this.config.sqlite;
-    this.db = new sqlite3.Database(database);
+    this.logger.info(`Initializing SQLite database with file: ${database}`);
+    this.db = new sqlite3.Database(database, err => {
+      if (err) {
+        this.logger.error(`Failed to initialize SQLite database: ${err.message}`);
+      } else {
+        this.logger.info('SQLite database initialized successfully');
+      }
+    });
   }
 
   protected async connect(): Promise<void> {
