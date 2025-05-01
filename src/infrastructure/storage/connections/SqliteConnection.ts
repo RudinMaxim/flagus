@@ -1,6 +1,8 @@
 import sqlite3 from 'sqlite3';
 import { promisify } from 'util';
 import { IDatabase } from '../interfaces';
+import fs from 'fs';
+import path from 'path';
 
 export interface SqliteOptions {
   path: string;
@@ -34,23 +36,30 @@ export class SqliteDatabase implements IDatabase {
       return;
     }
 
-    this.db = new sqlite3.Database(this.options.path, err => {
+    const { path: _path, timeout, enableForeignKeys } = this.options;
+
+    const dir = path.dirname(_path);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    this.db = new sqlite3.Database(_path, err => {
       if (err) {
         throw new Error(`Failed to open SQLite database: ${err.message}`);
       }
     });
 
-    this.db.configure('busyTimeout', this.options.timeout);
+    this.db.configure('busyTimeout', timeout);
 
     try {
-      if (this.options.enableForeignKeys) {
+      if (enableForeignKeys) {
         await this.exec('PRAGMA foreign_keys = ON');
       }
 
       await this.exec('PRAGMA journal_mode = WAL'); // Write-Ahead Logging
       await this.exec('PRAGMA synchronous = NORMAL'); // Balance safety and performance
 
-      console.log(`Successfully connected to SQLite database at ${this.options.path}`);
+      console.log(`Successfully connected to SQLite database at ${_path}`);
     } catch (error) {
       throw new Error(
         `Failed to initialize SQLite database: ${error instanceof Error ? error.message : String(error)}`

@@ -1,4 +1,3 @@
-// IDatabase.ts
 export interface IDatabase {
   /**
    * Инициализирует соединение с базой данных

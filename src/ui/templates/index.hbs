@@ -2,17 +2,6 @@
 <p>{{message}}</p>
 <p>This is a simple feature flags service with HTMX support.</p>
 
-<div>
-  <h3>HTMX Demo</h3>
-  <button class='btn' hx-get='/api/demo' hx-target='#demo-result' hx-swap='innerHTML'>
-    Click me (HTMX demo)
-  </button>
-  <div
-    id='demo-result'
-    style='margin-top: 1rem; padding: 1rem; border: 1px solid #ccc; border-radius: 4px;'
-  ></div>
-</div>
-
 <h3>Next steps:</h3>
 <ul>
   <li>Implement database layer</li>
@@ -20,4 +9,16 @@
   <li>Build admin UI with HTMX</li>
   <li>Set up API endpoints</li>
 </ul>
-<p>Health check endpoint: <a href='/api/health'>/api/health</a></p>
+<p>Health check endpoint:
+
+  <button class='btn' hx-get='/api/health' hx-target='#demo-result' hx-swap='innerHTML'>
+    Click me (HTMX demo)
+  </button>
+</p>
+
+<div>
+  <div
+    id='demo-result'
+    style='margin-top: 1rem; padding: 1rem; border: 1px solid #ccc; border-radius: 4px;'
+  ></div>
+</div>
