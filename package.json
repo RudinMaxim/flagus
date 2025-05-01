@@ -31,8 +31,8 @@
     "@fastify/view": "^8.0.0",
     "dotenv": "^16.5.0",
     "fastify": "^4.19.0",
-    "handlebars": "^4.7.8",
     "inversify": "^7.5.1",
+    "handlebars": "^4.7.8",
     "reflect-metadata": "^0.2.2",
     "sqlite3": "^5.1.6",
     "tsyringe": "^4.10.0"

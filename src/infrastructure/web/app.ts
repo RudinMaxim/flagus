@@ -3,13 +3,29 @@ import fastifyStatic from '@fastify/static';
 import fastifyView from '@fastify/view';
 import handlebars from 'handlebars';
 import path from 'path';
-import { DatabaseType, databasePlugin } from '../infrastructure/storage';
+import { LoggerService } from '@shared/logger';
+import { OnDestroy, OnInit } from '@shared/config';
+import { createContainer, TYPES } from '@infrastructure/di';
+import { DataGateway } from '@infrastructure/storage/abstract';
 
-export async function buildApp(): Promise<FastifyInstance> {
-  const app = Fastify({
-    logger: true,
+export async function createApp(): Promise<FastifyInstance> {
+  const app = Fastify({ logger: true });
+  const container = createContainer();
+
+  const dataService = container.get<DataGateway & OnInit>(TYPES.DataGateway);
+  await dataService.onInit();
+
+  app.decorate('container', container);
+  app.decorate('db', dataService);
+
+  app.addHook('onClose', async () => {
+    const logger = container.get<LoggerService>(TYPES.LoggerService);
+    logger.info('Shutting down app...');
+
+    await (dataService as unknown as OnDestroy).onDestroy();
   });
 
+  // TODO: Удалить после тестов
   await app.register(fastifyStatic, {
     root: path.join(__dirname, '../ui/public'),
     prefix: '/public/',
@@ -21,15 +37,6 @@ export async function buildApp(): Promise<FastifyInstance> {
     },
     templates: path.join(__dirname, '../ui/templates'),
     layout: 'layout',
-  });
-
-  await app.register(databasePlugin, {
-    type: DatabaseType.SQLITE,
-    connectionName: 'flagus',
-    autoInitialize: true,
-    sqlite: {
-      path: path.join(__dirname, '../../data/flagus.db'),
-    },
   });
 
   app.get('/', async (_, reply) => {

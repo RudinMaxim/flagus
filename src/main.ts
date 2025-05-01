@@ -1,9 +1,9 @@
+import { createApp } from '@infrastructure/web/app';
 import 'reflect-metadata';
-import { buildApp } from './config/app';
 
 async function start() {
   try {
-    const app = await buildApp();
+    const app = await createApp();
 
     const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
     const host = process.env.HOST || '0.0.0.0';
