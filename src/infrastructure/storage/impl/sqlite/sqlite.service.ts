@@ -2,7 +2,7 @@ import { injectable, inject } from 'inversify';
 import sqlite3 from 'sqlite3';
 import { Database } from 'sqlite3';
 import { DataGateway, OnDestroy, OnInit } from '../../abstract';
-import { ConfigService } from '@shared/config';
+import { ConfigService } from '@infrastructure/config';
 import { TYPES } from '@infrastructure/di';
 import { LoggerService } from '@shared/logger';
 
