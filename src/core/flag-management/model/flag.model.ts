@@ -1,11 +1,11 @@
-import { IEntity } from '../../../shared/kernel/base.interfaces';
 import {
-  FlagStatus,
+  IEntity,
   FlagType,
-  Metadata,
-  PercentageDistribution,
+  FlagStatus,
   TimeConstraint,
-} from '../../../shared/kernel/base.types';
+  PercentageDistribution,
+  Metadata,
+} from '@shared/kernel';
 
 export class FeatureFlag implements IEntity<string> {
   id: string;

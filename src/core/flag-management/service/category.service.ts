@@ -1,16 +1,15 @@
-import { injectable, inject } from 'inversify';
-import { FlagCategory, CreateCategoryDTO, UpdateCategoryDTO } from '../model/category.model';
-import { ICategoryRepository } from '@infrastructure/persistence/interfaces/repositories';
-import { IService } from '../../../shared/kernel/base.interfaces';
-import { AuditAction } from '../../../shared/kernel/base.types';
-import { AuditService } from './audit.service';
 import { TYPES } from '@infrastructure/config';
+import { ICategoryRepository } from '@infrastructure/persistence';
+import { IService, AuditAction } from '@shared/kernel';
+import { injectable, inject } from 'inversify';
+import { FlagCategory, CreateCategoryDTO, UpdateCategoryDTO } from '../model';
+import { AuditService } from './audit.service';
 
 @injectable()
 export class CategoryService
   implements IService<FlagCategory, string, CreateCategoryDTO, UpdateCategoryDTO>
 {
-  private MAX_DEPTH = 3; // Максимальная глубина вложенности категорий
+  private MAX_DEPTH = 3;
 
   constructor(
     @inject(TYPES.CategoryRepository) private categoryRepository: ICategoryRepository,
@@ -42,13 +41,11 @@ export class CategoryService
   }
 
   async create(dto: CreateCategoryDTO): Promise<FlagCategory> {
-    // Проверка на уникальность имени
     const existingCategory = await this.categoryRepository.findByName(dto.name);
     if (existingCategory) {
       throw new Error(`Category with name ${dto.name} already exists`);
     }
 
-    // Определение глубины категории
     let depth = 0;
     if (dto.parentId) {
       const parentCategory = await this.categoryRepository.findById(dto.parentId);
@@ -58,12 +55,10 @@ export class CategoryService
 
       depth = parentCategory.depth + 1;
 
-      // Проверка на максимальную глубину
       if (depth > this.MAX_DEPTH) {
         throw new Error(`Maximum category depth (${this.MAX_DEPTH}) exceeded`);
       }
 
-      // Проверка на циклические зависимости
       const path = await this.categoryRepository.getFullPath(dto.parentId);
       if (path.some(cat => cat.id === dto.parentId)) {
         throw new Error('Cyclic dependency detected in category hierarchy');
@@ -84,7 +79,6 @@ export class CategoryService
 
     const createdCategory = await this.categoryRepository.create(category);
 
-    // Регистрация в аудите
     await this.auditService.logAction({
       userId: dto.createdBy,
       action: AuditAction.CREATE,
@@ -102,7 +96,6 @@ export class CategoryService
       return null;
     }
 
-    // Проверка на уникальность имени если имя меняется
     if (dto.name && dto.name !== category.name) {
       const existingCategory = await this.categoryRepository.findByName(dto.name);
       if (existingCategory && existingCategory.id !== id) {
@@ -110,9 +103,7 @@ export class CategoryService
       }
     }
 
-    // Проверка новой глубины категории при изменении родителя
     if (dto.parentId && dto.parentId !== category.parentId) {
-      // Нельзя сделать категорию родителем самой себя
       if (dto.parentId === id) {
         throw new Error('Category cannot be its own parent');
       }
@@ -124,26 +115,21 @@ export class CategoryService
 
       const newDepth = parentCategory.depth + 1;
 
-      // Проверка на максимальную глубину
       if (newDepth > this.MAX_DEPTH) {
         throw new Error(`Maximum category depth (${this.MAX_DEPTH}) exceeded`);
       }
 
-      // Проверка на циклические зависимости
       const childCategories = await this.categoryRepository.findByParentId(id);
       const isParentAmongChildren = childCategories.some(cat => cat.id === dto.parentId);
       if (isParentAmongChildren) {
         throw new Error('Cyclic dependency detected in category hierarchy');
       }
 
-      // Обновление глубины
       dto = { ...dto, depth: newDepth };
     }
 
-    // Сохраняем старое значение для аудита
     const oldValue = JSON.stringify(category);
 
-    // Обновляем метаданные
     const metadata = { ...category.metadata };
     metadata.updatedBy = dto.updatedBy;
     metadata.updatedAt = new Date();
@@ -156,7 +142,6 @@ export class CategoryService
     const updatedCategory = await this.categoryRepository.update(id, updateData);
 
     if (updatedCategory) {
-      // Регистрация в аудите
       await this.auditService.logAction({
         userId: dto.updatedBy,
         action: AuditAction.UPDATE,
@@ -171,7 +156,6 @@ export class CategoryService
   }
 
   async delete(id: string): Promise<boolean> {
-    // Проверка наличия подкатегорий
     const subcategories = await this.categoryRepository.findByParentId(id);
     if (subcategories.length > 0) {
       throw new Error('Cannot delete category with subcategories');
@@ -185,9 +169,8 @@ export class CategoryService
     const result = await this.categoryRepository.delete(id);
 
     if (result) {
-      // Регистрация в аудите
       await this.auditService.logAction({
-        userId: 'system', // Можно передавать userId при вызове метода
+        userId: 'system',
         action: AuditAction.DELETE,
         entityId: id,
         entityType: 'flag_category',

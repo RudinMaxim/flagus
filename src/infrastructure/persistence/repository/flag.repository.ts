@@ -14,7 +14,7 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
   async findByName(name: string): Promise<FeatureFlag | null> {
     const sql = `
       SELECT * FROM ${this.tableName} 
-      WHERE name = $1 
+      WHERE name = ? 
       LIMIT 1
     `;
     return this.dataGateway.getOne<FeatureFlag>(sql, [name]);
@@ -23,7 +23,7 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
   async findByStatus(status: FlagStatus): Promise<FeatureFlag[]> {
     const sql = `
       SELECT * FROM ${this.tableName} 
-      WHERE status = $1 
+      WHERE status = ? 
       ORDER BY name ASC
     `;
     return this.dataGateway.query<FeatureFlag>(sql, [status]);
@@ -33,7 +33,7 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
     const sql = `
       SELECT f.* FROM ${this.tableName} f
       JOIN flag_categories_map fcm ON f.id = fcm.flag_id
-      WHERE fcm.category_id = $1
+      WHERE fcm.category_id = ? 
       ORDER BY f.name ASC
     `;
     return this.dataGateway.query<FeatureFlag>(sql, [categoryId]);
@@ -42,26 +42,31 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
   async findByType(type: FlagType): Promise<FeatureFlag[]> {
     const sql = `
       SELECT * FROM ${this.tableName} 
-      WHERE type = $1 
+      WHERE type = ? 
       ORDER BY name ASC
     `;
     return this.dataGateway.query<FeatureFlag>(sql, [type]);
   }
 
   async toggleStatus(id: string, status: FlagStatus): Promise<FeatureFlag | null> {
-    const sql = `
+    const updateSql = `
       UPDATE ${this.tableName} 
-      SET status = $1, updated_at = NOW() 
-      WHERE id = $2 
-      RETURNING *
+      SET status = ?, updated_at = CURRENT_TIMESTAMP 
+      WHERE id = ?
     `;
-    return this.dataGateway.getOne<FeatureFlag>(sql, [status, id]);
+    await this.dataGateway.execute(updateSql, [status, id]);
+
+    const selectSql = `
+      SELECT * FROM ${this.tableName} 
+      WHERE id = ?
+    `;
+    return this.dataGateway.getOne<FeatureFlag>(selectSql, [id]);
   }
 
   async findActiveFlags(): Promise<FeatureFlag[]> {
     const sql = `
       SELECT * FROM ${this.tableName} 
-      WHERE status = $1 
+      WHERE status = ? 
       ORDER BY name ASC
     `;
     return this.dataGateway.query<FeatureFlag>(sql, [FlagStatus.ACTIVE]);
@@ -71,7 +76,7 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
     const sql = `
       SELECT f.* FROM ${this.tableName} f
       JOIN flag_clients fc ON f.id = fc.flag_id
-      WHERE fc.client_id = $1 AND f.status = $2
+      WHERE fc.client_id = ? AND f.status = ? 
       ORDER BY f.name ASC
     `;
     return this.dataGateway.query<FeatureFlag>(sql, [clientId, FlagStatus.ACTIVE]);

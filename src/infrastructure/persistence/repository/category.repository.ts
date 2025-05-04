@@ -16,7 +16,7 @@ export class CategoryRepository
   async findByName(name: string): Promise<FlagCategory | null> {
     const sql = `
       SELECT * FROM ${this.tableName} 
-      WHERE name = $1 
+      WHERE name = ? 
       LIMIT 1
     `;
     return this.dataGateway.getOne<FlagCategory>(sql, [name]);
@@ -25,7 +25,7 @@ export class CategoryRepository
   async findByParentId(parentId: string): Promise<FlagCategory[]> {
     const sql = `
       SELECT * FROM ${this.tableName} 
-      WHERE parent_id = $1 
+      WHERE parent_id = ? 
       ORDER BY name ASC
     `;
     return this.dataGateway.query<FlagCategory>(sql, [parentId]);
@@ -43,11 +43,11 @@ export class CategoryRepository
   async getFullPath(categoryId: string): Promise<FlagCategory[]> {
     const sql = `
       WITH RECURSIVE category_path AS (
-        SELECT * FROM ${this.tableName} WHERE id = $1
+        SELECT *, 0 AS level FROM ${this.tableName} WHERE id = ?
         
         UNION ALL
         
-        SELECT c.* 
+        SELECT c.*, cp.level + 1 AS level
         FROM ${this.tableName} c
         JOIN category_path cp ON c.id = cp.parent_id
       )

@@ -1,8 +1,8 @@
 import { injectable, inject } from 'inversify';
-import { AuditLog, CreateAuditLogDTO } from '../model/audit.model';
-import { IAuditRepository } from '@infrastructure/persistence/interfaces/repositories';
 import { TYPES } from '@infrastructure/config';
-import { ILogger } from '../../../shared/logger';
+import { IAuditRepository } from '@infrastructure/persistence';
+import { ILogger } from '@shared/logger';
+import { AuditLog, CreateAuditLogDTO } from '../model';
 
 @injectable()
 export class AuditService {
@@ -86,7 +86,6 @@ export class AuditService {
         logs = await this.auditRepository.findAll();
       }
 
-      // Формируем CSV
       const header = 'ID,User ID,Action,Entity ID,Entity Type,Timestamp,IP Address\n';
       const rows = logs
         .map(log => {
@@ -101,7 +100,6 @@ export class AuditService {
     }
   }
 
-  // Получение разницы между двумя состояниями объекта для визуализации
   getDiff(
     oldValue?: string,
     newValue?: string
@@ -116,14 +114,12 @@ export class AuditService {
 
       const result: Record<string, { old?: any; new?: any; changed: boolean }> = {};
 
-      // Объединяем все ключи из обоих объектов
       const allKeys = new Set([...Object.keys(oldObj), ...Object.keys(newObj)]);
 
       for (const key of allKeys) {
         const oldVal = oldObj[key];
         const newVal = newObj[key];
 
-        // Сравниваем значения
         if (JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
           result[key] = {
             old: oldVal,

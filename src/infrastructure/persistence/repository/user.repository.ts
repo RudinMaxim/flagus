@@ -13,7 +13,7 @@ export class UserRepository extends BaseRepository<User, string> implements IUse
   async findByUsername(username: string): Promise<User | null> {
     const sql = `
       SELECT * FROM ${this.tableName} 
-      WHERE username = $1 
+      WHERE username = ? 
       LIMIT 1
     `;
     return this.dataGateway.getOne<User>(sql, [username]);
@@ -22,7 +22,7 @@ export class UserRepository extends BaseRepository<User, string> implements IUse
   async findByEmail(email: string): Promise<User | null> {
     const sql = `
       SELECT * FROM ${this.tableName} 
-      WHERE email = $1 
+      WHERE email = ? 
       LIMIT 1
     `;
     return this.dataGateway.getOne<User>(sql, [email]);
@@ -33,19 +33,24 @@ export class UserRepository extends BaseRepository<User, string> implements IUse
       SELECT u.* FROM ${this.tableName} u
       JOIN user_roles ur ON u.id = ur.user_id
       JOIN roles r ON ur.role_id = r.id
-      WHERE r.name = $1
+      WHERE r.name = ? 
       ORDER BY u.username ASC
     `;
     return this.dataGateway.query<User>(sql, [role]);
   }
 
   async updateLastLogin(id: string): Promise<User | null> {
-    const sql = `
+    const updateSql = `
       UPDATE ${this.tableName} 
-      SET last_login_at = NOW() 
-      WHERE id = $1 
-      RETURNING *
+      SET last_login_at = CURRENT_TIMESTAMP 
+      WHERE id = ?
     `;
-    return this.dataGateway.getOne<User>(sql, [id]);
+    await this.dataGateway.execute(updateSql, [id]);
+
+    const selectSql = `
+      SELECT * FROM ${this.tableName} 
+      WHERE id = ?
+    `;
+    return this.dataGateway.getOne<User>(selectSql, [id]);
   }
 }

@@ -13,7 +13,7 @@ export class AuditRepository extends BaseRepository<AuditLog, string> implements
   async findByEntityId(entityId: string): Promise<AuditLog[]> {
     const sql = `
       SELECT * FROM ${this.tableName} 
-      WHERE entity_id = $1 
+      WHERE entity_id = ? 
       ORDER BY created_at DESC
     `;
     return this.dataGateway.query<AuditLog>(sql, [entityId]);
@@ -22,7 +22,7 @@ export class AuditRepository extends BaseRepository<AuditLog, string> implements
   async findByUserId(userId: string): Promise<AuditLog[]> {
     const sql = `
       SELECT * FROM ${this.tableName} 
-      WHERE user_id = $1 
+      WHERE user_id = ? 
       ORDER BY created_at DESC
     `;
     return this.dataGateway.query<AuditLog>(sql, [userId]);
@@ -31,16 +31,16 @@ export class AuditRepository extends BaseRepository<AuditLog, string> implements
   async findByDateRange(startDate: Date, endDate: Date): Promise<AuditLog[]> {
     const sql = `
       SELECT * FROM ${this.tableName} 
-      WHERE created_at BETWEEN $1 AND $2 
+      WHERE created_at BETWEEN ? AND ? 
       ORDER BY created_at DESC
     `;
-    return this.dataGateway.query<AuditLog>(sql, [startDate, endDate]);
+    return this.dataGateway.query<AuditLog>(sql, [startDate.toISOString(), endDate.toISOString()]);
   }
 
   async findByAction(action: string): Promise<AuditLog[]> {
     const sql = `
       SELECT * FROM ${this.tableName} 
-      WHERE action = $1 
+      WHERE action = ? 
       ORDER BY created_at DESC
     `;
     return this.dataGateway.query<AuditLog>(sql, [action]);
