@@ -1,5 +1,5 @@
 import Fastify, { FastifyInstance } from 'fastify';
-import { LoggerService } from '@shared/logger';
+import { LoggerService } from './shared/logger';
 import { createContainer, OnDestroy, OnInit, TYPES } from '@infrastructure/config';
 import { DataGateway } from '@infrastructure/storage';
 import { registerRoutes } from '@infrastructure/delivery';

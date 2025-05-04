@@ -1,6 +1,6 @@
 import { injectable, inject } from 'inversify';
 import { IFlagRepository } from '@infrastructure/persistence/interfaces/repositories';
-import { ILogger } from '@shared/kernel/base.interfaces';
+import { ILogger } from '../../../shared/kernel/base.interfaces';
 import { FeatureFlag } from '../../flag-management/model/flag.model';
 import { TYPES } from '@infrastructure/config';
 

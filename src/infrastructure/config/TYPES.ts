@@ -7,7 +7,9 @@ export const TYPES = {
 
   FlagRepository: Symbol.for('FlagRepository'),
   AuditRepository: Symbol.for('AuditRepository'),
-  AuditService: Symbol.for('AuditService'),
   CategoryRepository: Symbol.for('CategoryRepository'),
+  UserRepository: Symbol.for('UserRepository'),
+
+  AuditService: Symbol.for('AuditService'),
   FlagEvaluationService: Symbol.for('FlagEvaluationService'),
 };

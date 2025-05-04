@@ -2,7 +2,7 @@ import { injectable, inject } from 'inversify';
 import { AuditLog, CreateAuditLogDTO } from '../model/audit.model';
 import { IAuditRepository } from '@infrastructure/persistence/interfaces/repositories';
 import { TYPES } from '@infrastructure/config';
-import { ILogger } from '@shared/logger';
+import { ILogger } from '../../../shared/logger';
 
 @injectable()
 export class AuditService {

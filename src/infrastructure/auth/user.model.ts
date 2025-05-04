@@ -1,10 +1,10 @@
-import { IEntity } from '@shared/kernel/base.interfaces';
-import { UserRole } from '@shared/kernel/base.types';
+import { IEntity } from '../../shared/kernel/base.interfaces';
+import { UserRole } from '../../shared/kernel/base.types';
 
 export class User implements IEntity<string> {
   id: string;
   username: string;
-  password: string; // Хэшированный пароль
+  password: string;
   email: string;
   role: UserRole;
   isActive: boolean;
@@ -34,14 +34,12 @@ export class User implements IEntity<string> {
     this.updatedAt = data.updatedAt;
   }
 
-  // Маскирование пароля при выводе
   protected toJSON(): Omit<User, 'password'> {
     const { password, ...userWithoutPassword } = this;
     return userWithoutPassword;
   }
 }
 
-// DTO для создания пользователя
 export interface CreateUserDTO {
   username: string;
   password: string;
@@ -49,7 +47,6 @@ export interface CreateUserDTO {
   role: UserRole;
 }
 
-// DTO для обновления пользователя
 export interface UpdateUserDTO {
   username?: string;
   password?: string;
@@ -58,13 +55,11 @@ export interface UpdateUserDTO {
   isActive?: boolean;
 }
 
-// DTO для аутентификации
 export interface AuthDTO {
   username: string;
   password: string;
 }
 
-// DTO для токена аутентификации
 export interface TokenDTO {
   accessToken: string;
   refreshToken: string;

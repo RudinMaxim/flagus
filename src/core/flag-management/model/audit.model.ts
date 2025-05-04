@@ -1,5 +1,5 @@
-import { IEntity } from '@shared/kernel/base.interfaces';
-import { AuditAction } from '@shared/kernel/base.types';
+import { IEntity } from '../../../shared/kernel/base.interfaces';
+import { AuditAction } from '../../../shared/kernel/base.types';
 
 export class AuditLog implements IEntity<string> {
   id: string;

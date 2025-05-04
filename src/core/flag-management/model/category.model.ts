@@ -1,5 +1,5 @@
-import { IEntity } from '@shared/kernel/base.interfaces';
-import { Metadata } from '@shared/kernel/base.types';
+import { IEntity } from '../../../shared/kernel/base.interfaces';
+import { Metadata } from '../../../shared/kernel/base.types';
 
 export class FlagCategory implements IEntity<string> {
   id: string;

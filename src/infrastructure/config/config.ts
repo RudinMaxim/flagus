@@ -1,14 +1,5 @@
 import { injectable } from 'inversify';
 
-export interface OnInit {
-  onInit(): Promise<void>;
-}
-
-export interface OnDestroy {
-  onDestroy(): Promise<void>;
-}
-
-// Интерфейс конфигурации SQLite
 export interface SQLiteConfig {
   database: string;
   options?: {

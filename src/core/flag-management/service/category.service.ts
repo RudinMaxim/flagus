@@ -1,8 +1,8 @@
 import { injectable, inject } from 'inversify';
 import { FlagCategory, CreateCategoryDTO, UpdateCategoryDTO } from '../model/category.model';
 import { ICategoryRepository } from '@infrastructure/persistence/interfaces/repositories';
-import { IService } from '@shared/kernel/base.interfaces';
-import { AuditAction } from '@shared/kernel/base.types';
+import { IService } from '../../../shared/kernel/base.interfaces';
+import { AuditAction } from '../../../shared/kernel/base.types';
 import { AuditService } from './audit.service';
 import { TYPES } from '@infrastructure/config';
 
