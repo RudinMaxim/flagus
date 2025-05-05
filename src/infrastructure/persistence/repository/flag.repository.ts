@@ -1,9 +1,9 @@
-import { BaseRepository, DataGateway } from '@infrastructure/storage';
+import { injectable, inject } from 'inversify';
 import { FeatureFlag } from '../../../core/flag-management/model';
 import { FlagStatus, FlagType } from '../../../shared/kernel';
+import { TYPES } from '../../config/types';
+import { BaseRepository, DataGateway } from '../../storage';
 import { IFlagRepository } from '../interfaces';
-import { inject, injectable } from 'inversify';
-import { TYPES } from '@infrastructure/config';
 
 @injectable()
 export class FlagRepository extends BaseRepository<FeatureFlag, string> implements IFlagRepository {

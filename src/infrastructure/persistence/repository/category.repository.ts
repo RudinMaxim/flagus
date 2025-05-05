@@ -1,8 +1,8 @@
-import { BaseRepository, DataGateway } from '@infrastructure/storage';
+import { injectable, inject } from 'inversify';
 import { FlagCategory } from '../../../core/flag-management/model';
+import { BaseRepository, DataGateway } from '../../storage';
 import { ICategoryRepository } from '../interfaces';
-import { TYPES } from '@infrastructure/config';
-import { inject, injectable } from 'inversify';
+import { TYPES } from '../../config/types';
 
 @injectable()
 export class CategoryRepository

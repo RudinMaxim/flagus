@@ -1,7 +1,7 @@
-import { TYPES } from '@infrastructure/config';
-import { ICategoryRepository } from '@infrastructure/persistence';
-import { IService, AuditAction } from '@shared/kernel';
 import { injectable, inject } from 'inversify';
+import { TYPES } from '../../../infrastructure/config/types';
+import { ICategoryRepository } from '../../../infrastructure/persistence';
+import { IService, AuditAction } from '../../../shared/kernel';
 import { FlagCategory, CreateCategoryDTO, UpdateCategoryDTO } from '../model';
 import { AuditService } from './audit.service';
 

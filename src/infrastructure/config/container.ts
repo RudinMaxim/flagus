@@ -1,13 +1,14 @@
 import { Container } from 'inversify';
-import { LoggerService } from '../../shared/logger';
-import { ConfigService, TYPES } from '@infrastructure/config';
-import { OnDestroy, OnInit, storageModule } from '@infrastructure/storage';
-import { persistenceModule } from '@infrastructure/persistence';
+import { ILogger, LoggerService } from '../../shared/logger';
+import { persistenceModule } from '../persistence';
+import { storageModule, OnInit, OnDestroy } from '../storage';
+import { ConfigService } from './config';
+import { TYPES } from './types';
 
 export function createContainer(): Container {
   const container = new Container();
 
-  container.bind<LoggerService>(TYPES.Logger).to(LoggerService).inSingletonScope();
+  container.bind<ILogger>(TYPES.Logger).to(LoggerService).inSingletonScope();
   container.bind<ConfigService>(TYPES.Config).to(ConfigService).inSingletonScope();
 
   container.load(storageModule);

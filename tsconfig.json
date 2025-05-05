@@ -7,11 +7,6 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "typeRoots": ["./node_modules/@types", "./src/types"],
-    "paths": {
-      "@core/*": ["./src/core/*"],
-      "@infrastructure/*": ["./src/infrastructure/*"],
-      "@shared/*": ["./src/shared/*"]
-    },
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,

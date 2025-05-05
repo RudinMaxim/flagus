@@ -1,8 +1,8 @@
-import { FlagEvaluationService } from '@core/evaluation/service/flag-evaluation.service';
-import { TYPES } from '@infrastructure/config';
-import { IFlagRepository } from '@infrastructure/persistence';
-import { IService, FlagStatus, AuditAction } from '@shared/kernel';
 import { injectable, inject } from 'inversify';
+import { TYPES } from '../../../infrastructure/config/types';
+import { IFlagRepository } from '../../../infrastructure/persistence';
+import { IService, FlagStatus, AuditAction } from '../../../shared/kernel';
+import { FlagEvaluationService } from '../../evaluation/service/flag-evaluation.service';
 import { FeatureFlag, CreateFlagDTO, UpdateFlagDTO } from '../model';
 import { AuditService } from './audit.service';
 

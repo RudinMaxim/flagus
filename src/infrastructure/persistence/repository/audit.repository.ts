@@ -1,8 +1,8 @@
-import { BaseRepository, DataGateway } from '@infrastructure/storage';
+import { injectable, inject } from 'inversify';
 import { AuditLog } from '../../../core/flag-management/model';
+import { TYPES } from '../../config/types';
+import { BaseRepository, DataGateway } from '../../storage';
 import { IAuditRepository } from '../interfaces';
-import { TYPES } from '@infrastructure/config';
-import { inject, injectable } from 'inversify';
 
 @injectable()
 export class AuditRepository extends BaseRepository<AuditLog, string> implements IAuditRepository {

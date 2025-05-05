@@ -1,4 +1,4 @@
-import { IRepository } from '@shared/kernel';
+import { IRepository } from '../../../shared/kernel';
 import { DataGateway } from '../abstract';
 
 export abstract class BaseRepository<T, ID> implements IRepository<T, ID> {

@@ -1,5 +1,4 @@
 import { ContainerModule } from 'inversify';
-import { TYPES } from '@infrastructure/config';
 import {
   IAuditRepository,
   ICategoryRepository,
@@ -7,6 +6,7 @@ import {
   IUserRepository,
 } from './interfaces';
 import { AuditRepository, CategoryRepository, FlagRepository, UserRepository } from './repository';
+import { TYPES } from '../config/types';
 
 export const persistenceModule = new ContainerModule(({ bind }) => {
   bind<IAuditRepository>(TYPES.AuditRepository).to(AuditRepository).inSingletonScope();

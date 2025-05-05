@@ -1,8 +1,8 @@
-import { User } from '@infrastructure/auth/user.model';
-import { BaseRepository, DataGateway } from '@infrastructure/storage';
+import { injectable, inject } from 'inversify';
+import { User } from '../../auth/user.model';
+import { TYPES } from '../../config/types';
+import { BaseRepository, DataGateway } from '../../storage';
 import { IUserRepository } from '../interfaces';
-import { inject, injectable } from 'inversify';
-import { TYPES } from '@infrastructure/config';
 
 @injectable()
 export class UserRepository extends BaseRepository<User, string> implements IUserRepository {

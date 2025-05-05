@@ -2,17 +2,16 @@ import { injectable, inject } from 'inversify';
 import sqlite3 from 'sqlite3';
 import { Database } from 'sqlite3';
 import { DataGateway, OnDestroy, OnInit } from '../../abstract';
-import { ConfigService, TYPES } from '@infrastructure/config';
-import { LoggerService } from '../../../../shared/logger';
-
-console.log('TYPES in SQLiteServiceImpl:', TYPES);
+import { TYPES } from '../../../config/types';
+import { ILogger } from '../../../../shared/logger';
+import { ConfigService } from '../../../config/config';
 
 @injectable()
 export class SQLiteServiceImpl extends DataGateway<Database> implements OnInit, OnDestroy {
   private db!: Database;
 
   constructor(
-    @inject(TYPES.Logger) private readonly logger: LoggerService,
+    @inject(TYPES.Logger) private readonly logger: ILogger,
     @inject(TYPES.Config) private readonly config: ConfigService
   ) {
     super();
