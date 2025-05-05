@@ -12,4 +12,6 @@ export const TYPES = {
 
   AuditService: Symbol.for('AuditService'),
   FlagEvaluationService: Symbol.for('FlagEvaluationService'),
+  FeatureFlagService: Symbol.for('FeatureFlagService'),
+  CategoryService: Symbol.for('CategoryService'),
 };

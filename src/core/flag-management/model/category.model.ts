@@ -1,4 +1,4 @@
-import { IEntity, Metadata } from '@shared/kernel';
+import { IEntity, Metadata } from '../../../shared/kernel';
 
 export class FlagCategory implements IEntity<string> {
   id: string;

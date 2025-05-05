@@ -5,7 +5,7 @@ import {
   TimeConstraint,
   PercentageDistribution,
   Metadata,
-} from '@shared/kernel';
+} from '../../../shared/kernel';
 
 export class FeatureFlag implements IEntity<string> {
   id: string;

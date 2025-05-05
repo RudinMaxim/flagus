@@ -22,7 +22,7 @@ export class SQLiteServiceImpl extends DataGateway<Database> implements OnInit, 
   }
 
   public async onInit(): Promise<void> {
-    this.initialize();
+    await this.initialize();
     await this.connect();
   }
 
@@ -82,25 +82,28 @@ export class SQLiteServiceImpl extends DataGateway<Database> implements OnInit, 
     return this.execute('ROLLBACK;').then(() => {});
   }
 
-  protected initialize(): void {
+  protected async initialize(): Promise<void> {
     const { database } = this.config.sqlite;
     this.logger.info(`Initializing SQLite database with file: ${database}`);
-    this.db = new sqlite3.Database(database, err => {
-      if (err) {
-        this.logger.error(`Failed to initialize SQLite database: ${err.message}`);
-      } else {
-        this.logger.info('SQLite database initialized successfully');
-      }
+
+    return new Promise((resolve, reject) => {
+      this.db = new sqlite3.Database(database, err => {
+        if (err) {
+          this.logger.error(`Failed to initialize SQLite database: ${err.message}`);
+          reject(err);
+        } else {
+          this.logger.info('SQLite database initialized successfully');
+          resolve();
+        }
+      });
     });
   }
 
   protected async connect(): Promise<void> {
     try {
-      // Проверка подключения
       await this.query('SELECT 1');
       this.logger.info('SQLite connection established');
 
-      // Настройки для БД
       await this.execute('PRAGMA foreign_keys = ON;');
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.stack : 'Unknown error';

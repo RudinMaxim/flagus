@@ -1,5 +1,5 @@
-import { User } from '@infrastructure/auth/user.model';
 import { IRepository } from '../../../shared/kernel';
+import { User } from '../../auth/user.model';
 
 export interface IUserRepository extends IRepository<User, string> {
   findByUsername(username: string): Promise<User | null>;

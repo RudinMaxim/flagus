@@ -1,4 +1,4 @@
-import { IEntity, AuditAction } from '@shared/kernel';
+import { AuditAction, IEntity } from '../../../shared/kernel';
 
 export class AuditLog implements IEntity<string> {
   id: string;
