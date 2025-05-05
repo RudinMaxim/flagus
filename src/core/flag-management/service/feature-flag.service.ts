@@ -60,7 +60,6 @@ export class FeatureFlagService
 
     const createdFlag = await this.flagRepository.create(flag);
 
-    // Регистрация в аудите
     await this.auditService.logAction({
       userId: dto.createdBy,
       action: AuditAction.CREATE,
@@ -86,10 +85,8 @@ export class FeatureFlagService
       }
     }
 
-    // Сохраняем старое значение для аудита
     const oldValue = JSON.stringify(flag);
 
-    // Обновляем метаданные
     const metadata = { ...flag.metadata };
     metadata.updatedBy = dto.updatedBy;
     metadata.updatedAt = new Date();
@@ -102,7 +99,6 @@ export class FeatureFlagService
     const updatedFlag = await this.flagRepository.update(id, updateData);
 
     if (updatedFlag) {
-      // Регистрация в аудите
       await this.auditService.logAction({
         userId: dto.updatedBy,
         action: AuditAction.UPDATE,
@@ -125,9 +121,8 @@ export class FeatureFlagService
     const result = await this.flagRepository.delete(id);
 
     if (result) {
-      // Регистрация в аудите
       await this.auditService.logAction({
-        userId: 'system', // Можно передавать userId при вызове метода
+        userId: 'system',
         action: AuditAction.DELETE,
         entityId: id,
         entityType: 'feature_flag',
@@ -149,7 +144,6 @@ export class FeatureFlagService
     const updatedFlag = await this.flagRepository.toggleStatus(id, status);
 
     if (updatedFlag) {
-      // Регистрация в аудите
       await this.auditService.logAction({
         userId,
         action: AuditAction.TOGGLE,

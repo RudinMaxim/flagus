@@ -9,31 +9,48 @@ const errorSchema = {
   },
 };
 
+const metadataSchema = {
+  type: 'object',
+  properties: {
+    createdBy: { type: 'string' },
+    createdAt: { type: 'string', format: 'date-time' },
+    updatedBy: { type: ['string', 'null'] },
+    updatedAt: { type: ['string', 'null'], format: 'date-time' },
+  },
+  required: ['createdBy', 'createdAt'],
+};
+
+const timeConstraintSchema = {
+  type: 'object',
+  properties: {
+    startDate: { type: ['string', 'null'], format: 'date-time' },
+    endDate: { type: ['string', 'null'], format: 'date-time' },
+  },
+};
+
+const percentageDistributionSchema = {
+  type: 'object',
+  properties: {
+    percentage: { type: 'number', minimum: 0, maximum: 100 },
+  },
+  required: ['percentage'],
+};
+
 const flagSchema = {
   type: 'object',
   properties: {
     id: { type: 'string' },
     name: { type: 'string' },
-    description: { type: 'string' },
+    description: { type: ['string', 'null'] },
+    type: { type: 'string', enum: ['boolean', 'percentage'] },
+    status: { type: 'string', enum: ['active', 'inactive', 'scheduled', 'archived'] },
     categoryId: { type: ['string', 'null'] },
-    status: { type: 'string', enum: ['ACTIVE', 'INACTIVE', 'SCHEDULED'] },
-    rolloutPercentage: { type: 'integer', minimum: 0, maximum: 100 },
-    rules: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          attribute: { type: 'string' },
-          operator: { type: 'string' },
-          value: { type: ['string', 'number', 'boolean', 'array'] },
-        },
-      },
-    },
-    scheduleStart: { type: ['string', 'null'], format: 'date-time' },
-    scheduleEnd: { type: ['string', 'null'], format: 'date-time' },
-    createdAt: { type: 'string', format: 'date-time' },
-    updatedAt: { type: 'string', format: 'date-time' },
+    timeConstraint: timeConstraintSchema,
+    percentageDistribution: percentageDistributionSchema,
+    clientIds: { type: 'array', items: { type: 'string' } },
+    metadata: metadataSchema,
   },
+  required: ['id', 'name', 'type', 'status', 'metadata'],
 };
 
 // GET /flags
@@ -56,7 +73,7 @@ export const getAllFlagsSchema: FastifySchema = {
 };
 
 // GET /flags/:id
-export const getFlagsByIdSchema: FastifySchema = {
+export const getFlagByIdSchema: FastifySchema = {
   description: 'Get flag by ID',
   tags: ['Feature Flags'],
   summary: 'Retrieve a specific feature flag by its ID',
@@ -80,43 +97,27 @@ export const getFlagsByIdSchema: FastifySchema = {
 };
 
 // POST /flags
-export const createSchema: FastifySchema = {
+export const createFlagSchema: FastifySchema = {
   description: 'Create new feature flag',
   tags: ['Feature Flags'],
   summary: 'Create a new feature flag with configuration',
   body: {
     type: 'object',
-    required: ['name'],
+    required: ['name', 'type', 'createdBy'],
     properties: {
       name: { type: 'string', pattern: '^[a-zA-Z0-9_-]+$', minLength: 1, maxLength: 100 },
       description: { type: 'string', maxLength: 500 },
-      categoryId: { type: ['string', 'null'] },
-      status: { type: 'string', enum: ['ACTIVE', 'INACTIVE', 'SCHEDULED'] },
-      rolloutPercentage: { type: 'integer', minimum: 0, maximum: 100 },
-      rules: {
-        type: 'array',
-        items: {
-          type: 'object',
-          required: ['attribute', 'operator', 'value'],
-          properties: {
-            attribute: { type: 'string' },
-            operator: {
-              type: 'string',
-              enum: [
-                'EQUALS',
-                'NOT_EQUALS',
-                'CONTAINS',
-                'NOT_CONTAINS',
-                'GREATER_THAN',
-                'LESS_THAN',
-              ],
-            },
-            value: { type: ['string', 'number', 'boolean', 'array'] },
-          },
-        },
+      type: { type: 'string', enum: ['boolean', 'percentage'] },
+      status: {
+        type: 'string',
+        enum: ['active', 'inactive', 'scheduled', 'archived'],
+        default: 'inactive',
       },
-      scheduleStart: { type: ['string', 'null'], format: 'date-time' },
-      scheduleEnd: { type: ['string', 'null'], format: 'date-time' },
+      categoryId: { type: ['string', 'null'] },
+      timeConstraint: timeConstraintSchema,
+      percentageDistribution: percentageDistributionSchema,
+      clientIds: { type: 'array', items: { type: 'string' } },
+      createdBy: { type: 'string' },
     },
   },
   response: {
@@ -126,13 +127,14 @@ export const createSchema: FastifySchema = {
         data: flagSchema,
       },
     },
+    400: errorSchema,
     409: errorSchema,
     500: errorSchema,
   },
 };
 
 // PUT /flags/:id
-export const updateSchema: FastifySchema = {
+export const updateFlagSchema: FastifySchema = {
   description: 'Update feature flag',
   tags: ['Feature Flags'],
   summary: 'Update an existing feature flag configuration',
@@ -145,36 +147,17 @@ export const updateSchema: FastifySchema = {
   },
   body: {
     type: 'object',
+    required: ['updatedBy'],
     properties: {
       name: { type: 'string', pattern: '^[a-zA-Z0-9_-]+$', minLength: 1, maxLength: 100 },
       description: { type: 'string', maxLength: 500 },
+      type: { type: 'string', enum: ['boolean', 'percentage'] },
+      status: { type: 'string', enum: ['active', 'inactive', 'scheduled', 'archived'] },
       categoryId: { type: ['string', 'null'] },
-      status: { type: 'string', enum: ['ACTIVE', 'INACTIVE', 'SCHEDULED'] },
-      rolloutPercentage: { type: 'integer', minimum: 0, maximum: 100 },
-      rules: {
-        type: 'array',
-        items: {
-          type: 'object',
-          required: ['attribute', 'operator', 'value'],
-          properties: {
-            attribute: { type: 'string' },
-            operator: {
-              type: 'string',
-              enum: [
-                'EQUALS',
-                'NOT_EQUALS',
-                'CONTAINS',
-                'NOT_CONTAINS',
-                'GREATER_THAN',
-                'LESS_THAN',
-              ],
-            },
-            value: { type: ['string', 'number', 'boolean', 'array'] },
-          },
-        },
-      },
-      scheduleStart: { type: ['string', 'null'], format: 'date-time' },
-      scheduleEnd: { type: ['string', 'null'], format: 'date-time' },
+      timeConstraint: timeConstraintSchema,
+      percentageDistribution: percentageDistributionSchema,
+      clientIds: { type: 'array', items: { type: 'string' } },
+      updatedBy: { type: 'string' },
     },
   },
   response: {
@@ -191,7 +174,7 @@ export const updateSchema: FastifySchema = {
 };
 
 // DELETE /flags/:id
-export const deleteSchema: FastifySchema = {
+export const deleteFlagSchema: FastifySchema = {
   description: 'Delete feature flag',
   tags: ['Feature Flags'],
   summary: 'Delete a feature flag',
@@ -212,10 +195,10 @@ export const deleteSchema: FastifySchema = {
 };
 
 // PATCH /flags/:id/toggle
-export const toggleSchema: FastifySchema = {
+export const toggleFlagSchema: FastifySchema = {
   description: 'Toggle flag status',
   tags: ['Feature Flags'],
-  summary: 'Change the status of a feature flag (ACTIVE/INACTIVE/SCHEDULED)',
+  summary: 'Change the status of a feature flag',
   params: {
     type: 'object',
     required: ['id'],
@@ -225,10 +208,10 @@ export const toggleSchema: FastifySchema = {
   },
   body: {
     type: 'object',
-    required: ['status', 'userId'],
+    required: ['status', 'updatedBy'],
     properties: {
-      status: { type: 'string', enum: ['ACTIVE', 'INACTIVE', 'SCHEDULED'] },
-      userId: { type: 'string' },
+      status: { type: 'string', enum: ['active', 'inactive', 'scheduled', 'archived'] },
+      updatedBy: { type: 'string' },
     },
   },
   response: {
@@ -247,7 +230,7 @@ export const toggleSchema: FastifySchema = {
 export const getClientFlagsSchema: FastifySchema = {
   description: 'Get client flags',
   tags: ['Client SDK'],
-  summary: 'Retrieve all active flags for a specific client (SDK integration)',
+  summary: 'Retrieve all active flags for a specific client',
   params: {
     type: 'object',
     required: ['clientId'],
@@ -275,7 +258,7 @@ export const getClientFlagsSchema: FastifySchema = {
 export const evaluateFlagSchema: FastifySchema = {
   description: 'Evaluate flag for client',
   tags: ['Client SDK'],
-  summary: 'Evaluate a specific flag for a given client (SDK integration)',
+  summary: 'Evaluate a specific flag for a given client',
   params: {
     type: 'object',
     required: ['flagName', 'clientId'],
@@ -297,6 +280,7 @@ export const evaluateFlagSchema: FastifySchema = {
         },
       },
     },
+    404: errorSchema,
     500: errorSchema,
   },
 };

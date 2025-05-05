@@ -1,12 +1,14 @@
 import { FastifySchema } from 'fastify';
 
-const errorSchema = {
+const metadataSchema = {
   type: 'object',
   properties: {
-    statusCode: { type: 'integer' },
-    error: { type: 'string' },
-    message: { type: 'string' },
+    createdBy: { type: 'string' },
+    createdAt: { type: 'string', format: 'date-time' },
+    updatedBy: { type: ['string', 'null'] },
+    updatedAt: { type: ['string', 'null'], format: 'date-time' },
   },
+  required: ['createdBy', 'createdAt'],
 };
 
 const categorySchema = {
@@ -14,10 +16,20 @@ const categorySchema = {
   properties: {
     id: { type: 'string' },
     name: { type: 'string' },
-    description: { type: 'string' },
+    description: { type: ['string', 'null'] },
     parentId: { type: ['string', 'null'] },
-    createdAt: { type: 'string', format: 'date-time' },
-    updatedAt: { type: 'string', format: 'date-time' },
+    depth: { type: 'integer', minimum: 0, maximum: 3 },
+    metadata: metadataSchema,
+  },
+  required: ['id', 'name', 'depth', 'metadata'],
+};
+
+const errorSchema = {
+  type: 'object',
+  properties: {
+    statusCode: { type: 'integer' },
+    error: { type: 'string' },
+    message: { type: 'string' },
   },
 };
 
@@ -41,7 +53,7 @@ export const getAllCategoriesSchema: FastifySchema = {
 };
 
 // GET /categories/:id
-export const getCategoriesByIdSchema: FastifySchema = {
+export const getCategoryByIdSchema: FastifySchema = {
   description: 'Get category by ID',
   tags: ['Categories'],
   summary: 'Retrieve a specific category by its ID',
@@ -65,10 +77,10 @@ export const getCategoriesByIdSchema: FastifySchema = {
 };
 
 // GET /categories/roots
-export const getRootsSchema: FastifySchema = {
+export const getRootCategoriesSchema: FastifySchema = {
   description: 'Get root categories',
   tags: ['Categories'],
-  summary: 'Retrieve all root categories (categories without parent)',
+  summary: 'Retrieve all root categories (depth=0)',
   response: {
     200: {
       type: 'object',
@@ -110,17 +122,18 @@ export const getSubcategoriesSchema: FastifySchema = {
 };
 
 // POST /categories
-export const createSchema: FastifySchema = {
+export const createCategorySchema: FastifySchema = {
   description: 'Create new category',
   tags: ['Categories'],
   summary: 'Create a new flag category',
   body: {
     type: 'object',
-    required: ['name'],
+    required: ['name', 'createdBy'],
     properties: {
       name: { type: 'string', minLength: 1, maxLength: 100 },
       description: { type: 'string', maxLength: 500 },
       parentId: { type: ['string', 'null'] },
+      createdBy: { type: 'string' },
     },
   },
   response: {
@@ -137,7 +150,7 @@ export const createSchema: FastifySchema = {
 };
 
 // PUT /categories/:id
-export const updateSchema: FastifySchema = {
+export const updateCategorySchema: FastifySchema = {
   description: 'Update category',
   tags: ['Categories'],
   summary: 'Update an existing category',
@@ -150,10 +163,12 @@ export const updateSchema: FastifySchema = {
   },
   body: {
     type: 'object',
+    required: ['updatedBy'],
     properties: {
       name: { type: 'string', minLength: 1, maxLength: 100 },
       description: { type: 'string', maxLength: 500 },
       parentId: { type: ['string', 'null'] },
+      updatedBy: { type: 'string' },
     },
   },
   response: {
@@ -171,7 +186,7 @@ export const updateSchema: FastifySchema = {
 };
 
 // DELETE /categories/:id
-export const deleteSchema: FastifySchema = {
+export const deleteCategorySchema: FastifySchema = {
   description: 'Delete category',
   tags: ['Categories'],
   summary: 'Delete a category (only if it has no subcategories)',

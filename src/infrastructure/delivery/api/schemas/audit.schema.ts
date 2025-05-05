@@ -13,24 +13,20 @@ const auditLogSchema = {
   type: 'object',
   properties: {
     id: { type: 'string' },
+    userId: { type: 'string' },
+    action: { type: 'string', enum: ['create', 'update', 'delete', 'toggle'] },
     entityId: { type: 'string' },
     entityType: { type: 'string' },
-    userId: { type: 'string' },
-    action: { type: 'string' },
+    oldValue: { type: ['object', 'null'], additionalProperties: true },
+    newValue: { type: ['object', 'null'], additionalProperties: true },
     timestamp: { type: 'string', format: 'date-time' },
-    oldValue: {
-      type: ['object', 'null'],
-      additionalProperties: true,
-    },
-    newValue: {
-      type: ['object', 'null'],
-      additionalProperties: true,
-    },
+    ipAddress: { type: ['string', 'null'] },
   },
+  required: ['id', 'userId', 'action', 'entityId', 'entityType', 'timestamp'],
 };
 
 // GET /audit
-export const getAllAuditSchema: FastifySchema = {
+export const getAllAuditLogsSchema: FastifySchema = {
   description: 'Get all audit logs',
   tags: ['Audit Logs'],
   summary: 'Retrieve all audit logs',
@@ -49,7 +45,7 @@ export const getAllAuditSchema: FastifySchema = {
 };
 
 // GET /audit/:id
-export const getAuditByIdSchema: FastifySchema = {
+export const getAuditLogByIdSchema: FastifySchema = {
   description: 'Get audit log by ID',
   tags: ['Audit Logs'],
   summary: 'Retrieve a specific audit log by its ID',
@@ -73,7 +69,7 @@ export const getAuditByIdSchema: FastifySchema = {
 };
 
 // GET /audit/entity/:entityId
-export const getByEntityIdSchema: FastifySchema = {
+export const getAuditLogsByEntityIdSchema: FastifySchema = {
   description: 'Get audit logs by entity ID',
   tags: ['Audit Logs'],
   summary: 'Retrieve audit logs for a specific entity',
@@ -99,7 +95,7 @@ export const getByEntityIdSchema: FastifySchema = {
 };
 
 // GET /audit/user/:userId
-export const getByUserIdSchema: FastifySchema = {
+export const getAuditLogsByUserIdSchema: FastifySchema = {
   description: 'Get audit logs by user ID',
   tags: ['Audit Logs'],
   summary: 'Retrieve audit logs created by a specific user',
@@ -124,8 +120,38 @@ export const getByUserIdSchema: FastifySchema = {
   },
 };
 
+// POST /audit
+export const createAuditLogSchema: FastifySchema = {
+  description: 'Create audit log',
+  tags: ['Audit Logs'],
+  summary: 'Create a new audit log entry',
+  body: {
+    type: 'object',
+    required: ['userId', 'action', 'entityId', 'entityType'],
+    properties: {
+      userId: { type: 'string' },
+      action: { type: 'string', enum: ['create', 'update', 'delete', 'toggle'] },
+      entityId: { type: 'string' },
+      entityType: { type: 'string' },
+      oldValue: { type: ['object', 'null'], additionalProperties: true },
+      newValue: { type: ['object', 'null'], additionalProperties: true },
+      ipAddress: { type: 'string' },
+    },
+  },
+  response: {
+    201: {
+      type: 'object',
+      properties: {
+        data: auditLogSchema,
+      },
+    },
+    400: errorSchema,
+    500: errorSchema,
+  },
+};
+
 // GET /audit/export
-export const exportLogsSchema: FastifySchema = {
+export const exportAuditLogsSchema: FastifySchema = {
   description: 'Export audit logs to CSV',
   tags: ['Audit Logs'],
   summary: 'Export audit logs with optional filtering',
@@ -139,12 +165,16 @@ export const exportLogsSchema: FastifySchema = {
     },
   },
   response: {
+    200: {
+      type: 'string',
+      format: 'binary',
+    },
     500: errorSchema,
   },
 };
 
 // GET /audit/:id/diff
-export const getDiffSchema: FastifySchema = {
+export const getAuditLogDiffSchema: FastifySchema = {
   description: 'Get diff between old and new values',
   tags: ['Audit Logs'],
   summary: 'Show differences between old and new values in an audit log',
