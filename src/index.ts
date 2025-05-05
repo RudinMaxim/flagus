@@ -1,62 +1,24 @@
 import 'reflect-metadata';
-import { FastifyInstance } from 'fastify';
+import 'tsconfig-paths/register';
+import * as dotenv from 'dotenv';
 import { createApp } from './application';
 
-async function bootstrap(): Promise<void> {
-  let app: FastifyInstance | null = null;
-  let shutdownInProgress = false;
+dotenv.config();
 
+async function start() {
   try {
-    app = await createApp();
-    const logger = app?.log;
+    const app = await createApp();
 
-    const gracefulShutdown = async (signal: string): Promise<void> => {
-      if (shutdownInProgress) return;
-      shutdownInProgress = true;
-
-      logger?.info(`Received ${signal} signal, shutting down gracefully`);
-
-      try {
-        if (app) {
-          await app.close();
-          logger?.info('Server closed successfully');
-        }
-        process.exit(0);
-      } catch (err) {
-        logger?.error('Error during shutdown:', err);
-        process.exit(1);
-      }
-    };
-
-    const signals: NodeJS.Signals[] = ['SIGINT', 'SIGTERM', 'SIGHUP'];
-    signals.forEach(signal => {
-      process.once(signal, () => gracefulShutdown(signal));
-    });
-
-    process.on('uncaughtException', err => {
-      app?.log.error('Uncaught exception:', err);
-      gracefulShutdown('uncaughtException');
-    });
-
-    process.on('unhandledRejection', reason => {
-      app?.log.error('Unhandled rejection:', reason);
-      gracefulShutdown('unhandledRejection');
-    });
-
-    const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
+    const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
     const host = process.env.HOST || '0.0.0.0';
 
     await app.listen({ port, host });
 
-    logger.info(`Server started on ${host}:${port}`);
+    console.log(`Server is running on http://${host}:${port}`);
   } catch (err) {
-    if (app?.log) {
-      app.log.error('Failed to start server:', err);
-    } else {
-      throw new Error(`Failed to start server: ${err}`);
-    }
+    console.error('Error starting server:', err);
     process.exit(1);
   }
 }
 
-bootstrap();
+start();

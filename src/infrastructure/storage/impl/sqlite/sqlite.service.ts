@@ -5,6 +5,8 @@ import { DataGateway, OnDestroy, OnInit } from '../../abstract';
 import { ConfigService, TYPES } from '@infrastructure/config';
 import { LoggerService } from '../../../../shared/logger';
 
+console.log('TYPES in SQLiteServiceImpl:', TYPES);
+
 @injectable()
 export class SQLiteServiceImpl extends DataGateway<Database> implements OnInit, OnDestroy {
   private db!: Database;

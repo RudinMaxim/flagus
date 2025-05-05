@@ -1,6 +1,6 @@
 export const TYPES = {
-  Logger: Symbol.for('LoggerService'),
-  Config: Symbol.for('ConfigService'),
+  Logger: Symbol.for('Logger'),
+  Config: Symbol.for('Config'),
   DataGateway: Symbol.for('DataGateway'),
   OnInit: Symbol.for('OnInit'),
   OnDestroy: Symbol.for('OnDestroy'),
