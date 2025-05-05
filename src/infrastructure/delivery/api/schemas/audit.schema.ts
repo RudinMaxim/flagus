@@ -1,6 +1,5 @@
 import { FastifySchema } from 'fastify';
 
-// Common response schemas
 const errorSchema = {
   type: 'object',
   properties: {
@@ -32,6 +31,9 @@ const auditLogSchema = {
 
 // GET /audit
 export const getAllAuditSchema: FastifySchema = {
+  description: 'Get all audit logs',
+  tags: ['Audit Logs'],
+  summary: 'Retrieve all audit logs',
   response: {
     200: {
       type: 'object',
@@ -48,6 +50,9 @@ export const getAllAuditSchema: FastifySchema = {
 
 // GET /audit/:id
 export const getAuditByIdSchema: FastifySchema = {
+  description: 'Get audit log by ID',
+  tags: ['Audit Logs'],
+  summary: 'Retrieve a specific audit log by its ID',
   params: {
     type: 'object',
     required: ['id'],
@@ -69,6 +74,9 @@ export const getAuditByIdSchema: FastifySchema = {
 
 // GET /audit/entity/:entityId
 export const getByEntityIdSchema: FastifySchema = {
+  description: 'Get audit logs by entity ID',
+  tags: ['Audit Logs'],
+  summary: 'Retrieve audit logs for a specific entity',
   params: {
     type: 'object',
     required: ['entityId'],
@@ -92,6 +100,9 @@ export const getByEntityIdSchema: FastifySchema = {
 
 // GET /audit/user/:userId
 export const getByUserIdSchema: FastifySchema = {
+  description: 'Get audit logs by user ID',
+  tags: ['Audit Logs'],
+  summary: 'Retrieve audit logs created by a specific user',
   params: {
     type: 'object',
     required: ['userId'],
@@ -115,6 +126,9 @@ export const getByUserIdSchema: FastifySchema = {
 
 // GET /audit/export
 export const exportLogsSchema: FastifySchema = {
+  description: 'Export audit logs to CSV',
+  tags: ['Audit Logs'],
+  summary: 'Export audit logs with optional filtering',
   querystring: {
     type: 'object',
     properties: {
@@ -131,6 +145,9 @@ export const exportLogsSchema: FastifySchema = {
 
 // GET /audit/:id/diff
 export const getDiffSchema: FastifySchema = {
+  description: 'Get diff between old and new values',
+  tags: ['Audit Logs'],
+  summary: 'Show differences between old and new values in an audit log',
   params: {
     type: 'object',
     required: ['id'],

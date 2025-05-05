@@ -1,6 +1,5 @@
 import { FastifySchema } from 'fastify';
 
-// Common response schemas
 const errorSchema = {
   type: 'object',
   properties: {
@@ -39,6 +38,9 @@ const flagSchema = {
 
 // GET /flags
 export const getAllFlagsSchema: FastifySchema = {
+  description: 'Get all feature flags',
+  tags: ['Feature Flags'],
+  summary: 'Retrieve all feature flags with their configurations',
   response: {
     200: {
       type: 'object',
@@ -55,6 +57,9 @@ export const getAllFlagsSchema: FastifySchema = {
 
 // GET /flags/:id
 export const getFlagsByIdSchema: FastifySchema = {
+  description: 'Get flag by ID',
+  tags: ['Feature Flags'],
+  summary: 'Retrieve a specific feature flag by its ID',
   params: {
     type: 'object',
     required: ['id'],
@@ -76,6 +81,9 @@ export const getFlagsByIdSchema: FastifySchema = {
 
 // POST /flags
 export const createSchema: FastifySchema = {
+  description: 'Create new feature flag',
+  tags: ['Feature Flags'],
+  summary: 'Create a new feature flag with configuration',
   body: {
     type: 'object',
     required: ['name'],
@@ -125,6 +133,9 @@ export const createSchema: FastifySchema = {
 
 // PUT /flags/:id
 export const updateSchema: FastifySchema = {
+  description: 'Update feature flag',
+  tags: ['Feature Flags'],
+  summary: 'Update an existing feature flag configuration',
   params: {
     type: 'object',
     required: ['id'],
@@ -181,6 +192,9 @@ export const updateSchema: FastifySchema = {
 
 // DELETE /flags/:id
 export const deleteSchema: FastifySchema = {
+  description: 'Delete feature flag',
+  tags: ['Feature Flags'],
+  summary: 'Delete a feature flag',
   params: {
     type: 'object',
     required: ['id'],
@@ -199,6 +213,9 @@ export const deleteSchema: FastifySchema = {
 
 // PATCH /flags/:id/toggle
 export const toggleSchema: FastifySchema = {
+  description: 'Toggle flag status',
+  tags: ['Feature Flags'],
+  summary: 'Change the status of a feature flag (ACTIVE/INACTIVE/SCHEDULED)',
   params: {
     type: 'object',
     required: ['id'],
@@ -228,6 +245,9 @@ export const toggleSchema: FastifySchema = {
 
 // GET /flags/client/:clientId
 export const getClientFlagsSchema: FastifySchema = {
+  description: 'Get client flags',
+  tags: ['Client SDK'],
+  summary: 'Retrieve all active flags for a specific client (SDK integration)',
   params: {
     type: 'object',
     required: ['clientId'],
@@ -253,6 +273,9 @@ export const getClientFlagsSchema: FastifySchema = {
 
 // GET /flags/evaluate/:flagName/:clientId
 export const evaluateFlagSchema: FastifySchema = {
+  description: 'Evaluate flag for client',
+  tags: ['Client SDK'],
+  summary: 'Evaluate a specific flag for a given client (SDK integration)',
   params: {
     type: 'object',
     required: ['flagName', 'clientId'],

@@ -1,6 +1,5 @@
 import { FastifySchema } from 'fastify';
 
-// Common response schemas
 const errorSchema = {
   type: 'object',
   properties: {
@@ -24,6 +23,9 @@ const categorySchema = {
 
 // GET /categories
 export const getAllCategoriesSchema: FastifySchema = {
+  description: 'Get all categories',
+  tags: ['Categories'],
+  summary: 'Retrieve all flag categories',
   response: {
     200: {
       type: 'object',
@@ -40,6 +42,9 @@ export const getAllCategoriesSchema: FastifySchema = {
 
 // GET /categories/:id
 export const getCategoriesByIdSchema: FastifySchema = {
+  description: 'Get category by ID',
+  tags: ['Categories'],
+  summary: 'Retrieve a specific category by its ID',
   params: {
     type: 'object',
     required: ['id'],
@@ -61,6 +66,9 @@ export const getCategoriesByIdSchema: FastifySchema = {
 
 // GET /categories/roots
 export const getRootsSchema: FastifySchema = {
+  description: 'Get root categories',
+  tags: ['Categories'],
+  summary: 'Retrieve all root categories (categories without parent)',
   response: {
     200: {
       type: 'object',
@@ -77,6 +85,9 @@ export const getRootsSchema: FastifySchema = {
 
 // GET /categories/:id/subcategories
 export const getSubcategoriesSchema: FastifySchema = {
+  description: 'Get subcategories',
+  tags: ['Categories'],
+  summary: 'Retrieve all subcategories for a given category',
   params: {
     type: 'object',
     required: ['id'],
@@ -100,6 +111,9 @@ export const getSubcategoriesSchema: FastifySchema = {
 
 // POST /categories
 export const createSchema: FastifySchema = {
+  description: 'Create new category',
+  tags: ['Categories'],
+  summary: 'Create a new flag category',
   body: {
     type: 'object',
     required: ['name'],
@@ -124,6 +138,9 @@ export const createSchema: FastifySchema = {
 
 // PUT /categories/:id
 export const updateSchema: FastifySchema = {
+  description: 'Update category',
+  tags: ['Categories'],
+  summary: 'Update an existing category',
   params: {
     type: 'object',
     required: ['id'],
@@ -155,6 +172,9 @@ export const updateSchema: FastifySchema = {
 
 // DELETE /categories/:id
 export const deleteSchema: FastifySchema = {
+  description: 'Delete category',
+  tags: ['Categories'],
+  summary: 'Delete a category (only if it has no subcategories)',
   params: {
     type: 'object',
     required: ['id'],

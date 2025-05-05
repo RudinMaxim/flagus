@@ -16,16 +16,44 @@ export async function registerApiRoutes(fastify: FastifyInstance, config: Config
     await fastify.register(fastifySwagger, {
       openapi: {
         info: {
-          title: 'Feature Flag Management API',
-          description: 'API for managing feature flags',
+          title: 'Flagus - Feature Flags Management API',
+          description:
+            'Flagus is a lightweight, open-source feature flag management service designed for simplicity and speed.',
           version: '1.0.0',
+          contact: {
+            name: 'API Support',
+            url: 'https://t.me/RudinMaxim',
+          },
+          license: {
+            name: 'MIT',
+            url: 'https://opensource.org/licenses/MIT',
+          },
         },
+        tags: [
+          {
+            name: 'Feature Flags',
+            description: 'Endpoints for managing feature flags',
+          },
+          {
+            name: 'Categories',
+            description: 'Endpoints for managing flag categories',
+          },
+          {
+            name: 'Audit Logs',
+            description: 'Endpoints for accessing audit logs',
+          },
+          {
+            name: 'Client SDK',
+            description: 'Endpoints for client SDK integration',
+          },
+        ],
         components: {
           securitySchemes: {
             apiKey: {
               type: 'apiKey',
               name: 'X-API-Key',
               in: 'header',
+              description: 'API key for authentication',
             },
           },
         },
@@ -39,6 +67,18 @@ export async function registerApiRoutes(fastify: FastifyInstance, config: Config
         docExpansion: 'list',
         deepLinking: true,
       },
+      uiHooks: {
+        onRequest: function (request, reply, next) {
+          next();
+        },
+        preHandler: function (request, reply, next) {
+          next();
+        },
+      },
+      staticCSP: true,
+      transformStaticCSP: header => header,
+      transformSpecification: swaggerObject => swaggerObject,
+      transformSpecificationClone: true,
     });
   }
 

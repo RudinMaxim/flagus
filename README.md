@@ -1,4 +1,4 @@
-# 🏗️ Flagus - Feature Flags Service
+# 🏗️ Flagus - Feature Flags Management
 
 Flagus is a lightweight, open-source feature flag management service designed for simplicity and speed.
 It provides a minimalistic web UI and API to create, edit, and toggle feature flags without the need for a separate frontend or database.
@@ -8,13 +8,13 @@ Easily deployable in a single Docker container, Flagus is ideal for small to med
 
 ## 📋 Tech stack
 
-| Component            | Technology        |
-|----------------------|-------------------|
-| HTTP-server          | Fastify          |
-| PL                   | TypeScript       |
-| Database             | SQLite           |
-| Client side          | HTMX             |
-| Containerization     | Docker           |
+| Component        | Technology |
+| ---------------- | ---------- |
+| HTTP-server      | Fastify    |
+| PL               | TypeScript |
+| Database         | SQLite     |
+| Client side      | HTMX       |
+| Containerization | Docker     |
 
 ---
 
