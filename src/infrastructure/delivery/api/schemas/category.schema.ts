@@ -205,3 +205,88 @@ export const deleteCategorySchema: FastifySchema = {
     500: errorSchema,
   },
 };
+
+// GET /categories/stats
+export const getCtatsCategorySchema: FastifySchema = {
+  description: 'Get category statistics',
+  tags: ['Categories'],
+  summary: 'Retrieve statistics for all categories',
+  response: {
+    200: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              name: { type: 'string' },
+              flagsCount: { type: 'integer' },
+            },
+          },
+        },
+      },
+    },
+    500: errorSchema,
+  },
+};
+
+// GET /categories/:id/children-tree
+export const getChildrenTreeCategorySchema: FastifySchema = {
+  description: 'Get children tree of a category',
+  tags: ['Categories'],
+  summary: 'Retrieve the tree of children categories for a given category',
+  params: {
+    type: 'object',
+    required: ['id'],
+    properties: {
+      id: { type: 'string' },
+    },
+  },
+  response: {
+    200: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'array',
+          items: categorySchema,
+        },
+      },
+    },
+    404: errorSchema,
+    500: errorSchema,
+  },
+};
+
+// PUT /categories/:id/move
+export const moveCategorySchema: FastifySchema = {
+  description: 'Move a category to a new parent',
+  tags: ['Categories'],
+  summary: 'Move a category to a new parent category',
+  params: {
+    type: 'object',
+    required: ['id'],
+    properties: {
+      id: { type: 'string' },
+    },
+  },
+  body: {
+    type: 'object',
+    required: ['newParentId'],
+    properties: {
+      newParentId: { type: ['string', 'null'] },
+    },
+  },
+  response: {
+    200: {
+      type: 'object',
+      properties: {
+        data: categorySchema,
+      },
+    },
+    400: errorSchema,
+    404: errorSchema,
+    500: errorSchema,
+  },
+};

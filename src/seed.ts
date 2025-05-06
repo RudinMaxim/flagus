@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import { FlagType, FlagStatus, AuditAction, UserRole } from './shared/kernel';
 
 async function runSeed() {
-  // 1. Open SQLite database
+  // 1. Открываем SQLite базу данных
   const db = new sqlite3.Database('data/flugs.db');
   const exec = promisify(db.exec.bind(db));
   const run = (sql: string, params: any[]) =>
@@ -15,7 +15,7 @@ async function runSeed() {
       });
     });
 
-  // 2. Enable foreign keys and create tables
+  // 2. Включаем внешние ключи и создаем таблицы
   await exec(`
     PRAGMA foreign_keys = ON;
 
@@ -38,14 +38,27 @@ async function runSeed() {
       type TEXT NOT NULL,
       status TEXT NOT NULL,
       category_id TEXT REFERENCES flag_categories(id),
-      start_date TEXT,
-      end_date TEXT,
-      percentage INTEGER,
-      client_ids TEXT,
       created_at TEXT NOT NULL,
       created_by TEXT NOT NULL,
       updated_at TEXT,
       updated_by TEXT
+    );
+    
+    CREATE TABLE IF NOT EXISTS flag_time_constraints (
+      flag_id TEXT PRIMARY KEY REFERENCES feature_flags(id) ON DELETE CASCADE,
+      start_date TEXT,
+      end_date TEXT
+    );
+    
+    CREATE TABLE IF NOT EXISTS flag_percentage_distributions (
+      flag_id TEXT PRIMARY KEY REFERENCES feature_flags(id) ON DELETE CASCADE,
+      percentage INTEGER NOT NULL
+    );
+    
+    CREATE TABLE IF NOT EXISTS flag_clients (
+      flag_id TEXT NOT NULL REFERENCES feature_flags(id) ON DELETE CASCADE,
+      client_id TEXT NOT NULL,
+      PRIMARY KEY (flag_id, client_id)
     );
 
     CREATE TABLE IF NOT EXISTS audit_logs (
@@ -73,11 +86,13 @@ async function runSeed() {
     CREATE INDEX IF NOT EXISTS idx_feature_flags_category ON feature_flags(category_id);
     CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_id, entity_type);
     CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs(timestamp);
+    CREATE INDEX IF NOT EXISTS idx_flag_clients_flag_id ON flag_clients(flag_id);
+    CREATE INDEX IF NOT EXISTS idx_flag_clients_client_id ON flag_clients(client_id);
   `);
 
   const now = new Date().toISOString();
 
-  // 3. Insert admin user
+  // 3. Добавляем admin пользователя
   const adminId = crypto.randomUUID();
   await run(
     `INSERT OR IGNORE INTO users
@@ -97,7 +112,7 @@ async function runSeed() {
     ]
   );
 
-  // 4. Insert categories
+  // 4. Добавляем категории
   const rootCategoryId = crypto.randomUUID();
   await run(
     `INSERT OR IGNORE INTO flag_categories
@@ -122,15 +137,13 @@ async function runSeed() {
     [apiCategoryId, 'API', 'Флаги для API', rootCategoryId, 1, now, adminId]
   );
 
-  // 5. Insert feature flags
-  // Boolean flag
+  // 5. Добавляем feature флаги
+  // Boolean флаг
   const dashboardFlagId = crypto.randomUUID();
   await run(
     `INSERT OR IGNORE INTO feature_flags
-      (id, name, description, type, status, category_id,
-       start_date, end_date, percentage, client_ids,
-       created_at, created_by)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, name, description, type, status, category_id, created_at, created_by)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       dashboardFlagId,
       'new-dashboard',
@@ -138,26 +151,20 @@ async function runSeed() {
       FlagType.BOOLEAN,
       FlagStatus.ACTIVE,
       uiCategoryId,
-      null,
-      null,
-      null,
-      JSON.stringify([]),
       now,
       adminId,
     ]
   );
 
-  // Percentage flag with time constraint
+  // Percentage флаг с временным ограничением
   const nextMonthDate = new Date();
   nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
 
   const newApiFlag = crypto.randomUUID();
   await run(
     `INSERT OR IGNORE INTO feature_flags
-      (id, name, description, type, status, category_id,
-       start_date, end_date, percentage, client_ids,
-       created_at, created_by)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, name, description, type, status, category_id, created_at, created_by)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       newApiFlag,
       'new-api-endpoints',
@@ -166,22 +173,43 @@ async function runSeed() {
       FlagStatus.SCHEDULED,
       apiCategoryId,
       now,
-      nextMonthDate.toISOString(),
-      25, // 25% пользователей
-      JSON.stringify(['client-1', 'client-2']),
-      now,
       adminId,
     ]
   );
 
-  // Client-specific flag
+  // Добавляем временное ограничение для флага
+  await run(
+    `INSERT INTO flag_time_constraints (flag_id, start_date, end_date)
+     VALUES (?, ?, ?)`,
+    [newApiFlag, now, nextMonthDate.toISOString()]
+  );
+
+  // Добавляем процентное распределение для флага
+  await run(
+    `INSERT INTO flag_percentage_distributions (flag_id, percentage)
+     VALUES (?, ?)`,
+    [newApiFlag, 25] // 25% пользователей
+  );
+
+  // Добавляем клиентов для флага
+  await run(
+    `INSERT INTO flag_clients (flag_id, client_id)
+     VALUES (?, ?)`,
+    [newApiFlag, 'client-1']
+  );
+
+  await run(
+    `INSERT INTO flag_clients (flag_id, client_id)
+     VALUES (?, ?)`,
+    [newApiFlag, 'client-2']
+  );
+
+  // Client-specific флаг
   const betaTestFlag = crypto.randomUUID();
   await run(
     `INSERT OR IGNORE INTO feature_flags
-      (id, name, description, type, status, category_id,
-       start_date, end_date, percentage, client_ids,
-       created_at, created_by)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, name, description, type, status, category_id, created_at, created_by)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       betaTestFlag,
       'beta-testers',
@@ -189,16 +217,22 @@ async function runSeed() {
       FlagType.BOOLEAN,
       FlagStatus.ACTIVE,
       rootCategoryId,
-      null,
-      null,
-      null,
-      JSON.stringify(['test-client-1', 'test-client-2', 'test-client-3']),
       now,
       adminId,
     ]
   );
 
-  // 6. Insert audit logs
+  // Добавляем клиентов для бета-флага
+  const betaClients = ['test-client-1', 'test-client-2', 'test-client-3'];
+  for (const clientId of betaClients) {
+    await run(
+      `INSERT INTO flag_clients (flag_id, client_id)
+       VALUES (?, ?)`,
+      [betaTestFlag, clientId]
+    );
+  }
+
+  // 6. Добавляем аудит логи
   const auditLog1 = crypto.randomUUID();
   await run(
     `INSERT OR IGNORE INTO audit_logs

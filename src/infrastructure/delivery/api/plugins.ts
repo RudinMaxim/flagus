@@ -1,19 +1,19 @@
 import { FastifyInstance } from 'fastify';
 import { ConfigService } from '../../config/config';
-import fastifySwagger from '@fastify/swagger';
-import fastifySwaggerUi from '@fastify/swagger-ui';
-import fastifyCors from '@fastify/cors';
 import apiRoutes from './routes';
 
 export async function registerApiRoutes(fastify: FastifyInstance, config: ConfigService) {
-  await fastify.register(fastifyCors, {
-    origin: config.corsOrigins || true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
-  });
+  if (config.cors.enabled) {
+    const fastifyCors = import('@fastify/cors');
+    await fastify.register(fastifyCors, {
+      origin: config.cors.origins || true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
+    });
+  }
 
-  if (config.nodeEnv === 'development') {
-    await fastify.register(fastifySwagger, {
+  if (config.server.swagger.enabled) {
+    await fastify.register(import('@fastify/swagger'), {
       openapi: {
         info: {
           title: 'Flagus - Feature Flags Management API',
@@ -31,6 +31,10 @@ export async function registerApiRoutes(fastify: FastifyInstance, config: Config
         },
         tags: [
           {
+            name: 'Client SDK',
+            description: 'Endpoints for client SDK integration',
+          },
+          {
             name: 'Feature Flags',
             description: 'Endpoints for managing feature flags',
           },
@@ -41,10 +45,6 @@ export async function registerApiRoutes(fastify: FastifyInstance, config: Config
           {
             name: 'Audit Logs',
             description: 'Endpoints for accessing audit logs',
-          },
-          {
-            name: 'Client SDK',
-            description: 'Endpoints for client SDK integration',
           },
         ],
         components: {
@@ -61,8 +61,8 @@ export async function registerApiRoutes(fastify: FastifyInstance, config: Config
       },
     });
 
-    await fastify.register(fastifySwaggerUi, {
-      routePrefix: '/documentation',
+    await fastify.register(import('@fastify/swagger-ui'), {
+      routePrefix: config.server.swagger.path,
       uiConfig: {
         docExpansion: 'list',
         deepLinking: true,

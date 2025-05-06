@@ -21,6 +21,21 @@ export class ConfigService {
   public readonly apiVersion = process.env.API_VERSION || '1.0.0';
   public readonly maxNestingLevel = parseInt(process.env.MAX_NESTING_LEVEL || '5', 10);
 
+  public readonly server = {
+    port: parseInt(process.env.PORT as string, 10),
+    host: process.env.HOST || '0.0.0.0',
+    hostname: process.env.HOSTNAME || 'localhost',
+    swagger: {
+      enabled: true,
+      path: process.env.SWAGGER_PATH || '/documentation',
+    },
+  };
+
+  public readonly cors = {
+    enabled: true,
+    origins: (process.env.CORS_ORIGINS || '*').split(','),
+  };
+
   public readonly sqlite: SQLiteConfig = {
     database: process.env.SQLITE_DATABASE || ':memory:',
     options: {

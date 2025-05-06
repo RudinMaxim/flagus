@@ -47,6 +47,16 @@ export class CategoryService
     return this.categoryRepository.getFullPath(categoryId);
   }
 
+  public async getCategoryTree(rootId: string | null = null): Promise<FlagCategory[]> {
+    return this.categoryRepository.getChildrenTree(rootId);
+  }
+
+  public async getCategoryStatistics(): Promise<
+    { id: string; name: string; flagsCount: number }[]
+  > {
+    return this.categoryRepository.getCategoryStats();
+  }
+
   public async create(dto: CreateCategoryDTO): Promise<FlagCategory> {
     await this.validateCategoryName(dto.name);
     const depth = await this.calculateDepth(dto.parentId);
@@ -117,6 +127,36 @@ export class CategoryService
     }
 
     return result;
+  }
+
+  public async moveCategory(
+    categoryId: string,
+    newParentId: string | null,
+    userId: string = 'system'
+  ): Promise<FlagCategory | null> {
+    const current = await this.categoryRepository.findById(categoryId);
+    if (!current) {
+      throw new Error(`Category with ID "${categoryId}" not found`);
+    }
+
+    if (current.parentId === newParentId) {
+      return current;
+    }
+
+    const updated = await this.categoryRepository.moveNode(categoryId, newParentId);
+
+    if (updated) {
+      await this.auditService.logAction({
+        userId,
+        action: AuditAction.UPDATE,
+        entityId: categoryId,
+        entityType: 'flag_categories',
+        oldValue: JSON.stringify(current),
+        newValue: JSON.stringify(updated),
+      });
+    }
+
+    return updated;
   }
 
   private async validateCategoryName(name: string, excludeId?: string): Promise<void> {
