@@ -17,7 +17,6 @@ const metadataSchema = {
     updatedBy: { type: ['string', 'null'] },
     updatedAt: { type: ['string', 'null'], format: 'date-time' },
   },
-  required: ['createdBy', 'createdAt'],
 };
 
 const timeConstraintSchema = {
@@ -33,7 +32,6 @@ const percentageDistributionSchema = {
   properties: {
     percentage: { type: 'number', minimum: 0, maximum: 100 },
   },
-  required: ['percentage'],
 };
 
 const flagSchema = {
@@ -50,7 +48,6 @@ const flagSchema = {
     clientIds: { type: 'array', items: { type: 'string' } },
     metadata: metadataSchema,
   },
-  required: ['id', 'name', 'type', 'status'],
 };
 
 // GET /flags
@@ -208,10 +205,10 @@ export const toggleFlagSchema: FastifySchema = {
   },
   body: {
     type: 'object',
-    required: ['status', 'updatedBy'],
+    required: ['status', 'userId'],
     properties: {
       status: { type: 'string', enum: ['active', 'inactive', 'scheduled', 'archived'] },
-      updatedBy: { type: 'string' },
+      userId: { type: 'string' },
     },
   },
   response: {

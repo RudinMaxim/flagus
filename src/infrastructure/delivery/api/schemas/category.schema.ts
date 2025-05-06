@@ -8,7 +8,6 @@ const metadataSchema = {
     updatedBy: { type: ['string', 'null'] },
     updatedAt: { type: ['string', 'null'], format: 'date-time' },
   },
-  required: ['createdBy', 'createdAt'],
 };
 
 const categorySchema = {

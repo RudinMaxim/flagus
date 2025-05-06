@@ -1,7 +1,7 @@
 {
   "name": "flagus",
   "version": "1.0.0",
-  "description": "A tiny open source service for managing feature flags.",
+  "description": "Flagus is a lightweight, open-source feature flag management service designed for simplicity and speed.",
   "homepage": "https://github.com/RudinMaxim/flagus#readme",
   "main": "dist/index.js",
   "author": "Maxim Rudin",

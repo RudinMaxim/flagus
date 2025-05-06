@@ -26,7 +26,7 @@ export async function registerApiRoutes(fastify: FastifyInstance, config: Config
           },
           license: {
             name: 'MIT',
-            url: 'https://opensource.org/licenses/MIT',
+            url: 'https://github.com/RudinMaxim/flagus/blob/main/LICENSE',
           },
         },
         tags: [

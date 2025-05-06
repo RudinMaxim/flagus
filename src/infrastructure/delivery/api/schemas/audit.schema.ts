@@ -22,7 +22,6 @@ const auditLogSchema = {
     timestamp: { type: 'string', format: 'date-time' },
     ipAddress: { type: ['string', 'null'] },
   },
-  required: ['id', 'userId', 'action', 'entityId', 'entityType', 'timestamp'],
 };
 
 // GET /audit
