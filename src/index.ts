@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import './global';
 import 'tsconfig-paths/register';
 import * as dotenv from 'dotenv';
 import { createApp } from './application';

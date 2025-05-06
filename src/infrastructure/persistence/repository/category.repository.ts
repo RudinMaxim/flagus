@@ -2,7 +2,7 @@ import { injectable, inject } from 'inversify';
 import crypto from 'crypto';
 import { FlagCategory } from '../../../core/model';
 import { BaseRepository, DataGateway } from '../../storage';
-import { ICategoryRepository } from '../interfaces';
+import { CategoryRow, ICategoryRepository } from '../interfaces';
 import { TYPES } from '../../config/types';
 import { Metadata } from '../../../shared/kernel';
 
@@ -20,7 +20,7 @@ export class CategoryRepository
       SELECT * FROM ${this.tableName}
       ORDER BY depth ASC, name ASC
     `;
-    const rows = await this.dataGateway.query<FlagCategory[]>(sql);
+    const rows = await this.dataGateway.query<CategoryRow>(sql);
     return rows.map(row => this.mapToEntity(row));
   }
 
@@ -30,7 +30,7 @@ export class CategoryRepository
       WHERE id = ?
       LIMIT 1
     `;
-    const row = await this.dataGateway.getOne<FlagCategory>(sql, [id]);
+    const row = await this.dataGateway.getOne<CategoryRow>(sql, [id]);
     return row ? this.mapToEntity(row) : null;
   }
 
@@ -40,7 +40,7 @@ export class CategoryRepository
       WHERE name = ? 
       LIMIT 1
     `;
-    const row = await this.dataGateway.getOne<FlagCategory>(sql, [name]);
+    const row = await this.dataGateway.getOne<CategoryRow>(sql, [name]);
     return row ? this.mapToEntity(row) : null;
   }
 
@@ -50,7 +50,7 @@ export class CategoryRepository
       WHERE parent_id = ? 
       ORDER BY name ASC
     `;
-    const rows = await this.dataGateway.query<FlagCategory>(sql, [parentId]);
+    const rows = await this.dataGateway.query<CategoryRow>(sql, [parentId]);
     return rows.map(row => this.mapToEntity(row));
   }
 
@@ -60,7 +60,7 @@ export class CategoryRepository
       WHERE parent_id IS NULL 
       ORDER BY name ASC
     `;
-    const rows = await this.dataGateway.query<FlagCategory[]>(sql);
+    const rows = await this.dataGateway.query<CategoryRow>(sql);
     return rows.map(row => this.mapToEntity(row));
   }
 
@@ -78,7 +78,7 @@ export class CategoryRepository
       SELECT * FROM category_path
       ORDER BY level DESC
     `;
-    const rows = await this.dataGateway.query(sql, [categoryId]);
+    const rows = await this.dataGateway.query<CategoryRow>(sql, [categoryId]);
     return rows.map(row => this.mapToEntity(row));
   }
 
@@ -100,7 +100,7 @@ export class CategoryRepository
     `;
 
     const params = categoryId ? [categoryId] : [];
-    const rows = await this.dataGateway.query(sql, params);
+    const rows = await this.dataGateway.query<CategoryRow>(sql, params);
     return rows.map(row => this.mapToEntity(row));
   }
 
@@ -169,7 +169,6 @@ export class CategoryRepository
         updateValues.push(entity.description);
       }
 
-      // Если меняется родитель, пересчитываем depth
       if (entity.parentId !== undefined) {
         updateFields.push('parent_id = ?');
         updateValues.push(entity.parentId);
@@ -186,7 +185,6 @@ export class CategoryRepository
         updateFields.push('depth = ?');
         updateValues.push(depth);
 
-        // Проверка на циклические зависимости
         if (entity.parentId) {
           const path = await this.getFullPath(entity.parentId);
           if (path.some(cat => cat.id === id)) {
@@ -212,7 +210,6 @@ export class CategoryRepository
         await this.dataGateway.execute(sql, [...updateValues, id]);
       }
 
-      // Если изменился depth, нужно обновить всех потомков
       if (entity.parentId !== undefined) {
         await this.updateChildrenDepth(id);
       }
@@ -240,7 +237,6 @@ export class CategoryRepository
     await this.dataGateway.beginTransaction();
 
     try {
-      // Проверяем, есть ли дочерние категории
       const children = await this.findByParentId(id);
       if (children.length > 0) {
         throw new Error(
@@ -248,7 +244,6 @@ export class CategoryRepository
         );
       }
 
-      // Проверяем, есть ли привязанные флаги
       const flagsCount = await this.dataGateway.getOne<{ count: number }>(
         'SELECT COUNT(*) as count FROM feature_flags WHERE category_id = ?',
         [id]
@@ -305,7 +300,7 @@ export class CategoryRepository
     }
   }
 
-  private mapToEntity(row: any): FlagCategory {
+  private mapToEntity(row: CategoryRow): FlagCategory {
     const parseDate = (dateStr: string | null | undefined): Date | undefined => {
       if (!dateStr) return undefined;
       try {
@@ -319,14 +314,11 @@ export class CategoryRepository
       }
     };
 
-    const createdAt = parseDate(row.created_at) || new Date();
-    const updatedAt = parseDate(row.updated_at);
-
     const metadata: Metadata = {
       createdBy: row.created_by,
-      createdAt,
+      createdAt: parseDate(row.created_at) || new Date(),
       updatedBy: row.updated_by || undefined,
-      updatedAt,
+      updatedAt: parseDate(row.updated_at),
     };
 
     return new FlagCategory({

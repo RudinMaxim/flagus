@@ -1,16 +1,15 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { AuditService } from '../../../../../core/flag-management/service';
+import { AuditService } from '../../../../../core/service';
 import { TYPES } from '../../../../config/types';
 import * as schemas from '../../schemas/audit.schema';
 
 export default async function (fastify: FastifyInstance) {
   const auditService = fastify.container.get<AuditService>(TYPES.AuditService);
 
-  // Get all audit logs
   fastify.route({
     method: 'GET',
     url: '/',
-    schema: schemas.getAllAuditSchema,
+    schema: schemas.getAllAuditLogsSchema,
     handler: async (_request: FastifyRequest, reply: FastifyReply) => {
       try {
         const logs = await auditService.getAll();
@@ -26,11 +25,10 @@ export default async function (fastify: FastifyInstance) {
     },
   });
 
-  // Get audit log by ID
   fastify.route({
     method: 'GET',
     url: '/:id',
-    schema: schemas.getAuditByIdSchema,
+    schema: schemas.getAuditLogByIdSchema,
     handler: async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
       try {
         const log = await auditService.getById(request.params.id);
@@ -53,11 +51,10 @@ export default async function (fastify: FastifyInstance) {
     },
   });
 
-  // Get audit logs by entity ID
   fastify.route({
     method: 'GET',
     url: '/entity/:entityId',
-    schema: schemas.getByEntityIdSchema,
+    schema: schemas.getAuditLogsByEntityIdSchema,
     handler: async (
       request: FastifyRequest<{ Params: { entityId: string } }>,
       reply: FastifyReply
@@ -79,11 +76,10 @@ export default async function (fastify: FastifyInstance) {
     },
   });
 
-  // Get audit logs by user ID
   fastify.route({
     method: 'GET',
     url: '/user/:userId',
-    schema: schemas.getByUserIdSchema,
+    schema: schemas.getAuditLogsByUserIdSchema,
     handler: async (
       request: FastifyRequest<{ Params: { userId: string } }>,
       reply: FastifyReply
@@ -102,11 +98,10 @@ export default async function (fastify: FastifyInstance) {
     },
   });
 
-  // Export audit logs
   fastify.route({
     method: 'GET',
     url: '/export',
-    schema: schemas.exportLogsSchema,
+    schema: schemas.exportAuditLogsSchema,
     handler: async (
       request: FastifyRequest<{
         Querystring: {
@@ -146,12 +141,12 @@ export default async function (fastify: FastifyInstance) {
           }
         }
 
-        const csv = await auditService.exportAuditLogs(
+        const csv = await auditService.exportAuditLogs({
           entityId,
-          parsedStartDate,
-          parsedEndDate,
-          userId
-        );
+          startDate: parsedStartDate,
+          endDate: parsedEndDate,
+          userId,
+        });
 
         const filename = `audit_logs_${new Date().toISOString().replace(/[:.]/g, '-')}.csv`;
 
@@ -171,11 +166,10 @@ export default async function (fastify: FastifyInstance) {
     },
   });
 
-  // Get diff between old and new values
   fastify.route({
     method: 'GET',
     url: '/:id/diff',
-    schema: schemas.getDiffSchema,
+    schema: schemas.getAuditLogDiffSchema,
     handler: async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
       try {
         const log = await auditService.getById(request.params.id);
@@ -187,7 +181,7 @@ export default async function (fastify: FastifyInstance) {
           });
         }
 
-        const diff = auditService.getDiff(log.oldValue, log.newValue);
+        const diff = auditService.getDiff(log.oldValue ?? undefined, log.newValue ?? undefined);
         return reply.code(200).send({ data: diff });
       } catch (error) {
         request.log.error(error, `Error generating diff for audit log ID: ${request.params.id}`);

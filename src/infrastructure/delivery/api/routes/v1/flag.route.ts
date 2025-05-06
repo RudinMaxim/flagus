@@ -1,14 +1,13 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import * as schemas from '../../schemas/flag.schema';
-import { CreateFlagDTO, UpdateFlagDTO } from '../../../../../core/flag-management/model';
-import { FeatureFlagService } from '../../../../../core/flag-management/service';
+import { CreateFlagDTO, UpdateFlagDTO } from '../../../../../core/model';
+import { FeatureFlagService } from '../../../../../core/service';
 import { FlagStatus } from '../../../../../shared/kernel';
 import { TYPES } from '../../../../config/types';
 
 export default async function (fastify: FastifyInstance) {
   const flagService = fastify.container.get<FeatureFlagService>(TYPES.FeatureFlagService);
 
-  // Get all flags
   fastify.route({
     method: 'GET',
     url: '/',
@@ -28,11 +27,10 @@ export default async function (fastify: FastifyInstance) {
     },
   });
 
-  // Get a specific flag by ID
   fastify.route({
     method: 'GET',
     url: '/:id',
-    schema: schemas.getFlagsByIdSchema,
+    schema: schemas.getFlagByIdSchema,
     handler: async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
       try {
         const flag = await flagService.getById(request.params.id);
@@ -55,11 +53,10 @@ export default async function (fastify: FastifyInstance) {
     },
   });
 
-  // Create a new flag
   fastify.route({
     method: 'POST',
     url: '/',
-    schema: schemas.createSchema,
+    schema: schemas.createFlagSchema,
     handler: async (request: FastifyRequest<{ Body: CreateFlagDTO }>, reply: FastifyReply) => {
       try {
         const newFlag = await flagService.create(request.body);
@@ -82,11 +79,10 @@ export default async function (fastify: FastifyInstance) {
     },
   });
 
-  // Update a flag
   fastify.route({
     method: 'PUT',
     url: '/:id',
-    schema: schemas.updateSchema,
+    schema: schemas.updateFlagSchema,
     handler: async (
       request: FastifyRequest<{
         Params: { id: string };
@@ -122,11 +118,10 @@ export default async function (fastify: FastifyInstance) {
     },
   });
 
-  // Delete a flag
   fastify.route({
     method: 'DELETE',
     url: '/:id',
-    schema: schemas.deleteSchema,
+    schema: schemas.deleteFlagSchema,
     handler: async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
       try {
         const result = await flagService.delete(request.params.id);
@@ -149,11 +144,10 @@ export default async function (fastify: FastifyInstance) {
     },
   });
 
-  // Toggle flag status
   fastify.route({
     method: 'PATCH',
     url: '/:id/toggle',
-    schema: schemas.toggleSchema,
+    schema: schemas.toggleFlagSchema,
     handler: async (
       request: FastifyRequest<{
         Params: { id: string };
@@ -183,7 +177,6 @@ export default async function (fastify: FastifyInstance) {
     },
   });
 
-  // Get client flags - main endpoint for client SDKs
   fastify.route({
     method: 'GET',
     url: '/client/:clientId',
@@ -209,7 +202,6 @@ export default async function (fastify: FastifyInstance) {
     },
   });
 
-  // Evaluate a specific flag for a client
   fastify.route({
     method: 'GET',
     url: '/evaluate/:flagName/:clientId',

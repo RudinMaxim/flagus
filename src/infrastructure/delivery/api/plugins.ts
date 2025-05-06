@@ -46,6 +46,10 @@ export async function registerApiRoutes(fastify: FastifyInstance, config: Config
             name: 'Audit Logs',
             description: 'Endpoints for accessing audit logs',
           },
+          {
+            name: 'System',
+            description: 'Endpoints for system',
+          },
         ],
         components: {
           securitySchemes: {

@@ -110,6 +110,8 @@ export class AuditService {
       action: dto.action,
       entityId: dto.entityId,
       entityType: dto.entityType,
+      oldValue: dto.oldValue,
+      newValue: dto.oldValue,
       timestamp: new Date(),
     });
   }
@@ -145,7 +147,7 @@ export class AuditService {
     const rows = logs
       .map(log => {
         const safeIpAddress = log.ipAddress || 'N/A';
-        return `${log.id},${log.userId},${log.action},${log.entityId},${log.entityType},${log.timestamp.toISOString()},${safeIpAddress}`;
+        return `${log.id},${log.userId},${log.action},${log.entityId},${log.entityType},${log.timestamp},${safeIpAddress}`;
       })
       .join('\n');
 

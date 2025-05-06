@@ -17,8 +17,14 @@ const auditLogSchema = {
     action: { type: 'string', enum: ['create', 'update', 'delete', 'toggle'] },
     entityId: { type: 'string' },
     entityType: { type: 'string' },
-    oldValue: { type: ['object', 'null'], additionalProperties: true },
-    newValue: { type: ['object', 'null'], additionalProperties: true },
+    oldValue: {
+      type: ['string', 'null'],
+      additionalProperties: true,
+    },
+    newValue: {
+      type: ['string', 'null'],
+      additionalProperties: true,
+    },
     timestamp: { type: 'string', format: 'date-time' },
     ipAddress: { type: ['string', 'null'] },
   },

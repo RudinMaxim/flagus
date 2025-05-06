@@ -1,13 +1,12 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { CreateCategoryDTO, UpdateCategoryDTO } from '../../../../../core/flag-management/model';
-import { CategoryService } from '../../../../../core/flag-management/service';
+import { CreateCategoryDTO, UpdateCategoryDTO } from '../../../../../core/model';
+import { CategoryService } from '../../../../../core/service';
 import { TYPES } from '../../../../config/types';
 import * as schemas from '../../schemas/category.schema';
 
 export default async function (fastify: FastifyInstance) {
   const categoryService = fastify.container.get<CategoryService>(TYPES.CategoryService);
 
-  // Get all categories
   fastify.route({
     method: 'GET',
     url: '/',
@@ -27,11 +26,10 @@ export default async function (fastify: FastifyInstance) {
     },
   });
 
-  // Get a specific category by ID
   fastify.route({
     method: 'GET',
     url: '/:id',
-    schema: schemas.getCategoriesByIdSchema,
+    schema: schemas.getCategoryByIdSchema,
     handler: async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
       try {
         const category = await categoryService.getById(request.params.id);
@@ -54,11 +52,10 @@ export default async function (fastify: FastifyInstance) {
     },
   });
 
-  // Get root categories
   fastify.route({
     method: 'GET',
     url: '/roots',
-    schema: schemas.getRootsSchema,
+    schema: schemas.getRootCategoriesSchema,
     handler: async (_request: FastifyRequest, reply: FastifyReply) => {
       try {
         const categories = await categoryService.getRootCategories();
@@ -74,7 +71,6 @@ export default async function (fastify: FastifyInstance) {
     },
   });
 
-  // Get subcategories
   fastify.route({
     method: 'GET',
     url: '/:id/subcategories',
@@ -97,11 +93,10 @@ export default async function (fastify: FastifyInstance) {
     },
   });
 
-  // Create a new category
   fastify.route({
     method: 'POST',
     url: '/',
-    schema: schemas.createSchema,
+    schema: schemas.createCategorySchema,
     handler: async (request: FastifyRequest<{ Body: CreateCategoryDTO }>, reply: FastifyReply) => {
       try {
         const newCategory = await categoryService.create(request.body);
@@ -138,11 +133,10 @@ export default async function (fastify: FastifyInstance) {
     },
   });
 
-  // Update a category
   fastify.route({
     method: 'PUT',
     url: '/:id',
-    schema: schemas.updateSchema,
+    schema: schemas.updateCategorySchema,
     handler: async (
       request: FastifyRequest<{
         Params: { id: string };
@@ -193,11 +187,10 @@ export default async function (fastify: FastifyInstance) {
     },
   });
 
-  // Delete a category
   fastify.route({
     method: 'DELETE',
     url: '/:id',
-    schema: schemas.deleteSchema,
+    schema: schemas.deleteCategorySchema,
     handler: async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
       try {
         const result = await categoryService.delete(request.params.id);
@@ -224,6 +217,95 @@ export default async function (fastify: FastifyInstance) {
           statusCode: 500,
           error: 'Internal Server Error',
           message: 'Failed to delete category',
+        });
+      }
+    },
+  });
+
+  fastify.route({
+    method: 'PUT',
+    url: '/:id/move',
+    schema: schemas.moveCategorySchema,
+    handler: async (
+      request: FastifyRequest<{ Params: { id: string }; Body: { newParentId: string | null } }>,
+      reply: FastifyReply
+    ) => {
+      try {
+        const movedCategory = await categoryService.moveCategory(
+          request.params.id,
+          request.body.newParentId
+        );
+        if (!movedCategory) {
+          return reply.code(404).send({
+            statusCode: 404,
+            error: 'Not Found',
+            message: 'Category not found or invalid parent',
+          });
+        }
+        return reply.code(200).send({ data: movedCategory });
+      } catch (error) {
+        request.log.error(error, `Error moving category with ID: ${request.params.id}`);
+
+        if ((error as Error).message.includes('Cyclic dependency')) {
+          return reply.code(400).send({
+            statusCode: 400,
+            error: 'Bad Request',
+            message: 'Cyclic dependency detected',
+          });
+        }
+
+        return reply.code(500).send({
+          statusCode: 500,
+          error: 'Internal Server Error',
+          message: 'Failed to move category',
+        });
+      }
+    },
+  });
+
+  fastify.route({
+    method: 'GET',
+    url: '/stats',
+    schema: schemas.getCtatsCategorySchema,
+    handler: async (_request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const stats = await categoryService.getCategoryStatistics();
+        return reply.code(200).send({ data: stats });
+      } catch (error) {
+        _request.log.error(error, 'Error fetching category statistics');
+        return reply.code(500).send({
+          statusCode: 500,
+          error: 'Internal Server Error',
+          message: 'Failed to fetch category statistics',
+        });
+      }
+    },
+  });
+
+  fastify.route({
+    method: 'GET',
+    url: '/:id/children-tree',
+    schema: schemas.getChildrenTreeCategorySchema,
+    handler: async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+      try {
+        const childrenTree = await categoryService.getCategoryTree(request.params.id);
+        if (!childrenTree) {
+          return reply.code(404).send({
+            statusCode: 404,
+            error: 'Not Found',
+            message: 'Category not found or has no children',
+          });
+        }
+        return reply.code(200).send({ data: childrenTree });
+      } catch (error) {
+        request.log.error(
+          error,
+          `Error fetching children tree for category ID: ${request.params.id}`
+        );
+        return reply.code(500).send({
+          statusCode: 500,
+          error: 'Internal Server Error',
+          message: 'Failed to fetch children tree',
         });
       }
     },

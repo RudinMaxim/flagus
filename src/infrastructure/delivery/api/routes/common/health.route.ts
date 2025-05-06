@@ -5,13 +5,13 @@ export default async function (fastify: FastifyInstance) {
     method: 'GET',
     url: '/',
     schema: {
+      tags: ['System'],
       response: {
         200: {
           type: 'object',
           properties: {
             status: { type: 'string' },
             timestamp: { type: 'string', format: 'date-time' },
-            version: { type: 'string' },
           },
         },
       },
@@ -20,7 +20,6 @@ export default async function (fastify: FastifyInstance) {
       return {
         status: 'ok',
         timestamp: new Date().toISOString(),
-        version: process.env.API_VERSION || '1.0.0',
       };
     },
   });

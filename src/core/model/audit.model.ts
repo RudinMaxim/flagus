@@ -1,37 +1,15 @@
 import { AuditAction, IEntity } from '../../shared/kernel';
 
-export class AuditLog implements IEntity<string> {
+export interface AuditLogProps {
   id: string;
   userId: string;
   action: AuditAction;
   entityId: string;
   entityType: string;
-  oldValue?: string;
-  newValue?: string;
+  oldValue: string | undefined;
+  newValue: string | undefined;
   timestamp: Date;
   ipAddress?: string;
-
-  constructor(data: {
-    id: string;
-    userId: string;
-    action: AuditAction;
-    entityId: string;
-    entityType: string;
-    oldValue?: string;
-    newValue?: string;
-    timestamp: Date;
-    ipAddress?: string;
-  }) {
-    this.id = data.id;
-    this.userId = data.userId;
-    this.action = data.action;
-    this.entityId = data.entityId;
-    this.entityType = data.entityType;
-    this.oldValue = data.oldValue;
-    this.newValue = data.newValue;
-    this.timestamp = data.timestamp;
-    this.ipAddress = data.ipAddress;
-  }
 }
 
 export interface CreateAuditLogDTO {
@@ -42,4 +20,28 @@ export interface CreateAuditLogDTO {
   oldValue?: string;
   newValue?: string;
   ipAddress?: string;
+}
+
+export class AuditLog implements IEntity<string> {
+  id: string;
+  userId: string;
+  action: AuditAction;
+  entityId: string;
+  entityType: string;
+  oldValue: string | undefined;
+  newValue: string | undefined;
+  timestamp: Date;
+  ipAddress?: string;
+
+  constructor(props: AuditLogProps) {
+    this.id = props.id;
+    this.userId = props.userId;
+    this.action = props.action;
+    this.entityId = props.entityId;
+    this.entityType = props.entityType;
+    this.oldValue = props.oldValue;
+    this.newValue = props.newValue;
+    this.timestamp = props.timestamp;
+    this.ipAddress = props.ipAddress;
+  }
 }
