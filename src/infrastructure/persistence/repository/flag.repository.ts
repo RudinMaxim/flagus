@@ -1,5 +1,5 @@
 import { injectable, inject } from 'inversify';
-import { FeatureFlag } from '../../../core/flag-management/model';
+import { FeatureFlag } from '../../../core/model';
 import { FlagStatus, FlagType } from '../../../shared/kernel';
 import { TYPES } from '../../config/types';
 import { BaseRepository, DataGateway } from '../../storage';

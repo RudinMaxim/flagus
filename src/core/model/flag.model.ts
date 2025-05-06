@@ -5,7 +5,31 @@ import {
   TimeConstraint,
   PercentageDistribution,
   Metadata,
-} from '../../../shared/kernel';
+} from '../../shared/kernel';
+
+export interface CreateFlagDTO {
+  name: string;
+  description?: string;
+  type: FlagType;
+  status?: FlagStatus;
+  categoryId?: string;
+  timeConstraint?: TimeConstraint;
+  percentageDistribution?: PercentageDistribution;
+  clientIds?: string[];
+  createdBy: string;
+}
+
+export interface UpdateFlagDTO {
+  name?: string;
+  description?: string;
+  type?: FlagType;
+  status?: FlagStatus;
+  categoryId?: string;
+  timeConstraint?: TimeConstraint;
+  percentageDistribution?: PercentageDistribution;
+  clientIds?: string[];
+  updatedBy: string;
+}
 
 export class FeatureFlag implements IEntity<string> {
   id: string;
@@ -16,7 +40,7 @@ export class FeatureFlag implements IEntity<string> {
   categoryId?: string;
   timeConstraint?: TimeConstraint;
   percentageDistribution?: PercentageDistribution;
-  clientIds?: string[]; // Список клиентов, для которых действует флаг
+  clientIds?: string[];
   metadata: Metadata;
 
   constructor(data: {
@@ -43,7 +67,6 @@ export class FeatureFlag implements IEntity<string> {
     this.metadata = data.metadata;
   }
 
-  // Активен ли флаг по временным ограничениям
   isActiveByTime(): boolean {
     if (!this.timeConstraint) {
       return true;
@@ -63,67 +86,33 @@ export class FeatureFlag implements IEntity<string> {
     return true;
   }
 
-  // Проверка активности флага для конкретного клиента
   isActiveForClient(clientId: string): boolean {
-    // Если флаг неактивен, то никому не доступен
     if (this.status !== FlagStatus.ACTIVE) {
       return false;
     }
 
-    // Проверка времени
     if (!this.isActiveByTime()) {
       return false;
     }
 
-    // Проверка списка клиентов
     if (this.clientIds && this.clientIds.length > 0) {
       return this.clientIds.includes(clientId);
     }
 
-    // Для процентного распределения
     if (this.type === FlagType.PERCENTAGE && this.percentageDistribution) {
-      // Хэшируем clientId для консистентного распределения
       const hash = this.hashClientId(clientId);
       return hash <= this.percentageDistribution.percentage;
     }
 
-    // Для булевого флага
     return this.status === FlagStatus.ACTIVE;
   }
 
-  // Простая хэш-функция для распределения клиентов (0-100)
   private hashClientId(clientId: string): number {
     let hash = 0;
     for (let i = 0; i < clientId.length; i++) {
       hash = (hash << 5) - hash + clientId.charCodeAt(i);
-      hash = hash & hash; // Convert to 32bit integer
+      hash = hash & hash;
     }
     return Math.abs(hash % 100);
   }
-}
-
-// DTO для создания флага
-export interface CreateFlagDTO {
-  name: string;
-  description?: string;
-  type: FlagType;
-  status?: FlagStatus;
-  categoryId?: string;
-  timeConstraint?: TimeConstraint;
-  percentageDistribution?: PercentageDistribution;
-  clientIds?: string[];
-  createdBy: string;
-}
-
-// DTO для обновления флага
-export interface UpdateFlagDTO {
-  name?: string;
-  description?: string;
-  type?: FlagType;
-  status?: FlagStatus;
-  categoryId?: string;
-  timeConstraint?: TimeConstraint;
-  percentageDistribution?: PercentageDistribution;
-  clientIds?: string[];
-  updatedBy: string;
 }

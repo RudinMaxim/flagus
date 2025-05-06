@@ -1,5 +1,5 @@
 import { injectable, inject } from 'inversify';
-import { AuditLog } from '../../../core/flag-management/model';
+import { AuditLog } from '../../../core/model';
 import { TYPES } from '../../config/types';
 import { BaseRepository, DataGateway } from '../../storage';
 import { IAuditRepository } from '../interfaces';

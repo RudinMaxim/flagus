@@ -21,7 +21,7 @@ const categorySchema = {
     depth: { type: 'integer', minimum: 0, maximum: 3 },
     metadata: metadataSchema,
   },
-  required: ['id', 'name', 'depth', 'metadata'],
+  required: ['id', 'name', 'depth'],
 };
 
 const errorSchema = {

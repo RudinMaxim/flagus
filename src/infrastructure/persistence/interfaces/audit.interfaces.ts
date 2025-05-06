@@ -1,5 +1,5 @@
 import { IRepository } from '../../../shared/kernel';
-import { AuditLog } from '../../../core/flag-management/model';
+import { AuditLog } from '../../../core/model';
 
 export interface IAuditRepository extends IRepository<AuditLog, string> {
   findByEntityId(entityId: string): Promise<AuditLog[]>;

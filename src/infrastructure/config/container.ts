@@ -8,8 +8,8 @@ import {
   AuditService,
   CategoryService,
   FeatureFlagService,
-} from '../../core/flag-management/service';
-import { FlagEvaluationService } from '../../core/evaluation/service/flag-evaluation.service';
+  FlagEvaluationService,
+} from '../../core/service';
 
 export async function createContainer(): Promise<Container> {
   const container = new Container();

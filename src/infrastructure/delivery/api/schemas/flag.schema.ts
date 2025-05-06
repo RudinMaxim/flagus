@@ -50,7 +50,7 @@ const flagSchema = {
     clientIds: { type: 'array', items: { type: 'string' } },
     metadata: metadataSchema,
   },
-  required: ['id', 'name', 'type', 'status', 'metadata'],
+  required: ['id', 'name', 'type', 'status'],
 };
 
 // GET /flags
@@ -113,7 +113,7 @@ export const createFlagSchema: FastifySchema = {
         enum: ['active', 'inactive', 'scheduled', 'archived'],
         default: 'inactive',
       },
-      categoryId: { type: ['string', 'null'] },
+      categoryId: { type: ['string', 'null'], default: null },
       timeConstraint: timeConstraintSchema,
       percentageDistribution: percentageDistributionSchema,
       clientIds: { type: 'array', items: { type: 'string' } },

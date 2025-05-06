@@ -1,5 +1,5 @@
 import { IRepository, FlagStatus, FlagType } from '../../../shared/kernel';
-import { FeatureFlag } from '../../../core/flag-management/model';
+import { FeatureFlag } from '../../../core/model';
 
 export interface IFlagRepository extends IRepository<FeatureFlag, string> {
   findByName(name: string): Promise<FeatureFlag | null>;

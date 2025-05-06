@@ -1,4 +1,4 @@
-import { AuditAction, IEntity } from '../../../shared/kernel';
+import { AuditAction, IEntity } from '../../shared/kernel';
 
 export class AuditLog implements IEntity<string> {
   id: string;
@@ -34,7 +34,6 @@ export class AuditLog implements IEntity<string> {
   }
 }
 
-// DTO для создания записи аудита
 export interface CreateAuditLogDTO {
   userId: string;
   action: AuditAction;

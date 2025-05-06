@@ -1,5 +1,5 @@
 import { injectable, inject } from 'inversify';
-import { FlagCategory } from '../../../core/flag-management/model';
+import { FlagCategory } from '../../../core/model';
 import { BaseRepository, DataGateway } from '../../storage';
 import { ICategoryRepository } from '../interfaces';
 import { TYPES } from '../../config/types';

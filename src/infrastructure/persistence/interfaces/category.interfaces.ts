@@ -1,5 +1,5 @@
 import { IRepository } from '../../../shared/kernel';
-import { FlagCategory } from '../../../core/flag-management/model';
+import { FlagCategory } from '../../../core/model';
 
 export interface ICategoryRepository extends IRepository<FlagCategory, string> {
   findByName(name: string): Promise<FlagCategory | null>;
