@@ -1,7 +1,14 @@
 import { injectable, inject } from 'inversify';
 import crypto from 'crypto';
 import { FeatureFlag } from '../../../core/model';
-import { FlagStatus, IFlagTTL, IMetadata, TFlagStatus, TFlagType } from '../../../shared/kernel';
+import {
+  FlagStatus,
+  IFlagTTL,
+  IMetadata,
+  TFlagStatus,
+  TFlagType,
+  IFlagEnum,
+} from '../../../shared/kernel';
 import { TYPES } from '../../config/types';
 import { BaseRepository, DataGateway } from '../../storage';
 import { FlagRow, IFlagRepository } from '../interfaces';
@@ -43,8 +50,8 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
       const flagSql = `
         INSERT INTO feature_flags (
           id, key, name, description, type, status, category_id, 
-          enum_values, created_at, created_by
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          enum_values, selected_enum, created_at, created_by
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
 
       const now = new Date();
@@ -56,7 +63,8 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
         entity.type,
         entity.status,
         entity.categoryId || null,
-        entity.enumValues ? JSON.stringify(entity.enumValues) : null,
+        entity.enum ? JSON.stringify(entity.enum.values) : null,
+        entity.enum?.selected || null,
         now,
         entity.metadata.createdBy,
       ]);
@@ -128,9 +136,12 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
         updateValues.push(entity.categoryId);
       }
 
-      if (entity.enumValues !== undefined) {
+      if (entity.enum !== undefined) {
         updateFields.push('enum_values = ?');
-        updateValues.push(entity.enumValues ? JSON.stringify(entity.enumValues) : null);
+        updateValues.push(entity.enum.values ? JSON.stringify(entity.enum.values) : null);
+
+        updateFields.push('selected_enum = ?');
+        updateValues.push(entity.enum.selected || null);
       }
 
       updateFields.push('updated_at = ?');
@@ -392,12 +403,17 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
         ? row.client_ids_concat.split(',')
         : [];
 
-    let enumValues: string[] | undefined = undefined;
+    let enumData: IFlagEnum | undefined = undefined;
+
     if (row.enum_values && typeof row.enum_values === 'string') {
       try {
-        enumValues = JSON.parse(row.enum_values);
+        const values = JSON.parse(row.enum_values);
+        enumData = {
+          values: values,
+          selected: row.selected_enum || undefined,
+        };
       } catch (e) {
-        // If parsing fails, leave enumValues as undefined
+        // If parsing fails, leave enumData as undefined
       }
     }
 
@@ -421,7 +437,7 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
       type: row.type as TFlagType,
       status: row.status as TFlagStatus,
       categoryId: row.category_id || undefined,
-      enumValues,
+      enum: enumData,
       ttl,
       clientIds: clientIds.length > 0 ? clientIds : undefined,
       metadata,

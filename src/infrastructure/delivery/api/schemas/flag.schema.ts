@@ -37,9 +37,15 @@ const flagSchema = {
     type: { type: 'string', enum: ['boolean', 'enum'] },
     status: { type: 'string', enum: ['active', 'inactive', 'scheduled', 'archived'] },
     categoryId: { type: ['string', 'null'] },
-    enumValues: {
-      type: ['array', 'null'],
-      items: { type: 'string' },
+    enum: {
+      type: 'object',
+      properties: {
+        selected: { type: ['string', 'null'] },
+        values: {
+          type: 'array',
+          items: { type: 'string' },
+        },
+      },
     },
     ttl: ttlSchema,
     clientIds: {

@@ -259,7 +259,7 @@ export default async function (fastify: FastifyInstance) {
 
   fastify.route({
     method: 'GET',
-    url: '/client/:clientId',
+    url: '/evaluate/:clientId',
     schema: schemas.getClientFlagsSchema,
     handler: async (
       request: FastifyRequest<{ Params: { clientId: string } }>,

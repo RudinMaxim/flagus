@@ -6,6 +6,7 @@ import {
   IFlagTTL,
   TFlagType,
   TFlagStatus,
+  IFlagEnum,
 } from '../../shared/kernel';
 
 export interface CreateFlagDTO {
@@ -15,7 +16,7 @@ export interface CreateFlagDTO {
   type: TFlagType;
   status?: TFlagStatus;
   categoryId?: string;
-  enumValues?: string[];
+  enum?: IFlagEnum;
   clientIds?: string[];
   createdBy: string;
 }
@@ -26,7 +27,7 @@ export interface UpdateFlagDTO {
   type?: TFlagType;
   status?: TFlagStatus;
   categoryId?: string;
-  enumValues?: string[];
+  enum?: IFlagEnum;
   clientIds?: string[];
   updatedBy: string;
 }
@@ -39,7 +40,7 @@ interface IFeatureFlagProps {
   description?: string;
   ttl: IFlagTTL;
   status: TFlagStatus;
-  enumValues?: string[];
+  enum?: IFlagEnum;
   categoryId?: string;
   clientIds?: string[];
   metadata: IMetadata;
@@ -53,7 +54,7 @@ export class FeatureFlag implements IEntity<string> {
   type: TFlagType;
   status: TFlagStatus;
   categoryId?: string;
-  enumValues?: string[];
+  enum?: IFlagEnum;
   ttl: IFlagTTL;
   clientIds?: string[];
   metadata: IMetadata;
@@ -66,7 +67,7 @@ export class FeatureFlag implements IEntity<string> {
     this.type = props.type;
     this.status = props.status;
     this.categoryId = props.categoryId;
-    this.enumValues = props.enumValues;
+    this.enum = props.enum;
     this.ttl = props.ttl;
     this.clientIds = props.clientIds;
     this.metadata = props.metadata;
@@ -101,7 +102,7 @@ export class FeatureFlag implements IEntity<string> {
   }
 
   getEnumValue(clientId: string): string | boolean {
-    if (this.type !== FlagType.ENUM || !this.enumValues || this.enumValues.length === 0) {
+    if (this.type !== FlagType.ENUM || !this.enum || this.enum.values.length === 0) {
       return false;
     }
 
@@ -109,9 +110,13 @@ export class FeatureFlag implements IEntity<string> {
       return false;
     }
 
+    if (this.enum.selected) {
+      return this.enum.selected;
+    }
+
     const hash = this.hashClientId(clientId);
-    const index = hash % this.enumValues.length;
-    return this.enumValues[index];
+    const index = hash % this.enum.values.length;
+    return this.enum.values[index];
   }
 
   private hashClientId(clientId: string): number {

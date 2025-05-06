@@ -15,6 +15,7 @@ export interface FlagRow {
   updated_by: string | null;
   expires_at: string;
   enum_values: string;
+  selected_enum: string;
   auto_delete: boolean | number;
   client_ids_concat: string | null;
 }

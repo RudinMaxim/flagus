@@ -48,6 +48,7 @@ async function runSeed() {
     DROP TABLE IF EXISTS audit_logs;
     DROP TABLE IF EXISTS users;
     DROP TABLE IF EXISTS clients;
+    DROP TABLE IF EXISTS flag_ttl;
 
     CREATE TABLE users (
       id TEXT PRIMARY KEY,
@@ -86,6 +87,7 @@ async function runSeed() {
       description TEXT,
       type TEXT NOT NULL,
       status TEXT NOT NULL,
+      selected_enum TEXT,
       enum_values TEXT,
       category_id TEXT REFERENCES flag_categories(id),
       created_at TEXT NOT NULL,
@@ -119,10 +121,10 @@ async function runSeed() {
     );
   `);
 
-  const now = new Date().toISOString();
+  const now = new Date();
   const nextMonth = new Date();
   nextMonth.setMonth(nextMonth.getMonth() + 1);
-  const nextMonthISO = nextMonth.toISOString();
+  const nextMonthISO = nextMonth;
 
   const adminId = crypto.randomUUID();
   await run(
@@ -182,11 +184,11 @@ async function runSeed() {
   const flagId = crypto.randomUUID();
   await run(
     `INSERT INTO feature_flags (
-     id, key, name, description, type, status,
-     enum_values, category_id,
-     created_at, created_by, updated_at, updated_by
-   )
-   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       id, key, name, description, type, status,
+       selected_enum, enum_values, category_id,
+       created_at, created_by, updated_at
+     )
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       flagId,
       'NEW_DASHBOARD',
@@ -194,12 +196,12 @@ async function runSeed() {
       'Enable new dashboard UI',
       FlagType.ENUM,
       FlagStatus.ACTIVE,
+      'v1',
       JSON.stringify(['v1', 'v2', 'v3']),
       uiCategoryId,
       now,
       adminId,
       now,
-      adminId,
     ]
   );
 

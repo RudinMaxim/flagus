@@ -12,6 +12,11 @@ export interface IFlagTTL {
   autoDelete: boolean;
 }
 
+export interface IFlagEnum {
+  selected?: string;
+  values: string[];
+}
+
 export type TFlagType = (typeof FlagType)[keyof typeof FlagType];
 export type TFlagStatus = (typeof FlagStatus)[keyof typeof FlagStatus];
 export type TUserRole = (typeof UserRole)[keyof typeof UserRole];

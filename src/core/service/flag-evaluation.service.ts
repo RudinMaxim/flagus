@@ -15,6 +15,7 @@ export class FlagEvaluationError extends Error {
 @injectable()
 export class FlagEvaluationService {
   private flagCache: Map<string, FeatureFlag> = new Map();
+  private keyToNameMap: Map<string, string> = new Map();
   private lastCacheUpdate: Date = new Date(0);
   private readonly cacheTTL: number = 5 * 60 * 1000; // 5 минут
 
@@ -26,7 +27,7 @@ export class FlagEvaluationService {
   public async evaluateFlag(flagNameOrKey: string, clientId: string): Promise<boolean | string> {
     try {
       if (!flagNameOrKey) {
-        throw new FlagEvaluationError('Flag name is required');
+        throw new FlagEvaluationError('Flag name or key is required');
       }
       if (!clientId) {
         throw new FlagEvaluationError('Client ID is required');
@@ -45,6 +46,8 @@ export class FlagEvaluationService {
       }
 
       if (flag.type === FlagType.ENUM) {
+        console.log(flag.getEnumValue(clientId));
+
         return flag.getEnumValue(clientId);
       }
 
@@ -58,7 +61,7 @@ export class FlagEvaluationService {
     }
   }
 
-  public async getAllFlagsForClient(clientId: string): Promise<Record<string, boolean>> {
+  public async getAllFlagsForClient(clientId: string): Promise<Record<string, boolean | string>> {
     try {
       if (!clientId) {
         throw new FlagEvaluationError('Client ID is required');
@@ -77,9 +80,11 @@ export class FlagEvaluationService {
       const activeFlags = await this.flagRepository.findActiveFlags();
 
       this.flagCache.clear();
+      this.keyToNameMap.clear();
 
       for (const flag of activeFlags) {
         this.flagCache.set(flag.name, flag);
+        this.keyToNameMap.set(flag.key, flag.name);
       }
 
       this.lastCacheUpdate = new Date();
@@ -98,14 +103,28 @@ export class FlagEvaluationService {
   }
 
   private async getFlagFromCache(flagNameOrKey: string): Promise<FeatureFlag | null> {
-    const flag = this.flagCache.get(flagNameOrKey);
+    let flag = this.flagCache.get(flagNameOrKey);
 
     if (!flag) {
-      const foundFlag = await this.flagRepository.findByName(flagNameOrKey);
+      const flagName = this.keyToNameMap.get(flagNameOrKey);
+      if (flagName) {
+        flag = this.flagCache.get(flagName);
+      }
+    }
 
-      if (foundFlag) {
-        this.flagCache.set(flagNameOrKey, foundFlag);
-        return foundFlag;
+    if (!flag) {
+      const foundFlagByName = await this.flagRepository.findByName(flagNameOrKey);
+      if (foundFlagByName) {
+        this.flagCache.set(foundFlagByName.name, foundFlagByName);
+        this.keyToNameMap.set(foundFlagByName.key, foundFlagByName.name);
+        return foundFlagByName;
+      }
+
+      const foundFlagByKey = await this.flagRepository.findByKey(flagNameOrKey);
+      if (foundFlagByKey) {
+        this.flagCache.set(foundFlagByKey.name, foundFlagByKey);
+        this.keyToNameMap.set(foundFlagByKey.key, foundFlagByKey.name);
+        return foundFlagByKey;
       }
 
       return null;
@@ -114,11 +133,15 @@ export class FlagEvaluationService {
     return flag;
   }
 
-  private evaluateAllCachedFlags(clientId: string): Record<string, boolean> {
-    const result: Record<string, boolean> = {};
+  private evaluateAllCachedFlags(clientId: string): Record<string, boolean | string> {
+    const result: Record<string, boolean | string> = {};
 
-    for (const [flagName, flag] of this.flagCache.entries()) {
-      result[flagName] = flag.isActiveForClient(clientId);
+    for (const [_, flag] of this.flagCache.entries()) {
+      if (flag.type === FlagType.ENUM) {
+        result[flag.key] = flag.getEnumValue(clientId);
+      } else {
+        result[flag.key] = flag.isActiveForClient(clientId);
+      }
     }
 
     return result;

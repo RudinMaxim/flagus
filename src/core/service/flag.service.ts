@@ -34,7 +34,7 @@ export class FeatureFlagService
     return this.evaluationService.evaluateFlag(flagNameOrKey, clientId);
   }
 
-  async getClientFlags(clientId: string): Promise<Record<string, boolean>> {
+  async getClientFlags(clientId: string): Promise<Record<string, boolean | string>> {
     if (!clientId) throw new Error('Client ID is required');
 
     return this.evaluationService.getAllFlagsForClient(clientId);
@@ -93,7 +93,7 @@ export class FeatureFlagService
       type: dto.type,
       status: dto.status || FlagStatus.INACTIVE,
       categoryId: dto.categoryId,
-      enumValues: dto.enumValues,
+      enum: dto.enum,
       ttl: {
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         autoDelete: true,
@@ -348,7 +348,7 @@ export class FeatureFlagService
     if (!dto.createdBy) throw new Error('Creator ID is required');
 
     if (dto.type === FlagType.ENUM) {
-      if (!dto.enumValues || dto.enumValues.length < 1) {
+      if (!dto.enum) {
         throw new Error('Enum type flags must have at least one enum value');
       }
     }
@@ -358,7 +358,7 @@ export class FeatureFlagService
     if (!dto.updatedBy) throw new Error('Updater ID is required');
 
     if (dto.type === FlagType.ENUM) {
-      if (!dto.enumValues || dto.enumValues.length < 1) {
+      if (!dto.enum?.values || dto.enum?.values.length < 1) {
         throw new Error('Enum type flags must have at least one enum value');
       }
     }
