@@ -34,6 +34,7 @@ async function runSeed() {
     CREATE TABLE IF NOT EXISTS feature_flags (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
+      key TEXT NOT NULL,
       description TEXT,
       type TEXT NOT NULL,
       status TEXT NOT NULL,
@@ -142,10 +143,11 @@ async function runSeed() {
   const dashboardFlagId = crypto.randomUUID();
   await run(
     `INSERT OR IGNORE INTO feature_flags
-      (id, name, description, type, status, category_id, created_at, created_by)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, key, name, description, type, status, category_id, created_at, created_by)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       dashboardFlagId,
+      'NEW_DASHBOARD',
       'new-dashboard',
       'Новая версия дашборда',
       FlagType.BOOLEAN,
@@ -163,10 +165,11 @@ async function runSeed() {
   const newApiFlag = crypto.randomUUID();
   await run(
     `INSERT OR IGNORE INTO feature_flags
-      (id, name, description, type, status, category_id, created_at, created_by)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, key, name, description, type, status, category_id, created_at, created_by)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       newApiFlag,
+      'NEW_API_ENDPOINT',
       'new-api-endpoints',
       'Новые эндпойнты API v2',
       FlagType.PERCENTAGE,
@@ -208,10 +211,11 @@ async function runSeed() {
   const betaTestFlag = crypto.randomUUID();
   await run(
     `INSERT OR IGNORE INTO feature_flags
-      (id, name, description, type, status, category_id, created_at, created_by)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, key, name, description, type, status, category_id, created_at, created_by)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       betaTestFlag,
+      'BETA_TESTERS',
       'beta-testers',
       'Доступ бета-тестерам',
       FlagType.BOOLEAN,

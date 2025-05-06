@@ -39,6 +39,11 @@ export class FeatureFlagService
     return this.flagRepository.findByName(name);
   }
 
+  async getByKey(key: string): Promise<FeatureFlag | null> {
+    if (!key) throw new Error('Flag key is required');
+    return this.flagRepository.findByKey(key);
+  }
+
   async getByCategory(categoryId: string): Promise<FeatureFlag[]> {
     if (!categoryId) throw new Error('Category ID is required');
     return this.flagRepository.findByCategory(categoryId);
@@ -56,8 +61,14 @@ export class FeatureFlagService
       throw new Error(`Flag with name ${dto.name} already exists`);
     }
 
+    const existingKey = await this.flagRepository.findByKey(dto.key);
+    if (existingKey) {
+      throw new Error(`Flag with key ${dto.key} already exists`);
+    }
+
     const flag = new FeatureFlag({
       id: crypto.randomUUID(),
+      key: dto.key,
       name: dto.name,
       description: dto.description,
       type: dto.type,
@@ -121,6 +132,10 @@ export class FeatureFlagService
       ...dto,
       metadata,
     };
+
+    if ('key' in updateData) {
+      delete (updateData as any).key;
+    }
 
     const updatedFlag = await this.flagRepository.update(id, updateData);
 
@@ -227,11 +242,11 @@ export class FeatureFlagService
     return updatedFlag;
   }
 
-  async evaluateFlag(flagName: string, clientId: string): Promise<boolean> {
-    if (!flagName) throw new Error('Flag name is required');
+  async evaluateFlag(flagNameOrKey: string, clientId: string): Promise<boolean> {
+    if (!flagNameOrKey) throw new Error('Flag name or key is required');
     if (!clientId) throw new Error('Client ID is required');
 
-    return this.evaluationService.evaluateFlag(flagName, clientId);
+    return this.evaluationService.evaluateFlag(flagNameOrKey, clientId);
   }
 
   async getClientFlags(clientId: string): Promise<Record<string, boolean>> {

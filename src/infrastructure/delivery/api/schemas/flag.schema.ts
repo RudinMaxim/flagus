@@ -38,6 +38,7 @@ const flagSchema = {
   type: 'object',
   properties: {
     id: { type: 'string' },
+    key: { type: 'string' },
     name: { type: 'string' },
     description: { type: ['string', 'null'] },
     type: { type: 'string', enum: ['boolean', 'percentage'] },

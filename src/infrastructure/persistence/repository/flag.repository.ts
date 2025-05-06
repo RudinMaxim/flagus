@@ -64,14 +64,15 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
       const flagId = crypto.randomUUID();
       const flagSql = `
         INSERT INTO feature_flags (
-          id, name, description, type, status, category_id, 
+          id, key, name, description, type, status, category_id, 
           created_at, created_by
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
 
       const now = new Date();
       await this.dataGateway.execute(flagSql, [
         flagId,
+        entity.key,
         entity.name,
         entity.description || null,
         entity.type,
@@ -278,6 +279,26 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
     return row ? this.mapToEntity(row) : null;
   }
 
+  async findByKey(key: string): Promise<FeatureFlag | null> {
+    const sql = `
+      SELECT 
+        f.*,
+        tc.start_date, tc.end_date,
+        pd.percentage,
+        GROUP_CONCAT(fc.client_id) AS client_ids_concat
+      FROM feature_flags f
+      LEFT JOIN flag_time_constraints tc ON f.id = tc.flag_id
+      LEFT JOIN flag_percentage_distributions pd ON f.id = pd.flag_id
+      LEFT JOIN flag_clients fc ON f.id = fc.flag_id
+      WHERE f.key = ? 
+      GROUP BY f.id
+      LIMIT 1
+    `;
+
+    const row = await this.dataGateway.getOne<FlagRow>(sql, [key]);
+    return row ? this.mapToEntity(row) : null;
+  }
+
   async findByStatus(status: FlagStatus): Promise<FeatureFlag[]> {
     const sql = `
       SELECT 
@@ -413,6 +434,7 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
 
     return new FeatureFlag({
       id: row.id,
+      key: row.key,
       name: row.name,
       description: row.description || undefined,
       type: row.type as FlagType,

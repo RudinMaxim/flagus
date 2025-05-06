@@ -3,6 +3,7 @@ import { FeatureFlag } from '../../../core/model';
 
 export interface FlagRow {
   id: string;
+  key: string;
   name: string;
   description: string | null;
   type: string;
@@ -23,6 +24,7 @@ export interface IFlagRepository extends IRepository<FeatureFlag, string> {
   findByStatus(status: FlagStatus): Promise<FeatureFlag[]>;
   findByCategory(categoryId: string): Promise<FeatureFlag[]>;
   findByType(type: FlagType): Promise<FeatureFlag[]>;
+  findByKey(key: string): Promise<FeatureFlag | null>;
   toggleStatus(id: string, status: FlagStatus): Promise<FeatureFlag | null>;
   findActiveFlags(): Promise<FeatureFlag[]>;
   findActiveFlagsForClient(clientId: string): Promise<FeatureFlag[]>;

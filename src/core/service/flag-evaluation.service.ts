@@ -22,9 +22,9 @@ export class FlagEvaluationService {
     @inject(TYPES.Logger) private readonly logger: ILogger
   ) {}
 
-  async evaluateFlag(flagName: string, clientId: string): Promise<boolean> {
+  async evaluateFlag(flagNameOrKey: string, clientId: string): Promise<boolean> {
     try {
-      if (!flagName) {
+      if (!flagNameOrKey) {
         throw new FlagEvaluationError('Flag name is required');
       }
       if (!clientId) {
@@ -32,7 +32,7 @@ export class FlagEvaluationService {
       }
 
       await this.refreshCacheIfNeeded();
-      const flag = await this.getFlagFromCache(flagName);
+      const flag = await this.getFlagFromCache(flagNameOrKey);
 
       if (!flag) {
         return false;
@@ -40,7 +40,10 @@ export class FlagEvaluationService {
 
       return flag.isActiveForClient(clientId);
     } catch (error) {
-      this.logger.error(`Error evaluating flag ${flagName} for client ${clientId}`, error as Error);
+      this.logger.error(
+        `Error evaluating flag ${flagNameOrKey} for client ${clientId}`,
+        error as Error
+      );
       return false;
     }
   }
@@ -94,14 +97,14 @@ export class FlagEvaluationService {
     }
   }
 
-  private async getFlagFromCache(flagName: string): Promise<FeatureFlag | undefined> {
-    const flag = this.flagCache.get(flagName);
+  private async getFlagFromCache(flagNameOrKey: string): Promise<FeatureFlag | undefined> {
+    const flag = this.flagCache.get(flagNameOrKey);
 
     if (!flag) {
-      const foundFlag = await this.flagRepository.findByName(flagName);
+      const foundFlag = await this.flagRepository.findByName(flagNameOrKey);
 
       if (foundFlag) {
-        this.flagCache.set(flagName, foundFlag);
+        this.flagCache.set(flagNameOrKey, foundFlag);
         return foundFlag;
       }
 

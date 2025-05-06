@@ -8,6 +8,7 @@ import {
 } from '../../shared/kernel';
 
 export interface CreateFlagDTO {
+  key: string;
   name: string;
   description?: string;
   type: FlagType;
@@ -33,6 +34,7 @@ export interface UpdateFlagDTO {
 
 export class FeatureFlag implements IEntity<string> {
   id: string;
+  key: string;
   name: string;
   description?: string;
   type: FlagType;
@@ -45,6 +47,7 @@ export class FeatureFlag implements IEntity<string> {
 
   constructor(data: {
     id: string;
+    key: string;
     name: string;
     description?: string;
     type: FlagType;
@@ -56,6 +59,7 @@ export class FeatureFlag implements IEntity<string> {
     metadata: Metadata;
   }) {
     this.id = data.id;
+    this.key = data.key;
     this.name = data.name;
     this.description = data.description;
     this.type = data.type;
