@@ -1,10 +1,10 @@
-import { AuditAction, IRepository } from '../../../shared/kernel';
+import { IRepository, TAuditAction } from '../../../shared/kernel';
 import { AuditLog } from '../../../core/model';
 
 export interface AuditLogRow {
   id: string;
   user_id: string;
-  action: AuditAction;
+  action: TAuditAction;
   entity_id: string;
   entity_type: string;
   old_value: string | null;

@@ -19,18 +19,11 @@ const metadataSchema = {
   },
 };
 
-const timeConstraintSchema = {
+const ttlSchema = {
   type: 'object',
   properties: {
-    startDate: { type: ['string', 'null'], format: 'date-time' },
-    endDate: { type: ['string', 'null'], format: 'date-time' },
-  },
-};
-
-const percentageDistributionSchema = {
-  type: 'object',
-  properties: {
-    percentage: { type: 'number', minimum: 0, maximum: 100 },
+    expiresAt: { type: 'string', format: 'date-time' },
+    autoDelete: { type: 'boolean', default: true },
   },
 };
 
@@ -41,12 +34,18 @@ const flagSchema = {
     key: { type: 'string' },
     name: { type: 'string' },
     description: { type: ['string', 'null'] },
-    type: { type: 'string', enum: ['boolean', 'percentage'] },
+    type: { type: 'string', enum: ['boolean', 'enum'] },
     status: { type: 'string', enum: ['active', 'inactive', 'scheduled', 'archived'] },
     categoryId: { type: ['string', 'null'] },
-    timeConstraint: timeConstraintSchema,
-    percentageDistribution: percentageDistributionSchema,
-    clientIds: { type: 'array', items: { type: 'string' } },
+    enumValues: {
+      type: ['array', 'null'],
+      items: { type: 'string' },
+    },
+    ttl: ttlSchema,
+    clientIds: {
+      type: ['array', 'null'],
+      items: { type: 'string' },
+    },
     metadata: metadataSchema,
   },
 };
@@ -101,19 +100,23 @@ export const createFlagSchema: FastifySchema = {
   summary: 'Create a new feature flag with configuration',
   body: {
     type: 'object',
-    required: ['name', 'type', 'createdBy'],
+    required: ['key', 'name', 'type', 'createdBy'],
     properties: {
-      name: { type: 'string', pattern: '^[a-zA-Z0-9_-]+$', minLength: 1, maxLength: 100 },
+      key: { type: 'string', pattern: '^[a-zA-Z0-9_-]+$', minLength: 1, maxLength: 100 },
+      name: { type: 'string', minLength: 1, maxLength: 100 },
       description: { type: 'string', maxLength: 500 },
-      type: { type: 'string', enum: ['boolean', 'percentage'] },
+      type: { type: 'string', enum: ['boolean', 'enum'] },
       status: {
         type: 'string',
         enum: ['active', 'inactive', 'scheduled', 'archived'],
         default: 'inactive',
       },
       categoryId: { type: ['string', 'null'], default: null },
-      timeConstraint: timeConstraintSchema,
-      percentageDistribution: percentageDistributionSchema,
+      enumValues: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Required when type is "enum"',
+      },
       clientIds: { type: 'array', items: { type: 'string' } },
       createdBy: { type: 'string' },
     },
@@ -147,13 +150,16 @@ export const updateFlagSchema: FastifySchema = {
     type: 'object',
     required: ['updatedBy'],
     properties: {
-      name: { type: 'string', pattern: '^[a-zA-Z0-9_-]+$', minLength: 1, maxLength: 100 },
+      name: { type: 'string', minLength: 1, maxLength: 100 },
       description: { type: 'string', maxLength: 500 },
-      type: { type: 'string', enum: ['boolean', 'percentage'] },
+      type: { type: 'string', enum: ['boolean', 'enum'] },
       status: { type: 'string', enum: ['active', 'inactive', 'scheduled', 'archived'] },
       categoryId: { type: ['string', 'null'] },
-      timeConstraint: timeConstraintSchema,
-      percentageDistribution: percentageDistributionSchema,
+      enumValues: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Required when type is "enum"',
+      },
       clientIds: { type: 'array', items: { type: 'string' } },
       updatedBy: { type: 'string' },
     },
@@ -243,7 +249,7 @@ export const getClientFlagsSchema: FastifySchema = {
         data: {
           type: 'object',
           additionalProperties: {
-            type: 'boolean',
+            oneOf: [{ type: 'boolean' }, { type: 'string' }],
           },
         },
       },
@@ -273,12 +279,64 @@ export const evaluateFlagSchema: FastifySchema = {
           type: 'object',
           properties: {
             flagName: { type: 'string' },
-            isActive: { type: 'boolean' },
+            isActive: {
+              oneOf: [{ type: 'boolean' }, { type: 'string' }],
+            },
           },
         },
       },
     },
     404: errorSchema,
+    500: errorSchema,
+  },
+};
+
+// POST /flags/:id/reset-ttl
+export const resetTTLSchema: FastifySchema = {
+  description: 'Reset flag TTL',
+  tags: ['Feature Flags'],
+  summary: 'Reset the TTL for a feature flag',
+  params: {
+    type: 'object',
+    required: ['id'],
+    properties: {
+      id: { type: 'string' },
+    },
+  },
+  body: {
+    type: 'object',
+    required: ['userId'],
+    properties: {
+      userId: { type: 'string' },
+    },
+  },
+  response: {
+    200: {
+      type: 'object',
+      properties: {
+        data: flagSchema,
+      },
+    },
+    404: errorSchema,
+    500: errorSchema,
+  },
+};
+
+// GET /flags/expired
+export const getExpiredFlagsSchema: FastifySchema = {
+  description: 'Get expired flags',
+  tags: ['Feature Flags'],
+  summary: 'Get all expired flags',
+  response: {
+    200: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'array',
+          items: flagSchema,
+        },
+      },
+    },
     500: errorSchema,
   },
 };

@@ -1,2 +1,3 @@
 export * from './base.interfaces';
-export * from './base.types';
+export type * from './base.types';
+export * from './base.constans';

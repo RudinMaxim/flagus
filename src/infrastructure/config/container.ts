@@ -10,6 +10,7 @@ import {
   FeatureFlagService,
   FlagEvaluationService,
 } from '../../core/service';
+import { FlagTTLService } from '../../core/service/flag-ttl.service';
 
 export async function createContainer(): Promise<Container> {
   const container = new Container();
@@ -30,6 +31,8 @@ export async function createContainer(): Promise<Container> {
     .bind<FlagEvaluationService>(TYPES.FlagEvaluationService)
     .to(FlagEvaluationService)
     .inSingletonScope();
+
+  container.bind<FlagTTLService>(TYPES.FlagTTLService).to(FlagTTLService).inSingletonScope();
 
   const initializeApp = async () => {
     const initializables = container.getAll<OnInit>(TYPES.OnInit);

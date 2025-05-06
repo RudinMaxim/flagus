@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { authenticate } from '../middlewares/auth.middleware';
+import { authenticate } from '../middlewares/x-api-key.middleware';
 import healthRoutes from './common/health.route';
 import flagRoutes from './v1/flag.route';
 import categoryRoutes from './v1/category.route';

@@ -1,7 +1,7 @@
 import { injectable, inject } from 'inversify';
 import crypto from 'crypto';
 import { AuditLog } from '../../../core/model';
-import { AuditAction } from '../../../shared/kernel';
+import { TAuditAction } from '../../../shared/kernel';
 import { TYPES } from '../../config/types';
 import { BaseRepository, DataGateway } from '../../storage';
 import { IAuditRepository, AuditLogRow } from '../interfaces';
@@ -188,7 +188,7 @@ export class AuditRepository extends BaseRepository<AuditLog, string> implements
     return rows.map(row => this.mapToEntity(row));
   }
 
-  async findByAction(action: AuditAction): Promise<AuditLog[]> {
+  async findByAction(action: TAuditAction): Promise<AuditLog[]> {
     const sql = `
       SELECT * FROM ${this.tableName} 
       WHERE action = ? 
@@ -208,7 +208,7 @@ export class AuditRepository extends BaseRepository<AuditLog, string> implements
     return rows.map(row => this.mapToEntity(row));
   }
 
-  async findByActionAndEntityType(action: AuditAction, entityType: string): Promise<AuditLog[]> {
+  async findByActionAndEntityType(action: TAuditAction, entityType: string): Promise<AuditLog[]> {
     const sql = `
       SELECT * FROM ${this.tableName} 
       WHERE action = ? AND entity_type = ? 

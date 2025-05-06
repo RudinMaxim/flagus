@@ -1,4 +1,4 @@
-import { IRepository, FlagStatus, FlagType } from '../../../shared/kernel';
+import { IRepository, TFlagType, TFlagStatus } from '../../../shared/kernel';
 import { FeatureFlag } from '../../../core/model';
 
 export interface FlagRow {
@@ -13,19 +13,20 @@ export interface FlagRow {
   created_by: string;
   updated_at: string | null;
   updated_by: string | null;
-  start_date: string | null;
-  end_date: string | null;
-  percentage: number | null;
+  expires_at: string;
+  enum_values: string;
+  auto_delete: boolean | number;
   client_ids_concat: string | null;
 }
 
 export interface IFlagRepository extends IRepository<FeatureFlag, string> {
   findByName(name: string): Promise<FeatureFlag | null>;
-  findByStatus(status: FlagStatus): Promise<FeatureFlag[]>;
+  findByStatus(status: TFlagStatus): Promise<FeatureFlag[]>;
   findByCategory(categoryId: string): Promise<FeatureFlag[]>;
-  findByType(type: FlagType): Promise<FeatureFlag[]>;
+  findByType(type: TFlagType): Promise<FeatureFlag[]>;
   findByKey(key: string): Promise<FeatureFlag | null>;
-  toggleStatus(id: string, status: FlagStatus): Promise<FeatureFlag | null>;
+  toggleStatus(id: string, status: TFlagStatus): Promise<FeatureFlag | null>;
   findActiveFlags(): Promise<FeatureFlag[]>;
   findActiveFlagsForClient(clientId: string): Promise<FeatureFlag[]>;
+  findExpiredFlags(): Promise<FeatureFlag[]>;
 }

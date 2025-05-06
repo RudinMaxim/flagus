@@ -4,7 +4,7 @@ import { FlagCategory } from '../../../core/model';
 import { BaseRepository, DataGateway } from '../../storage';
 import { CategoryRow, ICategoryRepository } from '../interfaces';
 import { TYPES } from '../../config/types';
-import { Metadata } from '../../../shared/kernel';
+import { IMetadata } from '../../../shared/kernel';
 
 @injectable()
 export class CategoryRepository
@@ -314,7 +314,7 @@ export class CategoryRepository
       }
     };
 
-    const metadata: Metadata = {
+    const metadata: IMetadata = {
       createdBy: row.created_by,
       createdAt: parseDate(row.created_at) || new Date(),
       updatedBy: row.updated_by || undefined,

@@ -2,20 +2,20 @@ import {
   IEntity,
   FlagType,
   FlagStatus,
-  TimeConstraint,
-  PercentageDistribution,
-  Metadata,
+  IMetadata,
+  IFlagTTL,
+  TFlagType,
+  TFlagStatus,
 } from '../../shared/kernel';
 
 export interface CreateFlagDTO {
   key: string;
   name: string;
   description?: string;
-  type: FlagType;
-  status?: FlagStatus;
+  type: TFlagType;
+  status?: TFlagStatus;
   categoryId?: string;
-  timeConstraint?: TimeConstraint;
-  percentageDistribution?: PercentageDistribution;
+  enumValues?: string[];
   clientIds?: string[];
   createdBy: string;
 }
@@ -23,13 +23,26 @@ export interface CreateFlagDTO {
 export interface UpdateFlagDTO {
   name?: string;
   description?: string;
-  type?: FlagType;
-  status?: FlagStatus;
+  type?: TFlagType;
+  status?: TFlagStatus;
   categoryId?: string;
-  timeConstraint?: TimeConstraint;
-  percentageDistribution?: PercentageDistribution;
+  enumValues?: string[];
   clientIds?: string[];
   updatedBy: string;
+}
+
+interface IFeatureFlagProps {
+  id: string;
+  key: string;
+  name: string;
+  type: TFlagType;
+  description?: string;
+  ttl: IFlagTTL;
+  status: TFlagStatus;
+  enumValues?: string[];
+  categoryId?: string;
+  clientIds?: string[];
+  metadata: IMetadata;
 }
 
 export class FeatureFlag implements IEntity<string> {
@@ -37,57 +50,26 @@ export class FeatureFlag implements IEntity<string> {
   key: string;
   name: string;
   description?: string;
-  type: FlagType;
-  status: FlagStatus;
+  type: TFlagType;
+  status: TFlagStatus;
   categoryId?: string;
-  timeConstraint?: TimeConstraint;
-  percentageDistribution?: PercentageDistribution;
+  enumValues?: string[];
+  ttl: IFlagTTL;
   clientIds?: string[];
-  metadata: Metadata;
+  metadata: IMetadata;
 
-  constructor(data: {
-    id: string;
-    key: string;
-    name: string;
-    description?: string;
-    type: FlagType;
-    status: FlagStatus;
-    categoryId?: string;
-    timeConstraint?: TimeConstraint;
-    percentageDistribution?: PercentageDistribution;
-    clientIds?: string[];
-    metadata: Metadata;
-  }) {
-    this.id = data.id;
-    this.key = data.key;
-    this.name = data.name;
-    this.description = data.description;
-    this.type = data.type;
-    this.status = data.status;
-    this.categoryId = data.categoryId;
-    this.timeConstraint = data.timeConstraint;
-    this.percentageDistribution = data.percentageDistribution;
-    this.clientIds = data.clientIds;
-    this.metadata = data.metadata;
-  }
-
-  isActiveByTime(): boolean {
-    if (!this.timeConstraint) {
-      return true;
-    }
-
-    const now = new Date();
-    const { startDate, endDate } = this.timeConstraint;
-
-    if (startDate && now < startDate) {
-      return false;
-    }
-
-    if (endDate && now > endDate) {
-      return false;
-    }
-
-    return true;
+  constructor(props: IFeatureFlagProps) {
+    this.id = props.id;
+    this.key = props.key;
+    this.name = props.name;
+    this.description = props.description;
+    this.type = props.type;
+    this.status = props.status;
+    this.categoryId = props.categoryId;
+    this.enumValues = props.enumValues;
+    this.ttl = props.ttl;
+    this.clientIds = props.clientIds;
+    this.metadata = props.metadata;
   }
 
   isActiveForClient(clientId: string): boolean {
@@ -95,7 +77,7 @@ export class FeatureFlag implements IEntity<string> {
       return false;
     }
 
-    if (!this.isActiveByTime()) {
+    if (this.isExpired()) {
       return false;
     }
 
@@ -103,12 +85,33 @@ export class FeatureFlag implements IEntity<string> {
       return this.clientIds.includes(clientId);
     }
 
-    if (this.type === FlagType.PERCENTAGE && this.percentageDistribution) {
-      const hash = this.hashClientId(clientId);
-      return hash <= this.percentageDistribution.percentage;
+    return true;
+  }
+
+  isExpired(): boolean {
+    if (!this.ttl || !this.ttl.expiresAt) {
+      return false;
     }
 
-    return this.status === FlagStatus.ACTIVE;
+    return new Date() > this.ttl.expiresAt;
+  }
+
+  shouldBeDeleted(): boolean {
+    return this.isExpired() && this.ttl?.autoDelete === true;
+  }
+
+  getEnumValue(clientId: string): string | boolean {
+    if (this.type !== FlagType.ENUM || !this.enumValues || this.enumValues.length === 0) {
+      return false;
+    }
+
+    if (!this.isActiveForClient(clientId)) {
+      return false;
+    }
+
+    const hash = this.hashClientId(clientId);
+    const index = hash % this.enumValues.length;
+    return this.enumValues[index];
   }
 
   private hashClientId(clientId: string): number {
@@ -117,6 +120,6 @@ export class FeatureFlag implements IEntity<string> {
       hash = (hash << 5) - hash + clientId.charCodeAt(i);
       hash = hash & hash;
     }
-    return Math.abs(hash % 100);
+    return Math.abs(hash);
   }
 }

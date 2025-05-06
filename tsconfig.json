@@ -15,6 +15,6 @@
     "emitDecoratorMetadata": true,
     "resolveJsonModule": true
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "scripts/seed.js", "src/shared/kernel/global.ts"],
   "exclude": ["node_modules", "**/*.test.ts"]
 }

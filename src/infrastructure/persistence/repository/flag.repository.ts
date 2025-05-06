@@ -1,13 +1,7 @@
 import { injectable, inject } from 'inversify';
 import crypto from 'crypto';
 import { FeatureFlag } from '../../../core/model';
-import {
-  FlagStatus,
-  FlagType,
-  TimeConstraint,
-  PercentageDistribution,
-  Metadata,
-} from '../../../shared/kernel';
+import { FlagStatus, IFlagTTL, IMetadata, TFlagStatus, TFlagType } from '../../../shared/kernel';
 import { TYPES } from '../../config/types';
 import { BaseRepository, DataGateway } from '../../storage';
 import { FlagRow, IFlagRepository } from '../interfaces';
@@ -19,22 +13,8 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
   }
 
   async findAll(): Promise<FeatureFlag[]> {
-    const sql = `
-      SELECT 
-        f.*,
-        tc.start_date, tc.end_date,
-        pd.percentage,
-        GROUP_CONCAT(fc.client_id) AS client_ids_concat
-      FROM feature_flags f
-      LEFT JOIN flag_time_constraints tc ON f.id = tc.flag_id
-      LEFT JOIN flag_percentage_distributions pd ON f.id = pd.flag_id
-      LEFT JOIN flag_clients fc ON f.id = fc.flag_id
-      GROUP BY f.id
-      ORDER BY f.name ASC
-    `;
-
+    const sql = this.buildBaseSelectQuery();
     const rows = await this.dataGateway.query<FlagRow>(sql);
-
     return rows.map(row => this.mapToEntity(row));
   }
 
@@ -42,12 +22,10 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
     const sql = `
       SELECT 
         f.*,
-        tc.start_date, tc.end_date,
-        pd.percentage,
-        GROUP_CONCAT(fc.client_id) AS client_ids_concat
+        ttl.expires_at, ttl.auto_delete,
+        GROUP_CONCAT(DISTINCT fc.client_id) AS client_ids_concat
       FROM feature_flags f
-      LEFT JOIN flag_time_constraints tc ON f.id = tc.flag_id
-      LEFT JOIN flag_percentage_distributions pd ON f.id = pd.flag_id
+      LEFT JOIN flag_ttl ttl ON f.id = ttl.flag_id
       LEFT JOIN flag_clients fc ON f.id = fc.flag_id
       WHERE f.id = ?
       GROUP BY f.id
@@ -65,8 +43,8 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
       const flagSql = `
         INSERT INTO feature_flags (
           id, key, name, description, type, status, category_id, 
-          created_at, created_by
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          enum_values, created_at, created_by
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
 
       const now = new Date();
@@ -78,28 +56,21 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
         entity.type,
         entity.status,
         entity.categoryId || null,
+        entity.enumValues ? JSON.stringify(entity.enumValues) : null,
         now,
         entity.metadata.createdBy,
       ]);
 
-      if (entity.timeConstraint) {
-        const tcSql = `
-          INSERT INTO flag_time_constraints (flag_id, start_date, end_date)
+      if (entity.ttl) {
+        const ttlSql = `
+          INSERT INTO flag_ttl (flag_id, expires_at, auto_delete)
           VALUES (?, ?, ?)
         `;
-        await this.dataGateway.execute(tcSql, [
+        await this.dataGateway.execute(ttlSql, [
           flagId,
-          entity.timeConstraint.startDate ? entity.timeConstraint.startDate : null,
-          entity.timeConstraint.endDate ? entity.timeConstraint.endDate : null,
+          entity.ttl.expiresAt,
+          entity.ttl.autoDelete ? 1 : 0,
         ]);
-      }
-
-      if (entity.percentageDistribution) {
-        const pdSql = `
-          INSERT INTO flag_percentage_distributions (flag_id, percentage)
-          VALUES (?, ?)
-        `;
-        await this.dataGateway.execute(pdSql, [flagId, entity.percentageDistribution.percentage]);
       }
 
       if (entity.clientIds && entity.clientIds.length > 0) {
@@ -157,6 +128,11 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
         updateValues.push(entity.categoryId);
       }
 
+      if (entity.enumValues !== undefined) {
+        updateFields.push('enum_values = ?');
+        updateValues.push(entity.enumValues ? JSON.stringify(entity.enumValues) : null);
+      }
+
       updateFields.push('updated_at = ?');
       updateValues.push(new Date());
 
@@ -174,48 +150,21 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
         await this.dataGateway.execute(flagSql, [...updateValues, id]);
       }
 
-      if (entity.timeConstraint) {
-        const tcExists = await this.dataGateway.getOne<{ count: number }>(
-          'SELECT COUNT(*) as count FROM flag_time_constraints WHERE flag_id = ?',
+      if (entity.ttl) {
+        const ttlExists = await this.dataGateway.getOne<{ count: number }>(
+          'SELECT COUNT(*) as count FROM flag_ttl WHERE flag_id = ?',
           [id]
         );
 
-        if (tcExists && tcExists.count > 0) {
+        if (ttlExists && ttlExists.count > 0) {
           await this.dataGateway.execute(
-            'UPDATE flag_time_constraints SET start_date = ?, end_date = ? WHERE flag_id = ?',
-            [
-              entity.timeConstraint.startDate ? entity.timeConstraint.startDate : null,
-              entity.timeConstraint.endDate ? entity.timeConstraint.endDate : null,
-              id,
-            ]
+            'UPDATE flag_ttl SET expires_at = ?, auto_delete = ? WHERE flag_id = ?',
+            [entity.ttl.expiresAt, entity.ttl.autoDelete ? 1 : 0, id]
           );
         } else {
           await this.dataGateway.execute(
-            'INSERT INTO flag_time_constraints (flag_id, start_date, end_date) VALUES (?, ?, ?)',
-            [
-              id,
-              entity.timeConstraint.startDate ? entity.timeConstraint.startDate : null,
-              entity.timeConstraint.endDate ? entity.timeConstraint.endDate : null,
-            ]
-          );
-        }
-      }
-
-      if (entity.percentageDistribution) {
-        const pdExists = await this.dataGateway.getOne<{ count: number }>(
-          'SELECT COUNT(*) as count FROM flag_percentage_distributions WHERE flag_id = ?',
-          [id]
-        );
-
-        if (pdExists && pdExists.count > 0) {
-          await this.dataGateway.execute(
-            'UPDATE flag_percentage_distributions SET percentage = ? WHERE flag_id = ?',
-            [entity.percentageDistribution.percentage, id]
-          );
-        } else {
-          await this.dataGateway.execute(
-            'INSERT INTO flag_percentage_distributions (flag_id, percentage) VALUES (?, ?)',
-            [id, entity.percentageDistribution.percentage]
+            'INSERT INTO flag_ttl (flag_id, expires_at, auto_delete) VALUES (?, ?, ?)',
+            [id, entity.ttl.expiresAt, entity.ttl.autoDelete ? 1 : 0]
           );
         }
       }
@@ -245,6 +194,9 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
     await this.dataGateway.beginTransaction();
 
     try {
+      await this.dataGateway.execute('DELETE FROM flag_clients WHERE flag_id = ?', [id]);
+      await this.dataGateway.execute('DELETE FROM flag_ttl WHERE flag_id = ?', [id]);
+
       const result = await this.dataGateway.execute<{ changes: number }>(
         `DELETE FROM ${this.tableName} WHERE id = ?`,
         [id]
@@ -263,12 +215,10 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
     const sql = `
       SELECT 
         f.*,
-        tc.start_date, tc.end_date,
-        pd.percentage,
-        GROUP_CONCAT(fc.client_id) AS client_ids_concat
+        ttl.expires_at, ttl.auto_delete,
+        GROUP_CONCAT(DISTINCT fc.client_id) AS client_ids_concat
       FROM feature_flags f
-      LEFT JOIN flag_time_constraints tc ON f.id = tc.flag_id
-      LEFT JOIN flag_percentage_distributions pd ON f.id = pd.flag_id
+      LEFT JOIN flag_ttl ttl ON f.id = ttl.flag_id
       LEFT JOIN flag_clients fc ON f.id = fc.flag_id
       WHERE f.name = ? 
       GROUP BY f.id
@@ -283,12 +233,10 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
     const sql = `
       SELECT 
         f.*,
-        tc.start_date, tc.end_date,
-        pd.percentage,
-        GROUP_CONCAT(fc.client_id) AS client_ids_concat
+        ttl.expires_at, ttl.auto_delete,
+        GROUP_CONCAT(DISTINCT fc.client_id) AS client_ids_concat
       FROM feature_flags f
-      LEFT JOIN flag_time_constraints tc ON f.id = tc.flag_id
-      LEFT JOIN flag_percentage_distributions pd ON f.id = pd.flag_id
+      LEFT JOIN flag_ttl ttl ON f.id = ttl.flag_id
       LEFT JOIN flag_clients fc ON f.id = fc.flag_id
       WHERE f.key = ? 
       GROUP BY f.id
@@ -299,16 +247,14 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
     return row ? this.mapToEntity(row) : null;
   }
 
-  async findByStatus(status: FlagStatus): Promise<FeatureFlag[]> {
+  async findByStatus(status: TFlagStatus): Promise<FeatureFlag[]> {
     const sql = `
       SELECT 
         f.*,
-        tc.start_date, tc.end_date,
-        pd.percentage,
-        GROUP_CONCAT(fc.client_id) AS client_ids_concat
+        ttl.expires_at, ttl.auto_delete,
+        GROUP_CONCAT(DISTINCT fc.client_id) AS client_ids_concat
       FROM feature_flags f
-      LEFT JOIN flag_time_constraints tc ON f.id = tc.flag_id
-      LEFT JOIN flag_percentage_distributions pd ON f.id = pd.flag_id
+      LEFT JOIN flag_ttl ttl ON f.id = ttl.flag_id
       LEFT JOIN flag_clients fc ON f.id = fc.flag_id
       WHERE f.status = ? 
       GROUP BY f.id
@@ -323,12 +269,10 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
     const sql = `
       SELECT 
         f.*,
-        tc.start_date, tc.end_date,
-        pd.percentage,
-        GROUP_CONCAT(fc.client_id) AS client_ids_concat
+        ttl.expires_at, ttl.auto_delete,
+        GROUP_CONCAT(DISTINCT fc.client_id) AS client_ids_concat
       FROM feature_flags f
-      LEFT JOIN flag_time_constraints tc ON f.id = tc.flag_id
-      LEFT JOIN flag_percentage_distributions pd ON f.id = pd.flag_id
+      LEFT JOIN flag_ttl ttl ON f.id = ttl.flag_id
       LEFT JOIN flag_clients fc ON f.id = fc.flag_id
       WHERE f.category_id = ? 
       GROUP BY f.id
@@ -339,16 +283,14 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
     return rows.map(row => this.mapToEntity(row));
   }
 
-  async findByType(type: FlagType): Promise<FeatureFlag[]> {
+  async findByType(type: TFlagType): Promise<FeatureFlag[]> {
     const sql = `
       SELECT 
         f.*,
-        tc.start_date, tc.end_date,
-        pd.percentage,
-        GROUP_CONCAT(fc.client_id) AS client_ids_concat
+        ttl.expires_at, ttl.auto_delete,
+        GROUP_CONCAT(DISTINCT fc.client_id) AS client_ids_concat
       FROM feature_flags f
-      LEFT JOIN flag_time_constraints tc ON f.id = tc.flag_id
-      LEFT JOIN flag_percentage_distributions pd ON f.id = pd.flag_id
+      LEFT JOIN flag_ttl ttl ON f.id = ttl.flag_id
       LEFT JOIN flag_clients fc ON f.id = fc.flag_id
       WHERE f.type = ? 
       GROUP BY f.id
@@ -359,7 +301,7 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
     return rows.map(row => this.mapToEntity(row));
   }
 
-  async toggleStatus(id: string, status: FlagStatus): Promise<FeatureFlag | null> {
+  async toggleStatus(id: string, status: TFlagStatus): Promise<FeatureFlag | null> {
     const updateSql = `
       UPDATE ${this.tableName} 
       SET status = ?, updated_at = ? 
@@ -377,12 +319,10 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
     const sql = `
       SELECT 
         f.*,
-        tc.start_date, tc.end_date,
-        pd.percentage,
-        GROUP_CONCAT(fc.client_id) AS client_ids_concat
+        ttl.expires_at, ttl.auto_delete,
+        GROUP_CONCAT(DISTINCT fc.client_id) AS client_ids_concat
       FROM feature_flags f
-      LEFT JOIN flag_time_constraints tc ON f.id = tc.flag_id
-      LEFT JOIN flag_percentage_distributions pd ON f.id = pd.flag_id
+      LEFT JOIN flag_ttl ttl ON f.id = ttl.flag_id
       JOIN flag_clients fc ON f.id = fc.flag_id
       WHERE f.status = ? AND fc.client_id = ?
       GROUP BY f.id
@@ -390,6 +330,42 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
     `;
 
     const rows = await this.dataGateway.query<FlagRow>(sql, [FlagStatus.ACTIVE, clientId]);
+    return rows.map(row => this.mapToEntity(row));
+  }
+
+  async findExpiredFlags(): Promise<FeatureFlag[]> {
+    const sql = `
+      SELECT 
+        f.*,
+        ttl.expires_at, ttl.auto_delete,
+        GROUP_CONCAT(DISTINCT fc.client_id) AS client_ids_concat
+      FROM feature_flags f
+      JOIN flag_ttl ttl ON f.id = ttl.flag_id
+      LEFT JOIN flag_clients fc ON f.id = fc.flag_id
+      WHERE ttl.expires_at < ?
+      GROUP BY f.id
+      ORDER BY f.name ASC
+    `;
+
+    const rows = await this.dataGateway.query<FlagRow>(sql, [new Date()]);
+    return rows.map(row => this.mapToEntity(row));
+  }
+
+  async findAutoDeleteFlags(): Promise<FeatureFlag[]> {
+    const sql = `
+      SELECT 
+        f.*,
+        ttl.expires_at, ttl.auto_delete,
+        GROUP_CONCAT(DISTINCT fc.client_id) AS client_ids_concat
+      FROM feature_flags f
+      JOIN flag_ttl ttl ON f.id = ttl.flag_id
+      LEFT JOIN flag_clients fc ON f.id = fc.flag_id
+      WHERE ttl.expires_at < ? AND ttl.auto_delete = 1
+      GROUP BY f.id
+      ORDER BY f.name ASC
+    `;
+
+    const rows = await this.dataGateway.query<FlagRow>(sql, [new Date()]);
     return rows.map(row => this.mapToEntity(row));
   }
 
@@ -407,8 +383,7 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
       }
     };
 
-    const startDate = parseDate(row.start_date);
-    const endDate = parseDate(row.end_date);
+    const expiresAt = parseDate(row.expires_at)!;
     const createdAt = parseDate(row.created_at) || new Date();
     const updatedAt = parseDate(row.updated_at);
 
@@ -417,15 +392,21 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
         ? row.client_ids_concat.split(',')
         : [];
 
-    const timeConstraint: TimeConstraint | undefined =
-      startDate || endDate ? { startDate, endDate } : undefined;
+    let enumValues: string[] | undefined = undefined;
+    if (row.enum_values && typeof row.enum_values === 'string') {
+      try {
+        enumValues = JSON.parse(row.enum_values);
+      } catch (e) {
+        // If parsing fails, leave enumValues as undefined
+      }
+    }
 
-    const percentageDistribution: PercentageDistribution | undefined =
-      row.percentage !== null && row.percentage !== undefined
-        ? { percentage: row.percentage }
-        : undefined;
+    const ttl: IFlagTTL = {
+      expiresAt,
+      autoDelete: row.auto_delete === 1 || row.auto_delete === true,
+    };
 
-    const metadata: Metadata = {
+    const metadata: IMetadata = {
       createdBy: row.created_by,
       createdAt,
       updatedBy: row.updated_by || undefined,
@@ -437,13 +418,29 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
       key: row.key,
       name: row.name,
       description: row.description || undefined,
-      type: row.type as FlagType,
-      status: row.status as FlagStatus,
+      type: row.type as TFlagType,
+      status: row.status as TFlagStatus,
       categoryId: row.category_id || undefined,
-      timeConstraint,
-      percentageDistribution,
+      enumValues,
+      ttl,
       clientIds: clientIds.length > 0 ? clientIds : undefined,
       metadata,
     });
+  }
+
+  private buildBaseSelectQuery(whereClause?: string): string {
+    return `
+      SELECT 
+        f.*,
+        ttl.expires_at, 
+        ttl.auto_delete,
+        GROUP_CONCAT(DISTINCT fc.client_id) AS client_ids_concat
+      FROM feature_flags f
+      LEFT JOIN flag_ttl ttl ON f.id = ttl.flag_id
+      LEFT JOIN flag_clients fc ON f.id = fc.flag_id
+      ${whereClause ? `WHERE ${whereClause}` : ''}
+      GROUP BY f.id
+      ORDER BY f.name ASC
+    `;
   }
 }

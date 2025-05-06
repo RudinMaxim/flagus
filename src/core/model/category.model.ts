@@ -1,4 +1,4 @@
-import { IEntity, Metadata } from '../../shared/kernel';
+import { IEntity, IMetadata } from '../../shared/kernel';
 
 export interface CreateCategoryDTO {
   name: string;
@@ -15,27 +15,29 @@ export interface UpdateCategoryDTO {
   depth?: number;
 }
 
+interface IFlagCategoryProps {
+  id: string;
+  name: string;
+  description?: string;
+  parentId?: string;
+  depth: number;
+  metadata: IMetadata;
+}
+
 export class FlagCategory implements IEntity<string> {
   id: string;
   name: string;
   description?: string;
   parentId?: string;
   depth: number;
-  metadata: Metadata;
+  metadata: IMetadata;
 
-  constructor(data: {
-    id: string;
-    name: string;
-    description?: string;
-    parentId?: string;
-    depth: number;
-    metadata: Metadata;
-  }) {
-    this.id = data.id;
-    this.name = data.name;
-    this.description = data.description;
-    this.parentId = data.parentId;
-    this.depth = data.depth;
-    this.metadata = data.metadata;
+  constructor(props: IFlagCategoryProps) {
+    this.id = props.id;
+    this.name = props.name;
+    this.description = props.description;
+    this.parentId = props.parentId;
+    this.depth = props.depth;
+    this.metadata = props.metadata;
   }
 }

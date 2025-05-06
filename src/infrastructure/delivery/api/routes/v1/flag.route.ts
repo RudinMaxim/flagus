@@ -2,7 +2,7 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import * as schemas from '../../schemas/flag.schema';
 import { CreateFlagDTO, UpdateFlagDTO } from '../../../../../core/model';
 import { FeatureFlagService } from '../../../../../core/service';
-import { FlagStatus } from '../../../../../shared/kernel';
+import { TFlagStatus } from '../../../../../shared/kernel';
 import { TYPES } from '../../../../config/types';
 
 export default async function (fastify: FastifyInstance) {
@@ -151,7 +151,7 @@ export default async function (fastify: FastifyInstance) {
     handler: async (
       request: FastifyRequest<{
         Params: { id: string };
-        Body: { status: FlagStatus; userId: string };
+        Body: { status: TFlagStatus; userId: string };
       }>,
       reply: FastifyReply
     ) => {
@@ -172,6 +172,86 @@ export default async function (fastify: FastifyInstance) {
           statusCode: 500,
           error: 'Internal Server Error',
           message: 'Failed to toggle flag status',
+        });
+      }
+    },
+  });
+
+  fastify.route({
+    method: 'POST',
+    url: '/:id/reset-ttl',
+    schema: schemas.resetTTLSchema,
+    handler: async (
+      request: FastifyRequest<{
+        Params: { id: string };
+        Body: { userId: string };
+      }>,
+      reply: FastifyReply
+    ) => {
+      try {
+        const { userId } = request.body;
+        const updatedFlag = await flagService.resetTTL(request.params.id, userId);
+        if (!updatedFlag) {
+          return reply.code(404).send({
+            statusCode: 404,
+            error: 'Not Found',
+            message: 'Flag not found',
+          });
+        }
+        return reply.code(200).send({ data: updatedFlag });
+      } catch (error) {
+        request.log.error(error, `Error resetting TTL for flag ID: ${request.params.id}`);
+        return reply.code(500).send({
+          statusCode: 500,
+          error: 'Internal Server Error',
+          message: 'Failed to reset flag TTL',
+        });
+      }
+    },
+  });
+
+  fastify.route({
+    method: 'GET',
+    url: '/expired',
+    schema: {
+      tags: ['Feature Flags'],
+    },
+    handler: async (_request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const expiredFlags = await flagService.findExpiredFlags();
+        return reply.code(200).send({ data: expiredFlags });
+      } catch (error) {
+        _request.log.error(error, 'Error fetching expired flags');
+        return reply.code(500).send({
+          statusCode: 500,
+          error: 'Internal Server Error',
+          message: 'Failed to fetch expired flags',
+        });
+      }
+    },
+  });
+
+  fastify.route({
+    method: 'POST',
+    url: '/cleanup',
+    schema: {
+      tags: ['Feature Flags'],
+    },
+    handler: async (_request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const deletedCount = await flagService.cleanupExpiredFlags();
+        return reply.code(200).send({
+          data: {
+            deletedCount,
+            message: `Cleaned up ${deletedCount} expired flags`,
+          },
+        });
+      } catch (error) {
+        _request.log.error(error, 'Error cleaning up expired flags');
+        return reply.code(500).send({
+          statusCode: 500,
+          error: 'Internal Server Error',
+          message: 'Failed to clean up expired flags',
         });
       }
     },
@@ -213,14 +293,14 @@ export default async function (fastify: FastifyInstance) {
       reply: FastifyReply
     ) => {
       try {
-        const isActive = await flagService.evaluateFlag(
+        const result = await flagService.evaluateFlag(
           request.params.flagName,
           request.params.clientId
         );
         return reply.code(200).send({
           data: {
             flagName: request.params.flagName,
-            isActive,
+            isActive: result,
           },
         });
       } catch (error) {

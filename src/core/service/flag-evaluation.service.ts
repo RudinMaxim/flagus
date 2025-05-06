@@ -3,6 +3,7 @@ import { TYPES } from '../../infrastructure/config/types';
 import { IFlagRepository } from '../../infrastructure/persistence';
 import { ILogger } from '../../shared/logger';
 import { FeatureFlag } from '../model';
+import { FlagType } from '../../shared/kernel';
 
 export class FlagEvaluationError extends Error {
   constructor(message: string) {
@@ -22,7 +23,7 @@ export class FlagEvaluationService {
     @inject(TYPES.Logger) private readonly logger: ILogger
   ) {}
 
-  async evaluateFlag(flagNameOrKey: string, clientId: string): Promise<boolean> {
+  public async evaluateFlag(flagNameOrKey: string, clientId: string): Promise<boolean | string> {
     try {
       if (!flagNameOrKey) {
         throw new FlagEvaluationError('Flag name is required');
@@ -38,6 +39,15 @@ export class FlagEvaluationService {
         return false;
       }
 
+      if (flag.isExpired()) {
+        this.logger.debug(`Flag '${flagNameOrKey}' is expired`);
+        return false;
+      }
+
+      if (flag.type === FlagType.ENUM) {
+        return flag.getEnumValue(clientId);
+      }
+
       return flag.isActiveForClient(clientId);
     } catch (error) {
       this.logger.error(
@@ -48,7 +58,7 @@ export class FlagEvaluationService {
     }
   }
 
-  async getAllFlagsForClient(clientId: string): Promise<Record<string, boolean>> {
+  public async getAllFlagsForClient(clientId: string): Promise<Record<string, boolean>> {
     try {
       if (!clientId) {
         throw new FlagEvaluationError('Client ID is required');
@@ -62,7 +72,7 @@ export class FlagEvaluationService {
     }
   }
 
-  async refreshCache(): Promise<void> {
+  private async refreshCache(): Promise<void> {
     try {
       const activeFlags = await this.flagRepository.findActiveFlags();
 
@@ -80,16 +90,6 @@ export class FlagEvaluationService {
     }
   }
 
-  invalidateFlagInCache(flagName: string): void {
-    if (!flagName) {
-      this.logger.warn('Attempted to invalidate flag with empty name');
-      return;
-    }
-
-    this.flagCache.delete(flagName);
-    this.logger.debug(`Flag ${flagName} invalidated in cache`);
-  }
-
   private async refreshCacheIfNeeded(): Promise<void> {
     const now = new Date();
     if (now.getTime() - this.lastCacheUpdate.getTime() > this.cacheTTL) {
@@ -97,7 +97,7 @@ export class FlagEvaluationService {
     }
   }
 
-  private async getFlagFromCache(flagNameOrKey: string): Promise<FeatureFlag | undefined> {
+  private async getFlagFromCache(flagNameOrKey: string): Promise<FeatureFlag | null> {
     const flag = this.flagCache.get(flagNameOrKey);
 
     if (!flag) {
@@ -108,7 +108,7 @@ export class FlagEvaluationService {
         return foundFlag;
       }
 
-      return undefined;
+      return null;
     }
 
     return flag;

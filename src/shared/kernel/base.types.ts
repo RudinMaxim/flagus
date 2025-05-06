@@ -1,40 +1,18 @@
-export enum FlagType {
-  BOOLEAN = 'boolean',
-  PERCENTAGE = 'percentage',
-}
+import { AuditAction, FlagStatus, FlagType, UserRole } from './base.constans';
 
-export enum FlagStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  SCHEDULED = 'scheduled',
-  ARCHIVED = 'archived',
-}
-
-export enum UserRole {
-  ADMIN = 'admin',
-  EDITOR = 'editor',
-  VIEWER = 'viewer',
-}
-
-export enum AuditAction {
-  CREATE = 'create',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  TOGGLE = 'toggle',
-}
-
-export interface TimeConstraint {
-  startDate?: Date;
-  endDate?: Date;
-}
-
-export interface PercentageDistribution {
-  percentage: number; // 0-100
-}
-
-export interface Metadata {
+export interface IMetadata {
   createdBy: string;
   createdAt: Date;
   updatedBy?: string;
   updatedAt?: Date;
 }
+
+export interface IFlagTTL {
+  expiresAt: Date;
+  autoDelete: boolean;
+}
+
+export type TFlagType = (typeof FlagType)[keyof typeof FlagType];
+export type TFlagStatus = (typeof FlagStatus)[keyof typeof FlagStatus];
+export type TUserRole = (typeof UserRole)[keyof typeof UserRole];
+export type TAuditAction = (typeof AuditAction)[keyof typeof AuditAction];

@@ -1,7 +1,7 @@
 import { injectable, inject } from 'inversify';
 import { TYPES } from '../../infrastructure/config/types';
 import { ICategoryRepository } from '../../infrastructure/persistence';
-import { IService, AuditAction } from '../../shared/kernel';
+import { IService, AuditAction, TAuditAction } from '../../shared/kernel';
 import { FlagCategory, CreateCategoryDTO, UpdateCategoryDTO } from '../model';
 import { AuditService } from './audit.service';
 
@@ -221,7 +221,7 @@ export class CategoryService
   }
 
   private async logAudit(
-    action: AuditAction,
+    action: TAuditAction,
     userId: string,
     entityId: string,
     oldValue: FlagCategory | null,

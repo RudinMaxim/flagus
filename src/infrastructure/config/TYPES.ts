@@ -14,4 +14,6 @@ export const TYPES = {
   FlagEvaluationService: Symbol.for('FlagEvaluationService'),
   FeatureFlagService: Symbol.for('FeatureFlagService'),
   CategoryService: Symbol.for('CategoryService'),
+  FlagTTLService: Symbol.for('FlagTTLService'), // обявить
+  FeatureFlagCleanupService: Symbol.for('FeatureFlagCleanupService'), // обявить
 };

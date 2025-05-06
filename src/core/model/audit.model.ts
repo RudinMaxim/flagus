@@ -1,20 +1,8 @@
-import { AuditAction, IEntity } from '../../shared/kernel';
-
-export interface AuditLogProps {
-  id: string;
-  userId: string;
-  action: AuditAction;
-  entityId: string;
-  entityType: string;
-  oldValue: string | undefined;
-  newValue: string | undefined;
-  timestamp: Date;
-  ipAddress?: string;
-}
+import { TAuditAction, IEntity } from '../../shared/kernel';
 
 export interface CreateAuditLogDTO {
   userId: string;
-  action: AuditAction;
+  action: TAuditAction;
   entityId: string;
   entityType: string;
   oldValue?: string;
@@ -22,10 +10,22 @@ export interface CreateAuditLogDTO {
   ipAddress?: string;
 }
 
+interface IAuditLogProps {
+  id: string;
+  userId: string;
+  action: TAuditAction;
+  entityId: string;
+  entityType: string;
+  oldValue: string | undefined;
+  newValue: string | undefined;
+  timestamp: Date;
+  ipAddress?: string;
+}
+
 export class AuditLog implements IEntity<string> {
   id: string;
   userId: string;
-  action: AuditAction;
+  action: TAuditAction;
   entityId: string;
   entityType: string;
   oldValue: string | undefined;
@@ -33,7 +33,7 @@ export class AuditLog implements IEntity<string> {
   timestamp: Date;
   ipAddress?: string;
 
-  constructor(props: AuditLogProps) {
+  constructor(props: IAuditLogProps) {
     this.id = props.id;
     this.userId = props.userId;
     this.action = props.action;

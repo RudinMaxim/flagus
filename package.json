@@ -19,12 +19,12 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "node -r tsconfig-paths/register dist/index.js",
-    "dev": "npx nodemon --watch src --exec \"ts-node -r tsconfig-paths/register src/index.ts\"",
+    "dev": "npx nodemon",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
     "format": "prettier --write \"src/**/*.{ts,js,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,js,json}\"",
-    "seed": "tsc && node dist/seed.js",
+    "seed": "node scripts/seed.js",
     "prepare": "husky install"
   },
   "dependencies": {
