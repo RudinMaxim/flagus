@@ -1,9 +1,9 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { inject, injectable } from 'inversify';
-import { CreateFlagDTO, UpdateFlagDTO } from '../../../../../core/model';
-import { FeatureFlagService } from '../../../../../core/service';
 import { TFlagStatus } from '../../../../../shared/kernel';
 import { TYPES } from '../../../../config/types';
+import { CreateFlagDTO, UpdateFlagDTO } from '../../../../../core/flag-manager/model';
+import { FeatureFlagService } from '../../../../../core/flag-manager/service';
 
 @injectable()
 export class FlagHttpController {

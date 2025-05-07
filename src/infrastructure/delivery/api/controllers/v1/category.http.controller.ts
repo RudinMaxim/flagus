@@ -1,8 +1,8 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { inject, injectable } from 'inversify';
-import { CreateCategoryDTO, UpdateCategoryDTO } from '../../../../../core/model';
-import { CategoryService } from '../../../../../core/service';
 import { TYPES } from '../../../../config/types';
+import { CreateCategoryDTO, UpdateCategoryDTO } from '../../../../../core/flag-manager/model';
+import { CategoryService } from '../../../../../core/flag-manager/service';
 
 @injectable()
 export class CategoryHttpController {

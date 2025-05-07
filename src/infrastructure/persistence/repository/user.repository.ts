@@ -1,5 +1,5 @@
 import { injectable, inject } from 'inversify';
-import { User } from '../../auth/user.model';
+import { User } from '../../../core/auth/user.model';
 import { TYPES } from '../../config/types';
 import { BaseRepository, DataGateway } from '../../storage';
 import { IUserRepository } from '../interfaces';

@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { inject, injectable } from 'inversify';
-import { AuditService } from '../../../../../core/service';
 import { TYPES } from '../../../../config/types';
+import { AuditService } from '../../../../../core/flag-manager/service';
 
 @injectable()
 export class AuditHttpController {
