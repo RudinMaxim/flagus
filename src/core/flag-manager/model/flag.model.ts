@@ -1,38 +1,8 @@
-import {
-  IEntity,
-  FlagType,
-  FlagStatus,
-  IMetadata,
-  IFlagTTL,
-  TFlagType,
-  TFlagStatus,
-  IFlagEnum,
-} from '../../shared/kernel';
+import { IMetadata, IEntity } from '../../../shared/kernel';
+import { FlagStatus, FlagType } from '../constants';
+import { TFlagType, IFlagTTL, TFlagStatus, IFlagEnum } from '../interfaces';
 
-export interface CreateFlagDTO {
-  key: string;
-  name: string;
-  description?: string;
-  type: TFlagType;
-  status?: TFlagStatus;
-  categoryId?: string;
-  enum?: IFlagEnum;
-  clientIds?: string[];
-  createdBy: string;
-}
-
-export interface UpdateFlagDTO {
-  name?: string;
-  description?: string;
-  type?: TFlagType;
-  status?: TFlagStatus;
-  categoryId?: string;
-  enum?: IFlagEnum;
-  clientIds?: string[];
-  updatedBy: string;
-}
-
-interface IFeatureFlagProps {
+export interface IFeatureFlagProps {
   id: string;
   key: string;
   name: string;

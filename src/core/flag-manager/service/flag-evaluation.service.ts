@@ -1,9 +1,9 @@
 import { injectable, inject } from 'inversify';
-import { TYPES } from '../../infrastructure/config/types';
-import { IFlagRepository } from '../../infrastructure/persistence';
-import { ILogger } from '../../shared/logger';
+import { TYPES } from '../../../infrastructure/config/types';
+import { IFlagRepository } from '../../../infrastructure/persistence';
+import { ILogger } from '../../../shared/logger';
+import { FlagType } from '../constants';
 import { FeatureFlag } from '../model';
-import { FlagType } from '../../shared/kernel';
 
 export class FlagEvaluationError extends Error {
   constructor(message: string) {

@@ -1,8 +1,10 @@
 import { injectable, inject } from 'inversify';
-import { TYPES } from '../../infrastructure/config/types';
-import { ICategoryRepository } from '../../infrastructure/persistence';
-import { IService, AuditAction, TAuditAction } from '../../shared/kernel';
-import { FlagCategory, CreateCategoryDTO, UpdateCategoryDTO } from '../model';
+import { TYPES } from '../../../infrastructure/config/types';
+import { ICategoryRepository } from '../../../infrastructure/persistence';
+import { IService } from '../../../shared/kernel';
+import { AuditAction } from '../constants';
+import { CreateCategoryDTO, UpdateCategoryDTO, TAuditAction } from '../interfaces';
+import { FlagCategory } from '../model';
 import { AuditService } from './audit.service';
 
 export class CategoryError extends Error {

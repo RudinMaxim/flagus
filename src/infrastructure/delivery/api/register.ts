@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { ConfigService } from '../../config/config';
-import apiRoutes from './routes';
+import apiRoutes from './v1/routes';
 
 export async function registerApiRoutes(fastify: FastifyInstance, config: ConfigService) {
   if (config.cors.enabled) {
@@ -47,6 +47,14 @@ export async function registerApiRoutes(fastify: FastifyInstance, config: Config
             description: 'Endpoints for accessing audit logs',
           },
           {
+            name: 'Authentication',
+            description: 'Endpoints for authentication',
+          },
+          {
+            name: 'Users',
+            description: 'Endpoints for managing users',
+          },
+          {
             name: 'System',
             description: 'Endpoints for system',
           },
@@ -59,9 +67,14 @@ export async function registerApiRoutes(fastify: FastifyInstance, config: Config
               in: 'header',
               description: 'API key for authentication',
             },
+            bearerAuth: {
+              type: 'http',
+              scheme: 'bearer',
+              bearerFormat: 'JWT',
+              description: 'JWT Bearer token for user authentication',
+            },
           },
         },
-        security: [{ apiKey: [] }],
       },
     });
 

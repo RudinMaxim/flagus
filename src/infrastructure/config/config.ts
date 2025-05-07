@@ -36,6 +36,10 @@ export class ConfigService {
     origins: (process.env.CORS_ORIGINS || '*').split(','),
   };
 
+  public readonly JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || 'JWT_ACCESS_SECRET';
+  public readonly JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'JWT_REFRESH_SECRET';
+  public readonly JWT_ACCESS_EXPIRES = process.env.JWT_ACCESS_EXPIRES || 15 * 60;
+  public readonly JWT_REFRESH_EXPIRES = process.env.JWT_REFRESH_EXPIRES || 7 * 60 * 60 * 24;
   public readonly sqlite: SQLiteConfig = {
     database: process.env.SQLITE_DATABASE || ':memory:',
     options: {

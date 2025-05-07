@@ -1,19 +1,4 @@
-import { IEntity, IMetadata } from '../../shared/kernel';
-
-export interface CreateCategoryDTO {
-  name: string;
-  description?: string;
-  parentId?: string;
-  createdBy: string;
-}
-
-export interface UpdateCategoryDTO {
-  name?: string;
-  description?: string;
-  parentId?: string;
-  updatedBy: string;
-  depth?: number;
-}
+import { IMetadata, IEntity } from '../../../shared/kernel';
 
 interface IFlagCategoryProps {
   id: string;

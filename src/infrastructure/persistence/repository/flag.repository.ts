@@ -1,17 +1,12 @@
 import { injectable, inject } from 'inversify';
 import crypto from 'crypto';
-import { FeatureFlag } from '../../../core/model';
-import {
-  FlagStatus,
-  IFlagTTL,
-  IMetadata,
-  TFlagStatus,
-  TFlagType,
-  IFlagEnum,
-} from '../../../shared/kernel';
-import { TYPES } from '../../config/types';
-import { BaseRepository, DataGateway } from '../../storage';
 import { FlagRow, IFlagRepository } from '../interfaces';
+import { FlagStatus } from '../../../core/flag-manager/constants';
+import { TFlagStatus, TFlagType, IFlagEnum, IFlagTTL } from '../../../core/flag-manager/interfaces';
+import { FeatureFlag } from '../../../core/flag-manager/model';
+import { IMetadata } from '../../../shared/kernel';
+import { BaseRepository, DataGateway } from '../../../shared/storage';
+import { TYPES } from '../../config/types';
 
 @injectable()
 export class FlagRepository extends BaseRepository<FeatureFlag, string> implements IFlagRepository {

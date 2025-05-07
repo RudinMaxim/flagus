@@ -1,5 +1,6 @@
-import { IRepository, TFlagType, TFlagStatus } from '../../../shared/kernel';
-import { FeatureFlag } from '../../../core/model';
+import { TFlagStatus, TFlagType } from '../../../core/flag-manager/interfaces';
+import { FeatureFlag } from '../../../core/flag-manager/model';
+import { IRepository } from '../../../shared/kernel';
 
 export interface FlagRow {
   id: string;

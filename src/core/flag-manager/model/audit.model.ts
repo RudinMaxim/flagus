@@ -1,14 +1,5 @@
-import { TAuditAction, IEntity } from '../../shared/kernel';
-
-export interface CreateAuditLogDTO {
-  userId: string;
-  action: TAuditAction;
-  entityId: string;
-  entityType: string;
-  oldValue?: string;
-  newValue?: string;
-  ipAddress?: string;
-}
+import { IEntity } from '../../../shared/kernel';
+import { TAuditAction } from '../interfaces';
 
 interface IAuditLogProps {
   id: string;

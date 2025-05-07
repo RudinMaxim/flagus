@@ -1,9 +1,31 @@
 import { IRepository } from '../../../shared/kernel';
-import { User } from '../../../core/auth/user.model';
+import { User } from '../../../core/access/model/user.model';
+
+export interface UserRow {
+  id: string;
+  username: string;
+  password_hash: string;
+  email: string;
+  role: string;
+  is_active: number;
+  created_at: string;
+  created_by: string;
+  updated_at?: string;
+  updated_by?: string;
+}
 
 export interface IUserRepository extends IRepository<User, string> {
-  findByUsername(username: string): Promise<User | null>;
+  findById(id: string): Promise<User | null>;
   findByEmail(email: string): Promise<User | null>;
-  findByRole(role: string): Promise<User[]>;
-  updateLastLogin(id: string): Promise<User | null>;
+  create(user: Omit<User, 'id'>): Promise<User>;
+  update(id: string, userData: Partial<User>): Promise<User>;
+  delete(id: string): Promise<boolean>;
+  list(options?: {
+    skip?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+    filter?: Partial<User>;
+  }): Promise<{ users: User[]; total: number }>;
+  checkIsFirstUser(): Promise<boolean>;
 }

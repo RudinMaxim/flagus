@@ -1,6 +1,6 @@
 import { injectable, inject } from 'inversify';
-import { TYPES } from '../../infrastructure/config/types';
-import { ILogger } from '../../shared/logger';
+import { TYPES } from '../../../infrastructure/config/types';
+import { ILogger } from '../../../shared/logger';
 import { FeatureFlag } from '../model';
 import { FeatureFlagService } from './flag.service';
 

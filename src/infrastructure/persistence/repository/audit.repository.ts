@@ -1,10 +1,10 @@
 import { injectable, inject } from 'inversify';
 import crypto from 'crypto';
-import { AuditLog } from '../../../core/model';
-import { TAuditAction } from '../../../shared/kernel';
-import { TYPES } from '../../config/types';
-import { BaseRepository, DataGateway } from '../../storage';
 import { IAuditRepository, AuditLogRow } from '../interfaces';
+import { TAuditAction } from '../../../core/flag-manager/interfaces';
+import { AuditLog } from '../../../core/flag-manager/model';
+import { BaseRepository, DataGateway } from '../../../shared/storage';
+import { TYPES } from '../../config/types';
 
 @injectable()
 export class AuditRepository extends BaseRepository<AuditLog, string> implements IAuditRepository {

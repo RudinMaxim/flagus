@@ -1,14 +1,20 @@
 import { Container } from 'inversify';
 import { ILogger, LoggerService } from '../../shared/logger';
 import { persistenceModule } from '../persistence';
-import { storageModule, OnInit, OnDestroy } from '../storage';
 import { ConfigService } from './config';
 import { TYPES } from './types';
-
-import { FlagHttpController } from '../delivery/api/controllers/v1/flag.http.controller';
-import { AuditHttpController } from '../delivery/api/controllers/v1/audit.http.controller';
-import { CategoryHttpController } from '../delivery/api/controllers/v1/category.http.controller';
 import { flagManagerContainer } from '../../core/flag-manager';
+import { storageModule, OnInit, OnDestroy } from '../../shared/storage';
+import {
+  AuditHttpController,
+  AuthHttpController,
+  CategoryHttpController,
+  FlagHttpController,
+  UserHttpController,
+} from '../delivery/api/v1/controllers';
+import { accessContainer } from '../../core/access';
+import { AuthMiddleware } from '../delivery/middlewares/auth.middleware';
+import { EvaluateHttpController } from '../delivery/api/v1/controllers/evaluate.http.controller';
 
 export async function createContainer(): Promise<Container> {
   const container = new Container();
@@ -19,6 +25,7 @@ export async function createContainer(): Promise<Container> {
   container.load(storageModule);
   container.load(persistenceModule);
   container.load(flagManagerContainer);
+  container.load(accessContainer);
 
   container
     .bind<AuditHttpController>(TYPES.AuditHttpController)
@@ -32,6 +39,21 @@ export async function createContainer(): Promise<Container> {
     .bind<FlagHttpController>(TYPES.FlagHttpController)
     .to(FlagHttpController)
     .inSingletonScope();
+  container
+    .bind<EvaluateHttpController>(TYPES.EvaluateHttpController)
+    .to(EvaluateHttpController)
+    .inSingletonScope();
+
+  container
+    .bind<AuthHttpController>(TYPES.AuthHttpController)
+    .to(AuthHttpController)
+    .inSingletonScope();
+  container
+    .bind<UserHttpController>(TYPES.UserHttpController)
+    .to(UserHttpController)
+    .inSingletonScope();
+
+  container.bind<AuthMiddleware>(TYPES.AuthMiddleware).to(AuthMiddleware).inSingletonScope();
 
   const initializeApp = async () => {
     const initializables = container.getAll<OnInit>(TYPES.OnInit);

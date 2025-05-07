@@ -7,3 +7,13 @@ declare module 'fastify' {
     config: any;
   }
 }
+
+declare module 'fastify' {
+  interface FastifyRequest {
+    user?: {
+      userId: string;
+      email: string;
+      role: string;
+    };
+  }
+}

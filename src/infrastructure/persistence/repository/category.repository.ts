@@ -1,10 +1,10 @@
 import { injectable, inject } from 'inversify';
 import crypto from 'crypto';
-import { FlagCategory } from '../../../core/model';
-import { BaseRepository, DataGateway } from '../../storage';
 import { CategoryRow, ICategoryRepository } from '../interfaces';
 import { TYPES } from '../../config/types';
 import { IMetadata } from '../../../shared/kernel';
+import { FlagCategory } from '../../../core/flag-manager/model';
+import { BaseRepository, DataGateway } from '../../../shared/storage';
 
 @injectable()
 export class CategoryRepository

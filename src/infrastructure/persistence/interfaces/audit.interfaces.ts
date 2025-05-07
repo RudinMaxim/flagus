@@ -1,5 +1,6 @@
-import { IRepository, TAuditAction } from '../../../shared/kernel';
-import { AuditLog } from '../../../core/model';
+import { TAuditAction } from '../../../core/flag-manager/interfaces';
+import { AuditLog } from '../../../core/flag-manager/model';
+import { IRepository } from '../../../shared/kernel';
 
 export interface AuditLogRow {
   id: string;

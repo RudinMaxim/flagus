@@ -17,7 +17,16 @@ export const TYPES = {
   FlagTTLService: Symbol.for('FlagTTLService'),
   FeatureFlagCleanupService: Symbol.for('FeatureFlagCleanupService'),
 
+  AuthService: Symbol.for('AuthService'),
+  TokenService: Symbol.for('TokenService'),
+  UserService: Symbol.for('UserService'),
+
   AuditHttpController: Symbol.for('AuditHttpController'),
   CategoryHttpController: Symbol.for('CategoryHttpController'),
   FlagHttpController: Symbol.for('FlagHttpController'),
+  UserHttpController: Symbol.for('UserHttpController'),
+  AuthHttpController: Symbol.for('AuthHttpController'),
+  EvaluateHttpController: Symbol.for('EvaluateHttpController'),
+
+  AuthMiddleware: Symbol.for('AuthMiddleware'),
 };

@@ -1,5 +1,5 @@
+import { FlagCategory } from '../../../core/flag-manager/model';
 import { IRepository } from '../../../shared/kernel';
-import { FlagCategory } from '../../../core/model';
 
 export interface CategoryRow {
   id: string;

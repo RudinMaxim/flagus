@@ -1,11 +1,13 @@
 import { injectable, inject } from 'inversify';
-import { TYPES } from '../../infrastructure/config/types';
-import { IFlagRepository } from '../../infrastructure/persistence';
-import { IService, FlagStatus, AuditAction, FlagType, TFlagStatus } from '../../shared/kernel';
-import { FlagEvaluationService } from './flag-evaluation.service';
-import { FeatureFlag, CreateFlagDTO, UpdateFlagDTO } from '../model';
+import { TYPES } from '../../../infrastructure/config/types';
+import { IFlagRepository } from '../../../infrastructure/persistence';
+import { IService } from '../../../shared/kernel';
+import { ILogger } from '../../../shared/logger';
+import { FlagStatus, AuditAction, FlagType } from '../constants';
+import { CreateFlagDTO, UpdateFlagDTO, TFlagStatus } from '../interfaces';
+import { FeatureFlag } from '../model';
 import { AuditService } from './audit.service';
-import { ILogger } from '../../shared/logger';
+import { FlagEvaluationService } from './flag-evaluation.service';
 import { FlagTTLService } from './flag-ttl.service';
 
 export class FeatureFlagError extends Error {

@@ -1,8 +1,9 @@
 import { injectable, inject } from 'inversify';
-import { TYPES } from '../../infrastructure/config/types';
-import { IAuditRepository } from '../../infrastructure/persistence';
-import { ILogger } from '../../shared/logger';
-import { AuditLog, CreateAuditLogDTO } from '../model';
+import { TYPES } from '../../../infrastructure/config/types';
+import { IAuditRepository } from '../../../infrastructure/persistence';
+import { ILogger } from '../../../shared/logger';
+import { CreateAuditLogDTO } from '../interfaces';
+import { AuditLog } from '../model';
 
 export class AuditError extends Error {
   constructor(message: string) {
