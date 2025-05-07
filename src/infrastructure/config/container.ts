@@ -1,15 +1,20 @@
 import { Container } from 'inversify';
 import { ILogger, LoggerService } from '../../shared/logger';
 import { persistenceModule } from '../persistence';
-import { storageModule, OnInit, OnDestroy } from '../storage';
 import { ConfigService } from './config';
 import { TYPES } from './types';
+import { flagManagerContainer } from '../../core/flag-manager';
+import { storageModule, OnInit, OnDestroy } from '../../shared/storage';
 import {
-  AuditService,
-  CategoryService,
-  FeatureFlagService,
-} from '../../core/flag-management/service';
-import { FlagEvaluationService } from '../../core/evaluation/service/flag-evaluation.service';
+  AuditHttpController,
+  AuthHttpController,
+  CategoryHttpController,
+  FlagHttpController,
+  UserHttpController,
+} from '../delivery/api/v1/controllers';
+import { accessContainer } from '../../core/access';
+import { AuthMiddleware } from '../delivery/middlewares/auth.middleware';
+import { EvaluateHttpController } from '../delivery/api/v1/controllers/evaluate.http.controller';
 
 export async function createContainer(): Promise<Container> {
   const container = new Container();
@@ -19,17 +24,36 @@ export async function createContainer(): Promise<Container> {
 
   container.load(storageModule);
   container.load(persistenceModule);
+  container.load(flagManagerContainer);
+  container.load(accessContainer);
 
-  container.bind<AuditService>(TYPES.AuditService).to(AuditService).inSingletonScope();
-  container.bind<CategoryService>(TYPES.CategoryService).to(CategoryService).inSingletonScope();
   container
-    .bind<FeatureFlagService>(TYPES.FeatureFlagService)
-    .to(FeatureFlagService)
+    .bind<AuditHttpController>(TYPES.AuditHttpController)
+    .to(AuditHttpController)
     .inSingletonScope();
   container
-    .bind<FlagEvaluationService>(TYPES.FlagEvaluationService)
-    .to(FlagEvaluationService)
+    .bind<CategoryHttpController>(TYPES.CategoryHttpController)
+    .to(CategoryHttpController)
     .inSingletonScope();
+  container
+    .bind<FlagHttpController>(TYPES.FlagHttpController)
+    .to(FlagHttpController)
+    .inSingletonScope();
+  container
+    .bind<EvaluateHttpController>(TYPES.EvaluateHttpController)
+    .to(EvaluateHttpController)
+    .inSingletonScope();
+
+  container
+    .bind<AuthHttpController>(TYPES.AuthHttpController)
+    .to(AuthHttpController)
+    .inSingletonScope();
+  container
+    .bind<UserHttpController>(TYPES.UserHttpController)
+    .to(UserHttpController)
+    .inSingletonScope();
+
+  container.bind<AuthMiddleware>(TYPES.AuthMiddleware).to(AuthMiddleware).inSingletonScope();
 
   const initializeApp = async () => {
     const initializables = container.getAll<OnInit>(TYPES.OnInit);

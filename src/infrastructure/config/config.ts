@@ -21,6 +21,25 @@ export class ConfigService {
   public readonly apiVersion = process.env.API_VERSION || '1.0.0';
   public readonly maxNestingLevel = parseInt(process.env.MAX_NESTING_LEVEL || '5', 10);
 
+  public readonly server = {
+    port: parseInt(process.env.PORT as string, 10),
+    host: process.env.HOST || '0.0.0.0',
+    hostname: process.env.HOSTNAME || 'localhost',
+    swagger: {
+      enabled: true,
+      path: process.env.SWAGGER_PATH || '/documentation',
+    },
+  };
+
+  public readonly cors = {
+    enabled: true,
+    origins: (process.env.CORS_ORIGINS || '*').split(','),
+  };
+
+  public readonly JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || 'JWT_ACCESS_SECRET';
+  public readonly JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'JWT_REFRESH_SECRET';
+  public readonly JWT_ACCESS_EXPIRES = process.env.JWT_ACCESS_EXPIRES || 15 * 60;
+  public readonly JWT_REFRESH_EXPIRES = process.env.JWT_REFRESH_EXPIRES || 7 * 60 * 60 * 24;
   public readonly sqlite: SQLiteConfig = {
     database: process.env.SQLITE_DATABASE || ':memory:',
     options: {
