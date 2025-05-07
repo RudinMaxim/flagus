@@ -11,6 +11,9 @@ import {
   FlagEvaluationService,
 } from '../../core/service';
 import { FlagTTLService } from '../../core/service/flag-ttl.service';
+import { FlagHttpController } from '../delivery/api/controllers/v1/flag.http.controller';
+import { AuditHttpController } from '../delivery/api/controllers/v1/audit.http.controller';
+import { CategoryHttpController } from '../delivery/api/controllers/v1/category.http.controller';
 
 export async function createContainer(): Promise<Container> {
   const container = new Container();
@@ -33,6 +36,19 @@ export async function createContainer(): Promise<Container> {
     .inSingletonScope();
 
   container.bind<FlagTTLService>(TYPES.FlagTTLService).to(FlagTTLService).inSingletonScope();
+
+  container
+    .bind<AuditHttpController>(TYPES.AuditHttpController)
+    .to(AuditHttpController)
+    .inSingletonScope();
+  container
+    .bind<CategoryHttpController>(TYPES.CategoryHttpController)
+    .to(CategoryHttpController)
+    .inSingletonScope();
+  container
+    .bind<FlagHttpController>(TYPES.FlagHttpController)
+    .to(FlagHttpController)
+    .inSingletonScope();
 
   const initializeApp = async () => {
     const initializables = container.getAll<OnInit>(TYPES.OnInit);

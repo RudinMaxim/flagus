@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
-import { pagesRoute } from './web/pages.route';
-import { registerApiRoutes } from './api/plugins';
+import { pagesRoute } from './client/register';
+import { registerApiRoutes } from './api/register';
 import { ConfigService } from '../config/config';
 import { TYPES } from '../config/types';
 
