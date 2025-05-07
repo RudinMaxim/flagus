@@ -43,7 +43,7 @@ export class UserRepository extends BaseRepository<User, string> implements IUse
       user.passwordHash,
       user.email,
       user.role,
-      user.isActive,
+      user.isActive ? 1 : 0,
       now,
       user.metadata.createdBy,
     ]);
@@ -239,7 +239,7 @@ export class UserRepository extends BaseRepository<User, string> implements IUse
       passwordHash: row.password_hash,
       email: row.email,
       role: row.role as TUserRole,
-      isActive: row.is_active === 1,
+      isActive: row.is_active == 1,
       metadata,
     });
   }
