@@ -24,7 +24,8 @@
     "lint:fix": "eslint . --ext .ts --fix",
     "format": "prettier --write \"src/**/*.{ts,js,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,js,json}\"",
-    "seed": "node scripts/seed.js",
+    "seed:table": "node scripts/seed/table.js",
+    "seed:data": "node scripts/seed/data.js",
     "prepare": "husky install"
   },
   "dependencies": {
