@@ -1,8 +1,21 @@
 import { FastifyInstance } from 'fastify';
 import { ConfigService } from '../../config/config';
-import apiRoutes from './v1/routes';
+import { TYPES } from '../../config/types';
+import {
+  auditRoutes,
+  authRoutes,
+  categoryRoutes,
+  evaluateRoutes,
+  flagRoutes,
+  userRoutes,
+} from './v1/routes';
+import { healthRoutes } from './common/health.route';
+import { AuthMiddleware } from '../middlewares';
 
-export async function registerApiRoutes(fastify: FastifyInstance, config: ConfigService) {
+export async function registerApi(fastify: FastifyInstance) {
+  const config = fastify.container.get<ConfigService>(TYPES.Config);
+  const authMiddleware = fastify.container.get<AuthMiddleware>(TYPES.AuthMiddleware);
+
   if (config.cors.enabled) {
     const fastifyCors = import('@fastify/cors');
     await fastify.register(fastifyCors, {
@@ -85,10 +98,10 @@ export async function registerApiRoutes(fastify: FastifyInstance, config: Config
         deepLinking: true,
       },
       uiHooks: {
-        onRequest: function (request, reply, next) {
+        onRequest: function (_request, _reply, next) {
           next();
         },
-        preHandler: function (request, reply, next) {
+        preHandler: function (_request, _reply, next) {
           next();
         },
       },
@@ -99,5 +112,33 @@ export async function registerApiRoutes(fastify: FastifyInstance, config: Config
     });
   }
 
-  await fastify.register(apiRoutes);
+  await fastify.register(
+    async rootApi => {
+      rootApi.register(
+        async v1Api => {
+          v1Api.register(healthRoutes, { prefix: '/health' });
+
+          v1Api.register(async protectedApi => {
+            protectedApi.addHook('onRequest', authMiddleware.XApiKey);
+
+            protectedApi.register(authRoutes, { prefix: '/auth' });
+            protectedApi.register(evaluateRoutes, { prefix: '/evaluate' });
+
+            protectedApi.register(async adminApi => {
+              adminApi.addHook('onRequest', authMiddleware.authenticate);
+
+              adminApi.register(flagRoutes, { prefix: '/flags' });
+              adminApi.register(categoryRoutes, { prefix: '/categories' });
+              adminApi.register(auditRoutes, { prefix: '/audit' });
+              adminApi.register(userRoutes, { prefix: '/users' });
+            });
+          });
+        },
+        { prefix: '/v1' }
+      );
+
+      // e.g., rootApi.register(async (v2Api) => { ... }, { prefix: '/v2' });
+    },
+    { prefix: '/api' }
+  );
 }

@@ -3,7 +3,7 @@ import * as schemas from '../schemas/user.schema';
 import { UserHttpController } from '../controllers/user.http.controller';
 import { TYPES } from '../../../../config/types';
 
-export default async function (fastify: FastifyInstance) {
+export async function userRoutes(fastify: FastifyInstance) {
   const userController = fastify.container.get<UserHttpController>(TYPES.UserHttpController);
 
   fastify.route({

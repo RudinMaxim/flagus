@@ -3,7 +3,7 @@ import * as schemas from '../schemas/flag.schema';
 import { FlagHttpController } from '../controllers/flag.http.controller';
 import { TYPES } from '../../../../config/types';
 
-export default async function (fastify: FastifyInstance) {
+export async function flagRoutes(fastify: FastifyInstance) {
   const flagController = fastify.container.get<FlagHttpController>(TYPES.FlagHttpController);
 
   fastify.route({

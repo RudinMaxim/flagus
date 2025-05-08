@@ -3,7 +3,7 @@ import { CategoryHttpController } from '../controllers/category.http.controller'
 import { TYPES } from '../../../../config/types';
 import * as schemas from '../schemas/category.schema';
 
-export default async function (fastify: FastifyInstance) {
+export async function categoryRoutes(fastify: FastifyInstance) {
   const categoryController = fastify.container.get<CategoryHttpController>(
     TYPES.CategoryHttpController
   );

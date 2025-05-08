@@ -3,7 +3,7 @@ import { AuditHttpController } from '../controllers/audit.http.controller';
 import { TYPES } from '../../../../config/types';
 import * as schemas from '../schemas/audit.schema';
 
-export default async function (fastify: FastifyInstance) {
+export async function auditRoutes(fastify: FastifyInstance) {
   const auditController = fastify.container.get<AuditHttpController>(TYPES.AuditHttpController);
 
   fastify.route({

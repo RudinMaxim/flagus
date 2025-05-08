@@ -27,7 +27,7 @@ export class ConfigService {
     hostname: process.env.HOSTNAME || 'localhost',
     swagger: {
       enabled: true,
-      path: process.env.SWAGGER_PATH || '/documentation',
+      path: process.env.SWAGGER_PATH || '/api/documentation',
     },
   };
 
