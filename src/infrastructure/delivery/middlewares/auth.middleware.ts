@@ -93,18 +93,44 @@ export class AuthMiddleware {
 
   public authenticateUI = async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const token = request.cookies.token || request.headers.authorization?.replace('Bearer ', '');
+      const accessToken = request.cookies.accessToken;
 
-      if (!token) {
+      if (!accessToken) {
         return reply.redirect('/login');
       }
 
       try {
-        const payload = this.tokenService.verifyAccessToken(token);
+        const payload = this.tokenService.verifyAccessToken(accessToken);
         request.user = payload;
       } catch (error) {
-        request.log.error(error, 'Недействительный токен UI');
-        return reply.redirect('/login');
+        const refreshToken = request.cookies.refreshToken;
+
+        if (!refreshToken) {
+          request.log.error('Отсутствует refresh token');
+          return reply.redirect('/login');
+        }
+
+        try {
+          const newTokens = await this.tokenService.refreshToken({ refreshToken });
+
+          reply.setCookie('accessToken', newTokens.accessToken, {
+            path: '/',
+            secure: true,
+            sameSite: 'lax',
+          });
+
+          reply.setCookie('refreshToken', newTokens.refreshToken, {
+            path: '/',
+            secure: true,
+            sameSite: 'lax',
+          });
+
+          const newPayload = this.tokenService.verifyAccessToken(newTokens.accessToken);
+          request.user = newPayload;
+        } catch (refreshError) {
+          request.log.error(refreshError, 'Ошибка обновления токена');
+          return reply.redirect('/login');
+        }
       }
     } catch (error) {
       request.log.error(error, 'Ошибка аутентификации UI');

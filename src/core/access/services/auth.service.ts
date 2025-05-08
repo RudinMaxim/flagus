@@ -4,7 +4,7 @@ import * as bcrypt from 'bcrypt';
 import { TokenService } from './token.service';
 import { TYPES } from '../../../infrastructure/config/types';
 import { UserRole } from '../constants';
-import { AuthDTO, TokenDTO, CreateUserDTO, RefreshTokenDTO, LoginResponseDTO } from '../interfaces';
+import { AuthDTO, CreateUserDTO, LoginResponseDTO } from '../interfaces';
 import { User } from '../model';
 
 @injectable()
@@ -36,17 +36,6 @@ export class AuthService {
       role: user.role,
       ...this.tokenService.generateTokens(user),
     };
-  }
-
-  public async refreshToken(request: RefreshTokenDTO): Promise<TokenDTO> {
-    const decoded = this.tokenService.verifyRefreshToken(request.refreshToken);
-    const user = await this.userRepository.findById(decoded.userId);
-
-    if (!user || !user.isActive) {
-      throw new Error('Недействительный токен');
-    }
-
-    return this.tokenService.generateTokens(user);
   }
 
   public async isFirstUser(): Promise<boolean> {

@@ -50,8 +50,6 @@
         if (response.ok) {
           const { accessToken, refreshToken } = result.data;
 
-          console.log(result.data)
-
           if (accessToken && refreshToken) {
             // Устанавливаем токены в cookie
             document.cookie = `accessToken=${accessToken}; path=/; secure; SameSite=Lax`;

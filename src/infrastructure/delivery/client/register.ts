@@ -12,8 +12,7 @@ import {
 } from '../../../core/flag-manager/service';
 import { AuthMiddleware } from '../middlewares';
 import { registerHandlebarsHelpers } from '../../../shared/utils';
-import { AuthController } from './controllers/auth.controller';
-import { AuthService, UserService } from '../../../core/access/services';
+import { AuthHttpController } from '../api/v1/controllers';
 
 export async function registerClient(app: FastifyInstance): Promise<void> {
   await app.register(fastifyView, {
@@ -42,7 +41,7 @@ export async function registerClient(app: FastifyInstance): Promise<void> {
   const flagService = app.container.get<FeatureFlagService>(TYPES.FeatureFlagService);
   const auditService = app.container.get<AuditService>(TYPES.AuditService);
   const categoryService = app.container.get<CategoryService>(TYPES.CategoryService);
-  const authService = app.container.get<AuthService>(TYPES.AuthService);
+  const authHttpController = app.container.get<AuthHttpController>(TYPES.AuthHttpController);
 
   const authMiddleware = app.container.get<AuthMiddleware>(TYPES.AuthMiddleware);
 
@@ -53,9 +52,7 @@ export async function registerClient(app: FastifyInstance): Promise<void> {
       categoryService,
       auditService,
     }),
-    auth: new AuthController({
-      authService,
-    }),
+    auth: authHttpController,
   };
 
   app.get(

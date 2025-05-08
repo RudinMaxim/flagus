@@ -1,12 +1,15 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { injectable, inject } from 'inversify';
 import { AuthDTO, RefreshTokenDTO, CreateUserDTO } from '../../../../../core/access/interfaces';
-import { AuthService } from '../../../../../core/access/services';
+import { AuthService, TokenService } from '../../../../../core/access/services';
 import { TYPES } from '../../../../config/types';
 
 @injectable()
 export class AuthHttpController {
-  constructor(@inject(TYPES.AuthService) private readonly authService: AuthService) {}
+  constructor(
+    @inject(TYPES.AuthService) private readonly authService: AuthService,
+    @inject(TYPES.TokenService) private readonly tokenService: TokenService
+  ) {}
 
   async login(request: FastifyRequest<{ Body: AuthDTO }>, reply: FastifyReply) {
     try {
@@ -24,7 +27,7 @@ export class AuthHttpController {
 
   async refreshToken(request: FastifyRequest<{ Body: RefreshTokenDTO }>, reply: FastifyReply) {
     try {
-      const tokens = await this.authService.refreshToken(request.body);
+      const tokens = await this.tokenService.refreshToken(request.body);
       return reply.code(200).send({ data: tokens });
     } catch (error) {
       request.log.error(error, 'Token refresh error');
