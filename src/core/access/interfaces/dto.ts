@@ -27,3 +27,8 @@ export interface UpdateUserDTO {
   role?: TUserRole;
   isActive?: boolean;
 }
+
+export interface LoginResponseDTO extends TokenDTO {
+  id: string;
+  role: string;
+}

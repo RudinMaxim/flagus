@@ -12,10 +12,11 @@ import {
 } from '../../../core/flag-manager/service';
 import { AuthMiddleware } from '../middlewares';
 import { registerHandlebarsHelpers } from '../../../shared/utils';
+import { AuthController } from './controllers/auth.controller';
+import { AuthService, UserService } from '../../../core/access/services';
 
-export default async function registerClient(fastify: FastifyInstance): Promise<void> {
-  // Register view engine
-  await fastify.register(fastifyView, {
+export async function registerClient(app: FastifyInstance): Promise<void> {
+  await app.register(fastifyView, {
     engine: {
       handlebars,
     },
@@ -24,28 +25,27 @@ export default async function registerClient(fastify: FastifyInstance): Promise<
     viewExt: 'hbs',
     options: {
       partials: {
-        header: 'partials/header',
-        sidebar: 'partials/sidebar',
-        footer: 'partials/footer',
+        header: 'partials/header.hbs',
+        sidebar: 'partials/sidebar.hbs',
+        footer: 'partials/footer.hbs',
       },
     },
   });
 
-  // Register static assets
-  await fastify.register(fastifyStatic, {
+  await app.register(fastifyStatic, {
     root: path.join(__dirname, 'assets'),
     prefix: '/assets/',
   });
 
-  // Setup handlebars helpers
   registerHandlebarsHelpers(handlebars);
 
-  // Get service dependencies from container
-  const flagService = fastify.container.get<FeatureFlagService>(TYPES.FeatureFlagService);
-  const auditService = fastify.container.get<AuditService>(TYPES.AuditService);
-  const categoryService = fastify.container.get<CategoryService>(TYPES.CategoryService);
+  const flagService = app.container.get<FeatureFlagService>(TYPES.FeatureFlagService);
+  const auditService = app.container.get<AuditService>(TYPES.AuditService);
+  const categoryService = app.container.get<CategoryService>(TYPES.CategoryService);
+  const authService = app.container.get<AuthService>(TYPES.AuthService);
 
-  // Initialize controllers
+  const authMiddleware = app.container.get<AuthMiddleware>(TYPES.AuthMiddleware);
+
   const controllers = {
     page: new PageController(),
     dashboard: new DashboardController({
@@ -53,35 +53,35 @@ export default async function registerClient(fastify: FastifyInstance): Promise<
       categoryService,
       auditService,
     }),
+    auth: new AuthController({
+      authService,
+    }),
   };
 
-  // Auth middleware for protected routes
-  const authMiddleware = fastify.container.get<AuthMiddleware>(TYPES.AuthMiddleware);
-
-  // Client routes
-  fastify.get(
+  app.get(
     '/',
     { preHandler: authMiddleware.authenticateUI },
     controllers.dashboard.index.bind(controllers.dashboard)
   );
-  fastify.get('/login', controllers.page.login.bind(controllers.page));
+  app.get('/login', controllers.page.login.bind(controllers.page));
+  app.get('/setup', controllers.page.setup.bind(controllers.page));
 
   // Register other routes here
   // ...
 
   // API client routes for HTMX interactions
-  fastify.register(async instance => {
+  app.register(async instance => {
     instance.addHook('preHandler', authMiddleware.authenticateUI);
 
     // Flag client API routes
-    instance.get(
-      '/api/client/flags/search',
-      controllers.dashboard.searchFlags.bind(controllers.dashboard)
-    );
-    instance.get(
-      '/api/client/flags/validate-name',
-      controllers.dashboard.validateFlagName.bind(controllers.dashboard)
-    );
+    // instance.get(
+    //   '/api/client/flags/search',
+    //   controllers.dashboard.searchFlags.bind(controllers.dashboard)
+    // );
+    // instance.get(
+    //   '/api/client/flags/validate-name',
+    //   controllers.dashboard.validateFlagName.bind(controllers.dashboard)
+    // );
 
     // Other client API routes
     // ...

@@ -1,0 +1,92 @@
+<h2 class="text-center mb-4">Первоначальная настройка</h2>
+
+<div class="alert alert-info">
+  <i class="bi bi-info-circle-fill me-2"></i>
+  Создайте первого администратора для начала работы с Flagus.
+</div>
+
+<form id="firstAdminForm">
+  <div class="mb-3">
+    <label for="username" class="form-label">Имя пользователя</label>
+    <input type="text" class="form-control" id="username" name="username" required autocomplete="username">
+  </div>
+  <div class="mb-3">
+    <label for="email" class="form-label">Email</label>
+    <input type="email" class="form-control" id="email" name="email" required autocomplete="email">
+  </div>
+  <div class="mb-3">
+    <label for="password" class="form-label">Пароль</label>
+    <input type="password" class="form-control" id="password" name="password" required autocomplete="new-password">
+    <div class="form-text">Пароль должен содержать минимум 8 символов, включая буквы, цифры и специальные символы.</div>
+  </div>
+  <div class="mb-3">
+    <label for="confirmPassword" class="form-label">Подтверждение пароля</label>
+    <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required autocomplete="new-password">
+  </div>
+  <div class="d-grid gap-2">
+    <button type="submit" class="btn btn-primary">Создать аккаунт администратора</button>
+  </div>
+</form>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    fetch('/api/v1/auth/check-first-user', {
+      headers: {
+        'X-API-Key': 'flugs'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (!data.data.isFirstUser) {
+        window.location.href = '/login';
+      }
+    });
+
+    const form = document.getElementById('firstAdminForm');
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirmPassword');
+
+    form.addEventListener('submit', async function (event) {
+      event.preventDefault(); // отменяем стандартную отправку формы
+
+      if (password.value !== confirmPassword.value) {
+        alert('Пароли не совпадают');
+        return;
+      }
+
+      if (password.value.length < 8) {
+        alert('Пароль должен содержать минимум 8 символов');
+        return;
+      }
+
+      const formData = {
+        username: form.username.value,
+        email: form.email.value,
+        password: form.password.value
+      };
+
+      try {
+        const response = await fetch('/api/v1/auth/create-first-admin', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          alert('Аккаунт успешно создан');
+          window.location.href = '/login';
+        } else {
+          alert(result.message || 'Ошибка при создании аккаунта');
+        }
+      } catch (err) {
+        console.error('Ошибка:', err);
+        alert('Произошла ошибка при отправке запроса');
+      }
+    });
+  });
+</script>

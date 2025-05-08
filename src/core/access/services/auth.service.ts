@@ -4,7 +4,7 @@ import * as bcrypt from 'bcrypt';
 import { TokenService } from './token.service';
 import { TYPES } from '../../../infrastructure/config/types';
 import { UserRole } from '../constants';
-import { AuthDTO, TokenDTO, CreateUserDTO, RefreshTokenDTO } from '../interfaces';
+import { AuthDTO, TokenDTO, CreateUserDTO, RefreshTokenDTO, LoginResponseDTO } from '../interfaces';
 import { User } from '../model';
 
 @injectable()
@@ -14,7 +14,7 @@ export class AuthService {
     @inject(TYPES.TokenService) private readonly tokenService: TokenService
   ) {}
 
-  public async login(credentials: AuthDTO): Promise<TokenDTO> {
+  public async login(credentials: AuthDTO): Promise<LoginResponseDTO> {
     const user = await this.userRepository.findByEmail(credentials.email);
 
     if (!user) {
@@ -31,7 +31,11 @@ export class AuthService {
       throw new Error('Неверный пароль');
     }
 
-    return this.tokenService.generateTokens(user);
+    return {
+      id: user.id,
+      role: user.role,
+      ...this.tokenService.generateTokens(user),
+    };
   }
 
   public async refreshToken(request: RefreshTokenDTO): Promise<TokenDTO> {

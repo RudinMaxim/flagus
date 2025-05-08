@@ -1,0 +1,83 @@
+<h2 class="text-center mb-4">Log In</h2>
+
+<form id="loginForm">
+  <div class="mb-3">
+    <label for="email" class="form-label">Email address</label>
+    <input type="email" class="form-control" id="email" name="email" required autocomplete="email">
+  </div>
+  <div class="mb-3">
+    <label for="password" class="form-label">Password</label>
+    <input type="password" class="form-control" id="password" name="password" required autocomplete="current-password">
+  </div>
+  <div class="d-grid gap-2">
+    <button type="submit" class="btn btn-primary">Sign In</button>
+  </div>
+</form>
+
+<div class="text-center mt-4">
+  <div id="first-user-check" hx-get="/api/v1/auth/check-first-user" hx-trigger="load">
+    <div class="spinner-border spinner-border-sm text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <span class="ms-2">Проверка статуса системы...</span>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('loginForm');
+
+    form.addEventListener('submit', async function (event) {
+      event.preventDefault();
+
+      const formData = {
+        email: form.email.value,
+        password: form.password.value
+      };
+
+      try {
+        const response = await fetch('/api/v1/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          const { accessToken, refreshToken } = result.data;
+
+          console.log(result.data)
+
+          if (accessToken && refreshToken) {
+            // Устанавливаем токены в cookie
+            document.cookie = `accessToken=${accessToken}; path=/; secure; SameSite=Lax`;
+            document.cookie = `refreshToken=${refreshToken}; path=/; secure; SameSite=Lax`;
+
+            // Проверим, установились ли куки
+            const cookies = document.cookie;
+            const accessExists = cookies.includes(`accessToken=${accessToken}`);
+            const refreshExists = cookies.includes(`refreshToken=${refreshToken}`);
+
+            if (accessExists && refreshExists) {
+              window.location.href = '/dashboard';
+            } else {
+              alert('Ошибка: не удалось сохранить токены в cookie');
+            }
+          } else {
+            alert('Сервер не вернул токены');
+          }
+        } else {
+          alert(result.message || 'Неверный email или пароль');
+        }
+      } catch (err) {
+        console.error('Ошибка входа:', err);
+        alert('Произошла ошибка при входе');
+      }
+    });
+  });
+</script>
+

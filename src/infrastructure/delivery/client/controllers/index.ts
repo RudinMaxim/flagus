@@ -1,3 +1,3 @@
-export * from './PageController';
-export * from './DashboardController';
-export * from './BaseController';
+export * from './page.controller';
+export * from './bashboard.controller';
+export * from './base.controller';

@@ -119,8 +119,6 @@ export async function registerApi(fastify: FastifyInstance) {
           v1Api.register(healthRoutes, { prefix: '/health' });
 
           v1Api.register(async protectedApi => {
-            protectedApi.addHook('onRequest', authMiddleware.XApiKey);
-
             protectedApi.register(authRoutes, { prefix: '/auth' });
             protectedApi.register(evaluateRoutes, { prefix: '/evaluate' });
 

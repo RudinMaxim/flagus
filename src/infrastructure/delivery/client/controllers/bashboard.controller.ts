@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { BaseController } from './BaseController';
+import { BaseController } from './base.controller';
 
 interface DashboardServices {
   flagService: any;
