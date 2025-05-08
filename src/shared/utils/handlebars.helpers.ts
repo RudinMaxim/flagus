@@ -1,17 +1,14 @@
 import Handlebars from 'handlebars';
 
 export function registerHandlebarsHelpers(handlebars: typeof Handlebars): void {
-  // Equal comparison helper
   handlebars.registerHelper('eq', function (a, b) {
     return a === b;
   });
 
-  // Not equal comparison helper
   handlebars.registerHelper('neq', function (a, b) {
     return a !== b;
   });
 
-  // Format date helper
   handlebars.registerHelper('formatDate', function (date) {
     if (!date) return '';
 
@@ -25,7 +22,6 @@ export function registerHandlebarsHelpers(handlebars: typeof Handlebars): void {
     });
   });
 
-  // Format relative time helper
   handlebars.registerHelper('relativeTime', function (date) {
     if (!date) return '';
 
@@ -54,7 +50,6 @@ export function registerHandlebarsHelpers(handlebars: typeof Handlebars): void {
     }
   });
 
-  // Truncate text helper
   handlebars.registerHelper('truncate', function (text, length) {
     if (!text) return '';
 
@@ -65,12 +60,10 @@ export function registerHandlebarsHelpers(handlebars: typeof Handlebars): void {
     return text.substring(0, length) + '...';
   });
 
-  // JSON stringify helper
   handlebars.registerHelper('json', function (context) {
     return JSON.stringify(context);
   });
 
-  // Count items in an array or object
   handlebars.registerHelper('count', function (value) {
     if (Array.isArray(value)) {
       return value.length;
@@ -80,12 +73,10 @@ export function registerHandlebarsHelpers(handlebars: typeof Handlebars): void {
     return 0;
   });
 
-  // Conditional class helper
   handlebars.registerHelper('ifClass', function (condition, trueClass, falseClass) {
     return condition ? trueClass : falseClass || '';
   });
 
-  // Each with index helper
   handlebars.registerHelper('eachWithIndex', function (array, options) {
     let result = '';
 

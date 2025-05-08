@@ -57,7 +57,7 @@ export abstract class BaseController {
     data: Record<string, any> = {}
   ): Promise<FastifyReply> {
     // For partials, we don't apply the layout
-    return reply.view(template, data, { layout: false });
+    return reply.view(template, data, { layout: false } as Record<string, any>);
   }
 
   /**

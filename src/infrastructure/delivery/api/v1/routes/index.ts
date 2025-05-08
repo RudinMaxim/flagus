@@ -1,13 +1,13 @@
 import { FastifyInstance } from 'fastify';
 import healthRoutes from '../../common/health.route';
 import { TYPES } from '../../../../config/types';
-import { AuthMiddleware } from '../../../middlewares/auth.middleware';
 import flagRoutes from './flag.route';
 import categoryRoutes from './category.route';
 import auditRoutes from './audit.route';
 import authRoutes from './auth.route';
 import userRoutes from './user.route';
 import evaluateRoutes from './evaluate.route';
+import { AuthMiddleware } from '../../../middlewares';
 
 export default async function (fastify: FastifyInstance) {
   const authMiddleware = fastify.container.get<AuthMiddleware>(TYPES.AuthMiddleware);

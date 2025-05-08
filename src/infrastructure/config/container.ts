@@ -13,8 +13,8 @@ import {
   UserHttpController,
 } from '../delivery/api/v1/controllers';
 import { accessContainer } from '../../core/access';
-import { AuthMiddleware } from '../delivery/middlewares/auth.middleware';
 import { EvaluateHttpController } from '../delivery/api/v1/controllers/evaluate.http.controller';
+import { AuthMiddleware } from '../delivery/middlewares';
 
 export async function createContainer(): Promise<Container> {
   const container = new Container();

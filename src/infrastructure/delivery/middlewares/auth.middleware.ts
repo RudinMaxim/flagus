@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { inject, injectable } from 'inversify';
-import { TokenService } from '../../../../core/access/services';
-import { TYPES } from '../../../config/types';
+import { TokenService } from '../../../core/access/services';
+import { TYPES } from '../../config/types';
 
 @injectable()
 export class AuthMiddleware {
@@ -88,6 +88,27 @@ export class AuthMiddleware {
         error: 'Internal Server Error',
         message: 'Authentication process failed',
       });
+    }
+  };
+
+  public authenticateUI = async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const token = request.cookies.token || request.headers.authorization?.replace('Bearer ', '');
+
+      if (!token) {
+        return reply.redirect('/login');
+      }
+
+      try {
+        const payload = this.tokenService.verifyAccessToken(token);
+        request.user = payload;
+      } catch (error) {
+        request.log.error(error, 'Недействительный токен UI');
+        return reply.redirect('/login');
+      }
+    } catch (error) {
+      request.log.error(error, 'Ошибка аутентификации UI');
+      return reply.redirect('/login');
     }
   };
 }

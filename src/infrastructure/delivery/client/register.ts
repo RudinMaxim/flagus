@@ -4,7 +4,14 @@ import fastifyStatic from '@fastify/static';
 import fastifyView from '@fastify/view';
 import handlebars from 'handlebars';
 import { PageController, DashboardController } from './controllers';
-import { registerHandlebarsHelpers } from './utils';
+import { TYPES } from '../../config/types';
+import {
+  AuditService,
+  CategoryService,
+  FeatureFlagService,
+} from '../../../core/flag-manager/service';
+import { AuthMiddleware } from '../middlewares';
+import { registerHandlebarsHelpers } from '../../../shared/utils';
 
 export default async function registerClient(fastify: FastifyInstance): Promise<void> {
   // Register view engine
@@ -34,7 +41,9 @@ export default async function registerClient(fastify: FastifyInstance): Promise<
   registerHandlebarsHelpers(handlebars);
 
   // Get service dependencies from container
-  const { flagService, categoryService, auditService, userService } = fastify.diContainer.cradle;
+  const flagService = fastify.container.get<FeatureFlagService>(TYPES.FeatureFlagService);
+  const auditService = fastify.container.get<AuditService>(TYPES.AuditService);
+  const categoryService = fastify.container.get<CategoryService>(TYPES.CategoryService);
 
   // Initialize controllers
   const controllers = {
@@ -47,26 +56,12 @@ export default async function registerClient(fastify: FastifyInstance): Promise<
   };
 
   // Auth middleware for protected routes
-  const authMiddleware = async (request, reply) => {
-    const token = request.cookies.token || request.headers.authorization?.replace('Bearer ', '');
-
-    if (!token) {
-      reply.redirect('/login');
-      return;
-    }
-
-    try {
-      const user = await fastify.diContainer.cradle.tokenService.verify(token);
-      request.user = user;
-    } catch (error) {
-      reply.redirect('/login');
-    }
-  };
+  const authMiddleware = fastify.container.get<AuthMiddleware>(TYPES.AuthMiddleware);
 
   // Client routes
   fastify.get(
     '/',
-    { preHandler: authMiddleware },
+    { preHandler: authMiddleware.authenticateUI },
     controllers.dashboard.index.bind(controllers.dashboard)
   );
   fastify.get('/login', controllers.page.login.bind(controllers.page));
@@ -76,7 +71,7 @@ export default async function registerClient(fastify: FastifyInstance): Promise<
 
   // API client routes for HTMX interactions
   fastify.register(async instance => {
-    instance.addHook('preHandler', authMiddleware);
+    instance.addHook('preHandler', authMiddleware.authenticateUI);
 
     // Flag client API routes
     instance.get(
