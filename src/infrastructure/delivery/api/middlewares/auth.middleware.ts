@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { inject, injectable } from 'inversify';
-import { TokenService } from '../../../core/access/services';
-import { TYPES } from '../../config/types';
+import { TokenService } from '../../../../core/access/services';
+import { TYPES } from '../../../config/types';
 
 @injectable()
 export class AuthMiddleware {
