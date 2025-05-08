@@ -46,8 +46,6 @@ export class FlagEvaluationService {
       }
 
       if (flag.type === FlagType.ENUM) {
-        console.log(flag.getEnumValue(clientId));
-
         return flag.getEnumValue(clientId);
       }
 
