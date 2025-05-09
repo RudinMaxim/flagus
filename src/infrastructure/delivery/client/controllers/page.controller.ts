@@ -13,8 +13,10 @@ export class PageController extends BaseController {
       }
 
       return this.render(request, reply, 'pages/auth/login', {
-        pageTitle: 'Login',
         layout: 'layouts/auth.hbs',
+        pageTitle: 'Вход в систему',
+        pageDescription:
+          'Вход в систему управления feature flags Flagus. Авторизуйтесь для доступа к панели управления.',
       });
     } catch (error) {
       return this.handleError(reply, error);
@@ -26,6 +28,8 @@ export class PageController extends BaseController {
       return this.render(request, reply, 'pages/auth/setup', {
         pageTitle: 'Setup',
         layout: 'layouts/auth.hbs',
+        pageDescription:
+          'Первоначальная настройка системы управления feature flags Flagus. Создайте администратора и начните работу.',
       });
     } catch (error) {
       return this.handleError(reply, error);
@@ -34,8 +38,10 @@ export class PageController extends BaseController {
 
   async notFound(request: FastifyRequest, reply: FastifyReply): Promise<FastifyReply> {
     return this.render(request, reply, 'pages/errors/404', {
-      pageTitle: 'Страница не найдена',
       layout: 'layouts/error',
+      pageTitle: 'Страница не найдена',
+      pageDescription:
+        'Запрашиваемая страница не найдена в системе Flagus. Проверьте URL или вернитесь на главную.',
     });
   }
 
@@ -45,12 +51,15 @@ export class PageController extends BaseController {
     reply: FastifyReply
   ): Promise<FastifyReply> {
     const errorId = crypto.randomUUID();
-    console.error(`Error ID: ${errorId}`, err);
-
     return this.render(request, reply, 'pages/errors/500', {
-      pageTitle: 'Ошибка сервера',
       layout: 'layouts/error',
       errorId: errorId,
+      pageTitle: 'Ошибка',
+      pageDescription: 'Произошла ошибка при обработке вашего запроса в системе Flagus.',
+      error: {
+        message: err.message,
+        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+      },
     });
   }
 }

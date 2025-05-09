@@ -35,6 +35,11 @@ export async function registerClient(app: FastifyInstance): Promise<void> {
   await app.register(fastifyStatic, {
     root: path.join(__dirname, 'assets'),
     prefix: '/assets/',
+    decorateReply: false,
+  });
+
+  app.get('/robots.txt', (request, reply) => {
+    reply.sendFile('robots.txt', path.join(__dirname, 'assets'));
   });
 
   registerHandlebarsHelpers(handlebars);
@@ -53,6 +58,14 @@ export async function registerClient(app: FastifyInstance): Promise<void> {
       auditService,
     }),
   };
+
+  // app.addHook('onSend', (request, reply, payload, done) => {
+  //   reply.header('X-Content-Type-Options', 'nosniff');
+  //   reply.header('X-Frame-Options', 'DENY');
+  //   reply.header('X-XSS-Protection', '1; mode=block');
+  //   reply.header('Referrer-Policy', 'same-origin');
+  //   done(null, payload);
+  // });
 
   app.get('/login', controllers.page.login.bind(controllers.page));
   app.get('/setup', controllers.page.setup.bind(controllers.page));
