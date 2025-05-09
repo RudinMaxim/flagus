@@ -16,16 +16,16 @@ export async function registerApi(fastify: FastifyInstance) {
   const config = fastify.container.get<ConfigService>(TYPES.Config);
   const authMiddleware = fastify.container.get<AuthMiddleware>(TYPES.AuthMiddleware);
 
-  if (config.cors.enabled) {
+  if (config.get('cors').enabled) {
     const fastifyCors = import('@fastify/cors');
     await fastify.register(fastifyCors, {
-      origin: config.cors.origins || true,
+      origin: config.get('cors').origins || true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
     });
   }
 
-  if (config.server.swagger.enabled) {
+  if (config.get('server').swagger.enabled) {
     await fastify.register(import('@fastify/swagger'), {
       openapi: {
         info: {
@@ -92,7 +92,7 @@ export async function registerApi(fastify: FastifyInstance) {
     });
 
     await fastify.register(import('@fastify/swagger-ui'), {
-      routePrefix: config.server.swagger.path,
+      routePrefix: config.get('server').swagger.path,
       uiConfig: {
         docExpansion: 'list',
         deepLinking: true,

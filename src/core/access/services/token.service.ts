@@ -35,22 +35,26 @@ export class TokenService {
       userId: user.id,
       email: user.email,
       role: user.role,
-      exp: this.expiryTimestamp(Number(this.config.JWT_ACCESS_EXPIRES)),
+      exp: this.expiryTimestamp(Number(this.config.get('jwt').accessExpires)),
     };
 
     const refreshPayload: TJwtPayload = {
       userId: user.id,
-      exp: this.expiryTimestamp(Number(this.config.JWT_REFRESH_EXPIRES)),
+      exp: this.expiryTimestamp(Number(this.config.get('jwt').refreshExpires)),
     };
 
-    const accessToken = this.buildToken(header, accessPayload, this.config.JWT_ACCESS_SECRET);
-    const refreshToken = this.buildToken(header, refreshPayload, this.config.JWT_REFRESH_SECRET);
+    const accessToken = this.buildToken(header, accessPayload, this.config.get('jwt').accessSecret);
+    const refreshToken = this.buildToken(
+      header,
+      refreshPayload,
+      this.config.get('jwt').refreshSecret
+    );
 
     return { accessToken, refreshToken };
   }
 
   public verifyAccessToken(token: string) {
-    return this.verifyToken<TJwtPayload>(token, this.config.JWT_ACCESS_SECRET) as {
+    return this.verifyToken<TJwtPayload>(token, this.config.get('jwt').accessSecret) as {
       userId: string;
       email: string;
       role: string;
@@ -58,7 +62,7 @@ export class TokenService {
   }
 
   private verifyRefreshToken(token: string) {
-    return this.verifyToken<TJwtPayload>(token, this.config.JWT_REFRESH_SECRET) as {
+    return this.verifyToken<TJwtPayload>(token, this.config.get('jwt').refreshSecret) as {
       userId: string;
     };
   }

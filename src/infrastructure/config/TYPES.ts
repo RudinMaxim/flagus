@@ -4,6 +4,7 @@ export const TYPES = {
   DataGateway: Symbol.for('DataGateway'),
   OnInit: Symbol.for('OnInit'),
   OnDestroy: Symbol.for('OnDestroy'),
+  DataGatewayFactory: Symbol.for('DataGatewayFactory'),
 
   FlagRepository: Symbol.for('FlagRepository'),
   AuditRepository: Symbol.for('AuditRepository'),

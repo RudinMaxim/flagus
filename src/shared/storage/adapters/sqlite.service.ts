@@ -1,10 +1,14 @@
 import { injectable, inject } from 'inversify';
 import sqlite3 from 'sqlite3';
 import { Database } from 'sqlite3';
-import { DataGateway, OnDestroy, OnInit } from '../../abstract';
-import { ILogger } from '../../../../shared/logger';
-import { ConfigService } from '../../../../infrastructure/config/config';
-import { TYPES } from '../../../../infrastructure/config/types';
+import { DataGateway, OnDestroy, OnInit } from '../abstract';
+import { ILogger } from '../../logger';
+import { ConfigService } from '../../../infrastructure/config/config';
+import { TYPES } from '../../../infrastructure/config/types';
+
+export interface ISQLite {
+  database: string;
+}
 
 @injectable()
 export class SQLiteServiceImpl extends DataGateway<Database> implements OnInit, OnDestroy {
@@ -83,11 +87,11 @@ export class SQLiteServiceImpl extends DataGateway<Database> implements OnInit, 
   }
 
   protected async initialize(): Promise<void> {
-    const { database } = this.config.sqlite;
-    this.logger.info(`Initializing SQLite database with file: ${database}`);
+    const { sqlite } = this.config.get('database');
+    this.logger.info(`Initializing SQLite database with file: ${sqlite.database}`);
 
     return new Promise((resolve, reject) => {
-      this.db = new sqlite3.Database(database, err => {
+      this.db = new sqlite3.Database(sqlite.database, err => {
         if (err) {
           this.logger.error(`Failed to initialize SQLite database: ${err.message}`);
           reject(err);
