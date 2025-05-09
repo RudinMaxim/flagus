@@ -1,83 +1,71 @@
-<form id="loginForm">
-  <div class="mb-3">
-    <label for="email" class="form-label">Email address</label>
-    <input type="email" class="form-control" id="email" name="email" required autocomplete="email">
-  </div>
-  <div class="mb-3">
-    <label for="password" class="form-label">Password</label>
-    <input type="password" class="form-control" id="password" name="password" required autocomplete="current-password">
-  </div>
-  <div class="d-grid gap-2">
-    <button type="submit" class="btn btn-primary">Sign In</button>
-  </div>
-</form>
+<div class='auth-container'>
+  <h1 class='text-center mb-4'>Login</h1>
 
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    fetch('/api/v1/auth/check-first-user', {
-      headers: {
-        'X-API-Key': 'flugs'
-      }
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (!!data?.data?.isFirstUser) {
-        window.location.href = '/setup';
-      }
-    });
+  <div id='loginError' class='alert alert-danger d-none' role='alert'></div>
 
+  <form id='loginForm' aria-labelledby='loginFormTitle'>
+    <h2 id='loginFormTitle' class='visually-hidden'>Login form</h2>
 
-    const form = document.getElementById('loginForm');
+    <div class='mb-3'>
+      <label for='email' class='form-label'>Email</label>
+      <input
+        type='email'
+        class='form-control'
+        id='email'
+        name='email'
+        autofocus
+        required
+        autocomplete='email'
+        aria-describedby='emailHelp'
+      />
+    </div>
 
-    form.addEventListener('submit', async function (event) {
-      event.preventDefault();
+    <div class='mb-3'>
+      <label for='password' class='form-label'>Password</label>
+      <div class='input-group'>
+        <input
+          type='password'
+          class='form-control'
+          id='password'
+          name='password'
+          required
+          autocomplete='current-password'
+          aria-describedby='passwordHelp'
+        />
+        <button
+          class='btn btn-outline-secondary'
+          type='button'
+          id='togglePassword'
+          aria-label='Показать/скрыть пароль'
+        >
+          <i class='bi bi-eye' aria-hidden='true'></i>
+        </button>
+      </div>
+    </div>
 
-      const formData = {
-        email: form.email.value,
-        password: form.password.value
-      };
+    {{! TODO }}
+    {{!-- <div class='mb-3 form-check'>
+      <input type='checkbox' class='form-check-input' id='rememberMe' name='rememberMe' />
+      <label class='form-check-label' for='rememberMe'>Запомнить меня</label>
+    </div> --}}
 
-      try {
-        const response = await fetch('/api/v1/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify(formData)
-        });
+    <div class='d-grid gap-2'>
+      <button type='submit' class='btn btn-primary' id='submitButton'>
+        <span
+          class='spinner-border spinner-border-sm d-none'
+          id='loginSpinner'
+          role='status'
+          aria-hidden='true'
+        ></span>
+        <span id='loginButtonText'>Sign In</span>
+      </button>
+    </div>
 
-        const result = await response.json();
+    {{! TODO }}
+    {{! <div class="mt-3 text-center">
+      <a href="/auth/forgot-password">Забыли пароль?</a>
+    </div> }}
+  </form>
+</div>
 
-        if (response.ok) {
-          const { accessToken, refreshToken } = result.data;
-
-          if (accessToken && refreshToken) {
-            // Устанавливаем токены в cookie
-            document.cookie = `accessToken=${accessToken}; path=/; secure; SameSite=Lax`;
-            document.cookie = `refreshToken=${refreshToken}; path=/; secure; SameSite=Lax`;
-
-            // Проверим, установились ли куки
-            const cookies = document.cookie;
-            const accessExists = cookies.includes(`accessToken=${accessToken}`);
-            const refreshExists = cookies.includes(`refreshToken=${refreshToken}`);
-
-            if (accessExists && refreshExists) {
-              window.location.href = '/dashboard';
-            } else {
-              alert('Ошибка: не удалось сохранить токены в cookie');
-            }
-          } else {
-            alert('Сервер не вернул токены');
-          }
-        } else {
-          alert(result.message || 'Неверный email или пароль');
-        }
-      } catch (err) {
-        console.error('Ошибка входа:', err);
-        alert('Произошла ошибка при входе');
-      }
-    });
-  });
-</script>
-
+<script src='/assets/javascript/auth/login.js' defer></script>
