@@ -13,8 +13,9 @@ export class PageController extends BaseController {
       }
 
       return this.render(request, reply, 'pages/auth/login', {
-        title: 'Login',
-        layout: 'layouts/auth',
+        pageTitle: 'Login',
+        appVersion: '0.1.1',
+        layout: 'layouts/auth.hbs',
       });
     } catch (error) {
       return this.handleError(reply, error);
@@ -24,8 +25,9 @@ export class PageController extends BaseController {
   async setup(request: FastifyRequest, reply: FastifyReply): Promise<FastifyReply> {
     try {
       return this.render(request, reply, 'pages/auth/setup', {
-        title: 'Setup',
-        layout: 'layouts/auth',
+        pageTitle: 'Setup',
+        appVersion: '0.1.1',
+        layout: 'layouts/auth.hbs',
       });
     } catch (error) {
       return this.handleError(reply, error);

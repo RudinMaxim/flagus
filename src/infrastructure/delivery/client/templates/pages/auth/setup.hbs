@@ -19,10 +19,6 @@
     <input type="password" class="form-control" id="password" name="password" required autocomplete="new-password">
     <div class="form-text">Пароль должен содержать минимум 8 символов, включая буквы, цифры и специальные символы.</div>
   </div>
-  <div class="mb-3">
-    <label for="confirmPassword" class="form-label">Подтверждение пароля</label>
-    <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required autocomplete="new-password">
-  </div>
   <div class="d-grid gap-2">
     <button type="submit" class="btn btn-primary">Создать аккаунт администратора</button>
   </div>
@@ -43,16 +39,9 @@
     });
 
     const form = document.getElementById('firstAdminForm');
-    const password = document.getElementById('password');
-    const confirmPassword = document.getElementById('confirmPassword');
 
     form.addEventListener('submit', async function (event) {
-      event.preventDefault(); // отменяем стандартную отправку формы
-
-      if (password.value !== confirmPassword.value) {
-        alert('Пароли не совпадают');
-        return;
-      }
+      event.preventDefault();
 
       if (password.value.length < 8) {
         alert('Пароль должен содержать минимум 8 символов');

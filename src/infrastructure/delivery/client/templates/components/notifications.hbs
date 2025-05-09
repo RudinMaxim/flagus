@@ -1,0 +1,69 @@
+<div id="notifications-container" class="notifications-container position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+  {{#if notifications}}
+    {{#each notifications}}
+      <div class="toast show notification-toast mb-2" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header {{#if this.type}}bg-{{this.type}} text-white{{/if}}">
+          <strong class="me-auto">{{this.title}}</strong>
+          <button type="button" class="btn-close {{#if this.type}}btn-close-white{{/if}}" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+          {{this.message}}
+        </div>
+      </div>
+    {{/each}}
+  {{/if}}
+</div>
+
+<script type="text/hyperscript">
+  def showNotification(type, title, message, duration)
+    set container to #notifications-container
+    set toast to make("<div class='toast show notification-toast mb-2' role='alert'></div>")
+    set headerClass to "toast-header"
+    if type is "success" then
+      add "bg-success text-white" to headerClass
+    else if type is "danger" then
+      add "bg-danger text-white" to headerClass
+    else if type is "warning" then
+      add "bg-warning text-white" to headerClass
+    else if type is "info" then
+      add "bg-info text-white" to headerClass
+    end
+    
+    set header to make("<div></div>")
+    set header.className to headerClass
+    
+    append make("<strong class='me-auto'>" + title + "</strong>") to header
+    append make("<button type='button' class='btn-close " + (type ? "btn-close-white" : "") + "' data-bs-dismiss='toast'></button>") to header
+    
+    set body to make("<div class='toast-body'>" + message + "</div>")
+    
+    append header to toast
+    append body to toast
+    append toast to container
+    
+    set duration to duration || 5000
+    wait duration ms
+    remove toast
+  end
+
+  on htmx:afterOnLoad from body
+    if event.detail.xhr.status is 200
+      if event.detail.xhr.responseText contains "notification-success"
+        showNotification("success", "Успех", event.detail.xhr.responseText, 3000)
+      end
+    else if event.detail.xhr.status is not 200
+      showNotification("danger", "Ошибка", "Произошла ошибка при выполнении операции", 5000)
+    end
+  end
+</script>
+
+<style>
+  .notifications-container {
+    width: 350px;
+    max-width: 100%;
+  }
+  
+  .notification-toast {
+    opacity: 1;
+  }
+</style>

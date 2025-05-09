@@ -42,10 +42,9 @@ export abstract class BaseController {
   ): Promise<FastifyReply> {
     const viewData = this.prepareViewData(request);
 
-    return reply.view(template, {
-      ...viewData,
-      ...data,
-    });
+    const layout = data.layout ?? 'layouts/main';
+
+    return reply.view(template, { ...viewData, ...data }, { layout });
   }
 
   /**

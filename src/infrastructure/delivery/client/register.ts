@@ -4,7 +4,6 @@ import fastifyStatic from '@fastify/static';
 import fastifyView from '@fastify/view';
 import handlebars from 'handlebars';
 import { PageController, DashboardController } from './controllers';
-import { TYPES } from '../../config/types';
 import {
   AuditService,
   CategoryService,
@@ -12,7 +11,7 @@ import {
 } from '../../../core/flag-manager/service';
 import { AuthMiddleware } from '../middlewares';
 import { registerHandlebarsHelpers } from '../../../shared/utils';
-import { AuthHttpController } from '../api/v1/controllers';
+import { TYPES } from '../../config/types';
 
 export async function registerClient(app: FastifyInstance): Promise<void> {
   await app.register(fastifyView, {
@@ -20,13 +19,13 @@ export async function registerClient(app: FastifyInstance): Promise<void> {
       handlebars,
     },
     root: path.join(__dirname, 'templates'),
-    layout: 'layouts/main',
     viewExt: 'hbs',
     options: {
       partials: {
-        header: 'partials/header.hbs',
-        sidebar: 'partials/sidebar.hbs',
-        footer: 'partials/footer.hbs',
+        header: 'components/header.hbs',
+        sidebar: 'components/sidebar.hbs',
+        footer: 'components/footer.hbs',
+        notifications: 'components/notifications.hbs',
       },
     },
   });
@@ -41,7 +40,6 @@ export async function registerClient(app: FastifyInstance): Promise<void> {
   const flagService = app.container.get<FeatureFlagService>(TYPES.FeatureFlagService);
   const auditService = app.container.get<AuditService>(TYPES.AuditService);
   const categoryService = app.container.get<CategoryService>(TYPES.CategoryService);
-  const authHttpController = app.container.get<AuthHttpController>(TYPES.AuthHttpController);
 
   const authMiddleware = app.container.get<AuthMiddleware>(TYPES.AuthMiddleware);
 
@@ -52,7 +50,6 @@ export async function registerClient(app: FastifyInstance): Promise<void> {
       categoryService,
       auditService,
     }),
-    auth: authHttpController,
   };
 
   app.get(
