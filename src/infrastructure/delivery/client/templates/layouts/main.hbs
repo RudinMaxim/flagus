@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ru" class="h-100">
+<head>
+  {{> head }}
+</head>
+<body class="d-flex flex-column h-100">
+  <div class="d-flex flex-grow-1">
+    {{> sidebar }}
+    
+    <div class="content-wrapper d-flex flex-column flex-grow-1">
+      {{> header }}
+      
+      <main class="container-fluid py-3 flex-grow-1">
+        {{> notifications }}
+        {{{body}}}
+      </main>
+      
+      {{> footer }}
+    </div>
+  </div>
+  
+  {{> scripts }}
+</body>
+</html>

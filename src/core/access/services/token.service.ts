@@ -2,15 +2,30 @@ import { inject, injectable } from 'inversify';
 import jwa from 'jwa';
 import { TYPES } from '../../../infrastructure/config/types';
 import { ConfigService } from '../../../infrastructure/config/config';
-import { TJwtPayload, TokenDTO } from '../interfaces';
+import { RefreshTokenDTO, TJwtPayload, TokenDTO } from '../interfaces';
 import { User } from '../model';
+import { IUserRepository } from '../../../infrastructure/persistence';
 
 @injectable()
 export class TokenService {
   private readonly signer;
 
-  constructor(@inject(TYPES.Config) private readonly config: ConfigService) {
+  constructor(
+    @inject(TYPES.Config) private readonly config: ConfigService,
+    @inject(TYPES.UserRepository) private readonly userRepository: IUserRepository
+  ) {
     this.signer = jwa('HS256');
+  }
+
+  public async refreshToken(request: RefreshTokenDTO): Promise<TokenDTO> {
+    const decoded = this.verifyRefreshToken(request.refreshToken);
+    const user = await this.userRepository.findById(decoded.userId);
+
+    if (!user || !user.isActive) {
+      throw new Error('Недействительный токен');
+    }
+
+    return this.generateTokens(user);
   }
 
   public generateTokens(user: User): TokenDTO {
@@ -42,7 +57,7 @@ export class TokenService {
     };
   }
 
-  public verifyRefreshToken(token: string) {
+  private verifyRefreshToken(token: string) {
     return this.verifyToken<TJwtPayload>(token, this.config.JWT_REFRESH_SECRET) as {
       userId: string;
     };

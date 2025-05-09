@@ -2,16 +2,19 @@ import { FastifyInstance } from 'fastify';
 import { CategoryHttpController } from '../controllers/category.http.controller';
 import { TYPES } from '../../../../config/types';
 import * as schemas from '../schemas/category.schema';
+import { AuthMiddleware } from '../../../middlewares';
 
-export default async function (fastify: FastifyInstance) {
+export async function categoryRoutes(fastify: FastifyInstance) {
   const categoryController = fastify.container.get<CategoryHttpController>(
     TYPES.CategoryHttpController
   );
+  const authMiddleware = fastify.container.get<AuthMiddleware>(TYPES.AuthMiddleware);
 
   fastify.route({
     method: 'GET',
     url: '/',
     schema: schemas.getAllCategoriesSchema,
+    preHandler: [authMiddleware.authenticate.bind(authMiddleware)],
     handler: categoryController.getAllCategories.bind(categoryController),
   });
 
@@ -19,6 +22,7 @@ export default async function (fastify: FastifyInstance) {
     method: 'GET',
     url: '/:id',
     schema: schemas.getCategoryByIdSchema,
+    preHandler: [authMiddleware.authenticate.bind(authMiddleware)],
     handler: categoryController.getCategoryById.bind(categoryController),
   });
 
@@ -26,6 +30,7 @@ export default async function (fastify: FastifyInstance) {
     method: 'GET',
     url: '/roots',
     schema: schemas.getRootCategoriesSchema,
+    preHandler: [authMiddleware.authenticate.bind(authMiddleware)],
     handler: categoryController.getRootCategories.bind(categoryController),
   });
 
@@ -33,6 +38,7 @@ export default async function (fastify: FastifyInstance) {
     method: 'GET',
     url: '/:id/subcategories',
     schema: schemas.getSubcategoriesSchema,
+    preHandler: [authMiddleware.authenticate.bind(authMiddleware)],
     handler: categoryController.getSubcategories.bind(categoryController),
   });
 
@@ -40,6 +46,7 @@ export default async function (fastify: FastifyInstance) {
     method: 'POST',
     url: '/',
     schema: schemas.createCategorySchema,
+    preHandler: [authMiddleware.authenticate.bind(authMiddleware)],
     handler: categoryController.createCategory.bind(categoryController),
   });
 
@@ -47,6 +54,7 @@ export default async function (fastify: FastifyInstance) {
     method: 'PUT',
     url: '/:id',
     schema: schemas.updateCategorySchema,
+    preHandler: [authMiddleware.authenticate.bind(authMiddleware)],
     handler: categoryController.updateCategory.bind(categoryController),
   });
 
@@ -54,6 +62,7 @@ export default async function (fastify: FastifyInstance) {
     method: 'DELETE',
     url: '/:id',
     schema: schemas.deleteCategorySchema,
+    preHandler: [authMiddleware.authenticate.bind(authMiddleware)],
     handler: categoryController.deleteCategory.bind(categoryController),
   });
 
@@ -61,6 +70,7 @@ export default async function (fastify: FastifyInstance) {
     method: 'PUT',
     url: '/:id/move',
     schema: schemas.moveCategorySchema,
+    preHandler: [authMiddleware.authenticate.bind(authMiddleware)],
     handler: categoryController.moveCategory.bind(categoryController),
   });
 
@@ -68,6 +78,7 @@ export default async function (fastify: FastifyInstance) {
     method: 'GET',
     url: '/stats',
     schema: schemas.getCtatsCategorySchema,
+    preHandler: [authMiddleware.authenticate.bind(authMiddleware)],
     handler: categoryController.getCategoryStatistics.bind(categoryController),
   });
 
@@ -75,6 +86,7 @@ export default async function (fastify: FastifyInstance) {
     method: 'GET',
     url: '/:id/children-tree',
     schema: schemas.getChildrenTreeCategorySchema,
+    preHandler: [authMiddleware.authenticate.bind(authMiddleware)],
     handler: categoryController.getCategoryChildrenTree.bind(categoryController),
   });
 }

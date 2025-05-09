@@ -13,8 +13,10 @@ import {
   UserHttpController,
 } from '../delivery/api/v1/controllers';
 import { accessContainer } from '../../core/access';
-import { AuthMiddleware } from '../delivery/middlewares/auth.middleware';
 import { EvaluateHttpController } from '../delivery/api/v1/controllers/evaluate.http.controller';
+import { AuthMiddleware } from '../delivery/middlewares';
+import { PageController } from '../delivery/client/controllers';
+import { FlagController } from '../delivery/client/controllers/flag.controller';
 
 export async function createContainer(): Promise<Container> {
   const container = new Container();
@@ -54,6 +56,9 @@ export async function createContainer(): Promise<Container> {
     .inSingletonScope();
 
   container.bind<AuthMiddleware>(TYPES.AuthMiddleware).to(AuthMiddleware).inSingletonScope();
+
+  container.bind<PageController>(TYPES.PageController).to(PageController).inSingletonScope();
+  container.bind<FlagController>(TYPES.FlagController).to(FlagController).inSingletonScope();
 
   const initializeApp = async () => {
     const initializables = container.getAll<OnInit>(TYPES.OnInit);

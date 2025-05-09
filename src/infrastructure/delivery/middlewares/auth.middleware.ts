@@ -90,4 +90,57 @@ export class AuthMiddleware {
       });
     }
   };
+
+  public authenticateUI = async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const accessToken = request.cookies.accessToken;
+      const refreshToken = request.cookies.refreshToken;
+
+      if (!accessToken && !refreshToken) {
+        return reply.redirect('/login');
+      }
+
+      if (accessToken) {
+        try {
+          const payload = this.tokenService.verifyAccessToken(accessToken);
+          request.user = payload;
+          return;
+        } catch (accessError) {
+          request.log.warn(accessError, 'Access token expired or invalid');
+        }
+      }
+
+      if (!refreshToken) {
+        return reply.redirect('/login');
+      }
+
+      try {
+        const newTokens = await this.tokenService.refreshToken({ refreshToken });
+
+        reply.setCookie('accessToken', newTokens.accessToken, {
+          path: '/',
+          secure: true,
+          sameSite: 'lax',
+          httpOnly: true,
+        });
+        reply.setCookie('refreshToken', newTokens.refreshToken, {
+          path: '/',
+          secure: true,
+          sameSite: 'lax',
+          httpOnly: true,
+        });
+
+        const newPayload = this.tokenService.verifyAccessToken(newTokens.accessToken);
+        request.user = newPayload;
+
+        return;
+      } catch (refreshError) {
+        request.log.error(refreshError, 'Ошибка обновления токена по refreshToken');
+        return reply.redirect('/login');
+      }
+    } catch (error) {
+      request.log.error(error, 'Unexpected error in authenticateUI');
+      return reply.redirect('/login');
+    }
+  };
 }

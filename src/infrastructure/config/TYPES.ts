@@ -29,4 +29,7 @@ export const TYPES = {
   EvaluateHttpController: Symbol.for('EvaluateHttpController'),
 
   AuthMiddleware: Symbol.for('AuthMiddleware'),
+
+  PageController: Symbol.for('PageController'),
+  FlagController: Symbol.for('FlagController'),
 };
