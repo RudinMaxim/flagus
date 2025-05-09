@@ -12,9 +12,9 @@ export class PageController extends BaseController {
 
       return this.render(request, reply, 'pages/auth/login', {
         layout: 'layouts/auth.hbs',
-        pageTitle: 'Вход в систему',
+        pageTitle: 'Login',
         pageDescription:
-          'Вход в систему управления feature flags Flagus. Авторизуйтесь для доступа к панели управления.',
+          'Login to the feature flags Flagus control panel. Log in to access the control panel.',
       });
     } catch (error) {
       return this.handleError(reply, error);
@@ -27,7 +27,7 @@ export class PageController extends BaseController {
         pageTitle: 'Setup',
         layout: 'layouts/auth.hbs',
         pageDescription:
-          'Первоначальная настройка системы управления feature flags Flagus. Создайте администратора и начните работу.',
+          'Initial setup of the feature flags Flagus management system. Create an administrator and get started.',
       });
     } catch (error) {
       return this.handleError(reply, error);
@@ -37,9 +37,9 @@ export class PageController extends BaseController {
   async notFound(request: FastifyRequest, reply: FastifyReply): Promise<FastifyReply> {
     return this.render(request, reply, 'pages/errors/404', {
       layout: 'layouts/error',
-      pageTitle: 'Страница не найдена',
+      pageTitle: 'Page not found',
       pageDescription:
-        'Запрашиваемая страница не найдена в системе Flagus. Проверьте URL или вернитесь на главную.',
+        'The requested page was not found in the Flagus system. Check the URL or return to the home page.',
     });
   }
 
@@ -52,8 +52,8 @@ export class PageController extends BaseController {
     return this.render(request, reply, 'pages/errors/500', {
       layout: 'layouts/error',
       errorId: errorId,
-      pageTitle: 'Ошибка',
-      pageDescription: 'Произошла ошибка при обработке вашего запроса в системе Flagus.',
+      pageTitle: 'Error',
+      pageDescription: 'There was an error processing your request in the Flagus system.',
       error: {
         message: err.message,
         stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,

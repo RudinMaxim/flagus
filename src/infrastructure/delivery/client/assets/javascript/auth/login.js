@@ -161,7 +161,7 @@ function setupLoginForm() {
 
         if (checkCookies(accessToken, refreshToken)) {
           localStorage.setItem('isAuthenticated', 'true');
-          window.location.href = '/dashboard';
+          window.location.href = '/';
         } else {
           showError('Failed to save login details. Check your browser settings.');
         }

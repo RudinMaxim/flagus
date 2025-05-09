@@ -1,162 +1,87 @@
-<div class="sidebar bg-dark text-white" id="sidebar">
-  <div class="sidebar-header p-3 text-center">
-    <a href="/" class="d-block">
-      <img src="/assets/media/img/logo.png" alt="Logo" class="img-fluid sidebar-logo" style="max-height: 40px;">
+<!-- Main Sidebar -->
+<div class="sidebar bg-dark text-white" id="sidebar" role="navigation" aria-label="Главное меню">
+  <!-- Logo Header -->
+  <div class="sidebar-header p-3 d-flex align-items-center justify-content-between">
+    <a href="/" class="text-decoration-none" aria-label="Главная страница">
+      <img src="/assets/media/img/logo.png" alt="Логотип" class="img-fluid" style="max-height: 40px;">
     </a>
-    <button class="btn btn-sm btn-link text-white d-md-none sidebar-close" aria-label="Close sidebar">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
-        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
-      </svg>
+    <button class="btn btn-sm text-white d-md-none sidebar-close" aria-label="Закрыть меню">
+      <i class="bi bi-x-lg" aria-hidden="true"></i>
+      <span class="visually-hidden">Закрыть</span>
     </button>
   </div>
   
-  <div class="sidebar-content">
-    <ul class="nav flex-column">
-      <li class="nav-item">
-        <a href="/flags" class="nav-link text-white {{#if (eq activeRoute 'flags')}}active{{/if}}">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-flag me-2" viewBox="0 0 16 16">
-            <path d="M14.778.085A.5.5 0 0 1 15 .5V8a.5.5 0 0 1-.314.464L14.5 8l.186.464-.003-.001-.006-.003-.023-.009a12.435 12.435 0 0 1-.397-.15c-.264-.1-.7-.25-1.22-.394-.85-.236-1.958-.48-3.07-.48-1.02 0-2.174.28-3.175.616-.503.168-.923.33-1.209.44-.285.11-.737.23-.739.23H5.5V15h-.001a.5.5 0 0 1-.5-.45l-.237-1.183c-.097-.484-.182-.937-.235-1.356-.055-.419-.072-.804-.05-1.128.024-.333.106-.621.217-.895.109-.264.25-.525.414-.795.33-.543.72-1.097 1.094-1.632.376-.535.74-1.052 1.06-1.547a11.795 11.795 0 0 0 .572-1.008c.157-.328.283-.68.364-1.027.082-.345.124-.707.124-1.075 0-.367-.042-.73-.124-1.075a4.257 4.257 0 0 0-.364-1.027 6.07 6.07 0 0 0-.572-1.008c-.32-.495-.684-1.012-1.06-1.547-.374-.535-.764-1.089-1.094-1.632-.164-.27-.305-.53-.414-.795-.11-.274-.193-.562-.217-.895-.024-.322-.006-.708.049-1.128.053-.42.138-.873.236-1.355L5 1.5c0-.166.068-.33.186-.45.218-.272.528-.417.863-.417zM7.5 0C6.507 0 5.625.37 5.032.997c.295.289.496.623.616.997h1.368c.103-.665.258-1.343.562-1.994z"/>
-          </svg>
-          Флаги
-        </a>
-      </li>
-      <li class="nav-item">
-        <a href="/audit" class="nav-link text-white {{#if (eq activeRoute 'audit')}}active{{/if}}">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-text me-2" viewBox="0 0 16 16">
-            <path d="M5.5 7a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zM5 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5z"/>
-            <path d="M9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.5L9.5 0zm0 1v2A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
-          </svg>
-          Аудит
-        </a>
-      </li>
-    </ul>
+  <!-- Main Navigation -->
+  <div class="sidebar-content overflow-auto">
+    <nav>
+      <ul class="nav flex-column" role="menu">
+        <li class="nav-item" role="none">
+          <a href="/flags" class="nav-link text-white d-flex align-items-center" 
+             hx-boost="true" 
+             role="menuitem"
+             aria-current="page"
+             tabindex="0">
+            <i class="bi bi-flag me-3" aria-hidden="true"></i>
+            <span>Флаги</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
   </div>
   
+  <!-- Footer Section -->
   <div class="sidebar-footer mt-auto border-top">
-    <ul class="nav flex-column">
-      <li class="nav-item">
-        <a href="/settings/profile" class="nav-link text-white">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-circle me-2" viewBox="0 0 16 16">
-            <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
-            <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
-          </svg>
-          Профиль
+    <ul class="nav flex-column" role="menu">
+      <li class="nav-item" role="none">
+        <a href="/settings/profile" class="nav-link text-white d-flex align-items-center" 
+           hx-boost="true" 
+           role="menuitem"
+           tabindex="0">
+          <i class="bi bi-person-circle me-3" aria-hidden="true"></i>
+          <span>Профиль</span>
         </a>
       </li>
-      <li class="nav-item">
-        <a href="/settings" class="nav-link text-white {{#if (eq activeRoute 'settings')}}active{{/if}}">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear me-2" viewBox="0 0 16 16">
-            <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
-            <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z"/>
-          </svg>
-          Настройки
+      <li class="nav-item" role="none">
+        <a href="/settings" class="nav-link text-white d-flex align-items-center" 
+           hx-boost="true" 
+           role="menuitem"
+           tabindex="0">
+          <i class="bi bi-gear me-3" aria-hidden="true"></i>
+          <span>Настройки</span>
         </a>
       </li>
-      <li class="nav-item">
-        <a href="/help" class="nav-link text-white">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-question-circle me-2" viewBox="0 0 16 16">
-            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-            <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/>
-          </svg>
-          Помощь
+      <li class="nav-item" role="none">
+        <a href="/help" class="nav-link text-white d-flex align-items-center" 
+           hx-boost="true" 
+           role="menuitem"
+           tabindex="0">
+          <i class="bi bi-question-circle me-3" aria-hidden="true"></i>
+          <span>Помощь</span>
         </a>
       </li>
-      <li class="nav-item">
-        <a href="/logout" class="nav-link text-white" 
+      <li class="nav-item" role="none">
+        <a href="#" class="nav-link text-white d-flex align-items-center" 
            hx-post="/api/v1/auth/logout" 
            hx-confirm="Вы уверены, что хотите выйти?"
-           hx-target="body">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-right me-2" viewBox="0 0 16 16">
-            <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/>
-            <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
-          </svg>
-          Выход
+           hx-target="body"
+           role="menuitem"
+           tabindex="0">
+          <i class="bi bi-box-arrow-right me-3" aria-hidden="true"></i>
+          <span>Выход</span>
         </a>
       </li>
     </ul>
   </div>
 </div>
 
-<div class="mobile-sidebar-toggle d-md-none position-fixed bottom-0 start-0 end-0 bg-dark text-white p-2">
-  <button class="btn btn-link text-white w-100" id="openSidebar" _="on click toggle .d-none on #sidebar">
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list me-2" viewBox="0 0 16 16">
-      <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
-    </svg>
-    Меню
+<!-- Mobile Toggle Button -->
+<div class="mobile-menu-toggle d-md-none position-fixed bottom-0 start-0 end-0 bg-dark text-white p-2 z-3">
+  <button class="btn btn-dark w-100 d-flex align-items-center justify-content-center" 
+          id="toggleSidebar" 
+          aria-expanded="false" 
+          aria-controls="sidebar" 
+          aria-label="Открыть меню">
+    <i class="bi bi-list me-2" aria-hidden="true"></i>
+    <span>Меню</span>
   </button>
 </div>
-
-<style>
-  @media (max-width: 767.98px) {
-    .sidebar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      bottom: 0;
-      z-index: 1030;
-      width: 280px;
-      transform: translateX(-100%);
-      transition: transform 0.3s ease;
-    }
-    
-    .sidebar.show {
-      transform: translateX(0);
-    }
-    
-  }
-  
-  @media (min-width: 768px) {
-    .sidebar {
-      width: 250px;
-      min-height: 100vh;
-    }
-    
-    .mobile-sidebar-toggle {
-      display: none;
-    }
-  }
-  
-  .sidebar-content {
-    overflow-y: auto;
-  }
-  
-  .sidebar-footer {
-    padding-top: 0.5rem;
-  }
-  
-  .nav-link {
-    padding: 0.75rem 1rem;
-    display: flex;
-    align-items: center;
-  }
-  
-  .nav-link.active {
-    background-color: rgba(255, 255, 255, 0.1);
-  }
-</style>
-
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    if (window.innerWidth < 768) {
-      const sidebar = document.getElementById('sidebar');
-      sidebar.classList.remove('d-md-none');
-      sidebar.classList.add('d-none');
-    }
-    
-    const closeButton = document.querySelector('.sidebar-close');
-    if (closeButton) {
-      closeButton.addEventListener('click', function() {
-        const sidebar = document.getElementById('sidebar');
-        sidebar.classList.add('d-none');
-      });
-    }
-    
-    const openButton = document.getElementById('openSidebar');
-    if (openButton) {
-      openButton.addEventListener('click', function() {
-        const sidebar = document.getElementById('sidebar');
-        sidebar.classList.toggle('d-none');
-      });
-    }
-  });
-</script>

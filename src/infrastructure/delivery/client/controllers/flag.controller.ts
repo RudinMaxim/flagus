@@ -28,8 +28,8 @@ export class FlagController extends BaseController {
       }
 
       return this.render(request, reply, 'pages/flags/index', {
-        pageTitle: 'Фича-флаги',
-        pageDescription: 'Управление фича-флагами в системе Flagus',
+        pageTitle: 'Feature flags',
+        pageDescription: 'Managing feature flags in the Flagus system',
         flags: flagsResult,
         layout: 'layouts/main.hbs',
         categories,
@@ -51,8 +51,8 @@ export class FlagController extends BaseController {
       const history = await this.flagService.getById(id);
 
       return this.render(request, reply, 'pages/flags/detail', {
-        pageTitle: `Флаг: ${flag.name}`,
-        pageDescription: `Подробная информация о флаге ${flag.name}`,
+        pageTitle: `flag: ${flag.name}`,
+        pageDescription: `Detailed information about the flag ${flag.name}`,
         flag,
         layout: 'layouts/main.hbs',
         history,
@@ -67,8 +67,8 @@ export class FlagController extends BaseController {
       const categories = await this.categoryService.getAll();
 
       return this.render(request, reply, 'pages/flags/form', {
-        pageTitle: 'Создание флага',
-        pageDescription: 'Создание нового фича-флага в системе Flagus',
+        pageTitle: 'Creating a flag',
+        pageDescription: 'Creating a new feature flag in the Flagus system',
         categories,
         layout: 'layouts/main.hbs',
         flag: {
@@ -94,8 +94,8 @@ export class FlagController extends BaseController {
       const categories = await this.categoryService.getAll();
 
       return this.render(request, reply, 'pages/flags/form', {
-        pageTitle: `Редактирование флага: ${flag.name}`,
-        pageDescription: `Редактирование фича-флага ${flag.name}`,
+        pageTitle: `Editing a flag: ${flag.name}`,
+        pageDescription: `Editing a feature flag ${flag.name}`,
         categories,
         layout: 'layouts/main.hbs',
         flag,
