@@ -44,7 +44,7 @@ export abstract class BaseController {
 
     const layout = data.layout ?? 'layouts/main';
 
-    return reply.view(template, { ...viewData, ...data }, { layout });
+    return reply.view(template, { ...viewData, appVersion: '0.1.1', ...data }, { layout });
   }
 
   /**

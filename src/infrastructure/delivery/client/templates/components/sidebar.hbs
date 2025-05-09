@@ -142,15 +142,28 @@
   }
 </style>
 
-<script type="text/hyperscript">
-  on load
-    if window.innerWidth < 768
-      remove .d-md-none from #sidebar
-      add .d-none to #sidebar
-    end
-  end
-  
-  on click from .sidebar-close
-    add .d-none to #sidebar
-  end
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (window.innerWidth < 768) {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.remove('d-md-none');
+      sidebar.classList.add('d-none');
+    }
+    
+    const closeButton = document.querySelector('.sidebar-close');
+    if (closeButton) {
+      closeButton.addEventListener('click', function() {
+        const sidebar = document.getElementById('sidebar');
+        sidebar.classList.add('d-none');
+      });
+    }
+    
+    const openButton = document.getElementById('openSidebar');
+    if (openButton) {
+      openButton.addEventListener('click', function() {
+        const sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('d-none');
+      });
+    }
+  });
 </script>

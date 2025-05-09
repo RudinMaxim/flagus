@@ -1,5 +1,3 @@
-<h2 class="text-center mb-4">Log In</h2>
-
 <form id="loginForm">
   <div class="mb-3">
     <label for="email" class="form-label">Email address</label>
@@ -14,17 +12,21 @@
   </div>
 </form>
 
-<div class="text-center mt-4">
-  <div id="first-user-check" hx-get="/api/v1/auth/check-first-user" hx-trigger="load">
-    <div class="spinner-border spinner-border-sm text-primary" role="status">
-      <span class="visually-hidden">Loading...</span>
-    </div>
-    <span class="ms-2">Проверка статуса системы...</span>
-  </div>
-</div>
-
 <script>
   document.addEventListener('DOMContentLoaded', function () {
+    fetch('/api/v1/auth/check-first-user', {
+      headers: {
+        'X-API-Key': 'flugs'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (!!data?.data?.isFirstUser) {
+        window.location.href = '/setup';
+      }
+    });
+
+
     const form = document.getElementById('loginForm');
 
     form.addEventListener('submit', async function (event) {

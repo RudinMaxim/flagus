@@ -55,8 +55,7 @@
         {{#if actionButtons}}
           {{#each actionButtons}}
             <a href="{{this.url}}" class="btn btn-{{this.type}} ms-2" 
-               {{#if this.htmxAttr}}{{this.htmxAttr}}{{/if}}
-               {{#if this.hyperscriptAttr}}{{this.hyperscriptAttr}}{{/if}}>
+               {{#if this.htmxAttr}}{{this.htmxAttr}}{{/if}}>
               {{#if this.icon}}
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-{{this.icon}} me-1" viewBox="0 0 16 16">
                   {{#if (eq this.icon 'plus')}}

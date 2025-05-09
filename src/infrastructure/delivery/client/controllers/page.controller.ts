@@ -1,4 +1,4 @@
-import { FastifyRequest, FastifyReply } from 'fastify';
+import { FastifyRequest, FastifyReply, FastifyError } from 'fastify';
 import { BaseController } from './base.controller';
 
 export class PageController extends BaseController {
@@ -14,7 +14,6 @@ export class PageController extends BaseController {
 
       return this.render(request, reply, 'pages/auth/login', {
         pageTitle: 'Login',
-        appVersion: '0.1.1',
         layout: 'layouts/auth.hbs',
       });
     } catch (error) {
@@ -26,7 +25,6 @@ export class PageController extends BaseController {
     try {
       return this.render(request, reply, 'pages/auth/setup', {
         pageTitle: 'Setup',
-        appVersion: '0.1.1',
         layout: 'layouts/auth.hbs',
       });
     } catch (error) {
@@ -36,15 +34,23 @@ export class PageController extends BaseController {
 
   async notFound(request: FastifyRequest, reply: FastifyReply): Promise<FastifyReply> {
     return this.render(request, reply, 'pages/errors/404', {
-      title: 'Not Found',
+      pageTitle: 'Страница не найдена',
       layout: 'layouts/error',
     });
   }
 
-  async error(request: FastifyRequest, reply: FastifyReply): Promise<FastifyReply> {
+  async error(
+    err: FastifyError,
+    request: FastifyRequest,
+    reply: FastifyReply
+  ): Promise<FastifyReply> {
+    const errorId = crypto.randomUUID();
+    console.error(`Error ID: ${errorId}`, err);
+
     return this.render(request, reply, 'pages/errors/500', {
-      title: 'Error',
+      pageTitle: 'Ошибка сервера',
       layout: 'layouts/error',
+      errorId: errorId,
     });
   }
 }

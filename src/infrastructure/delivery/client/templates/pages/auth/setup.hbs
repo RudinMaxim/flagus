@@ -33,7 +33,7 @@
     })
     .then(response => response.json())
     .then(data => {
-      if (!data.data.isFirstUser) {
+      if (!!data?.data?.isFirstUser) {
         window.location.href = '/login';
       }
     });

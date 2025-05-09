@@ -52,32 +52,14 @@ export async function registerClient(app: FastifyInstance): Promise<void> {
     }),
   };
 
-  app.get(
-    '/',
-    { preHandler: authMiddleware.authenticateUI },
-    controllers.dashboard.index.bind(controllers.dashboard)
-  );
   app.get('/login', controllers.page.login.bind(controllers.page));
   app.get('/setup', controllers.page.setup.bind(controllers.page));
 
-  // Register other routes here
-  // ...
-
-  // API client routes for HTMX interactions
   app.register(async instance => {
     instance.addHook('preHandler', authMiddleware.authenticateUI);
-
-    // Flag client API routes
-    // instance.get(
-    //   '/api/client/flags/search',
-    //   controllers.dashboard.searchFlags.bind(controllers.dashboard)
-    // );
-    // instance.get(
-    //   '/api/client/flags/validate-name',
-    //   controllers.dashboard.validateFlagName.bind(controllers.dashboard)
-    // );
-
-    // Other client API routes
-    // ...
+    instance.get('/', controllers.dashboard.index.bind(controllers.dashboard));
   });
+
+  app.setErrorHandler(controllers.page.error.bind(controllers.page));
+  app.setNotFoundHandler(controllers.page.notFound.bind(controllers.page));
 }

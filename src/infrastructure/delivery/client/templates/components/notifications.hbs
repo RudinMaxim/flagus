@@ -14,47 +14,73 @@
   {{/if}}
 </div>
 
-<script type="text/hyperscript">
-  def showNotification(type, title, message, duration)
-    set container to #notifications-container
-    set toast to make("<div class='toast show notification-toast mb-2' role='alert'></div>")
-    set headerClass to "toast-header"
-    if type is "success" then
-      add "bg-success text-white" to headerClass
-    else if type is "danger" then
-      add "bg-danger text-white" to headerClass
-    else if type is "warning" then
-      add "bg-warning text-white" to headerClass
-    else if type is "info" then
-      add "bg-info text-white" to headerClass
-    end
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    function showNotification(type, title, message, duration = 5000) {
+      const container = document.getElementById('notifications-container');
+      
+      const toast = document.createElement('div');
+      toast.className = 'toast show notification-toast mb-2';
+      toast.setAttribute('role', 'alert');
+      toast.setAttribute('aria-live', 'assertive');
+      toast.setAttribute('aria-atomic', 'true');
+      
+      const header = document.createElement('div');
+      let headerClass = 'toast-header';
+      
+      if (type === 'success') {
+        headerClass += ' bg-success text-white';
+      } else if (type === 'danger') {
+        headerClass += ' bg-danger text-white';
+      } else if (type === 'warning') {
+        headerClass += ' bg-warning text-white';
+      } else if (type === 'info') {
+        headerClass += ' bg-info text-white';
+      }
+      
+      header.className = headerClass;
+      
+      const titleElement = document.createElement('strong');
+      titleElement.className = 'me-auto';
+      titleElement.textContent = title;
+      
+      const closeButton = document.createElement('button');
+      closeButton.className = 'btn-close' + (type ? ' btn-close-white' : '');
+      closeButton.setAttribute('type', 'button');
+      closeButton.setAttribute('data-bs-dismiss', 'toast');
+      closeButton.setAttribute('aria-label', 'Close');
+      
+      const body = document.createElement('div');
+      body.className = 'toast-body';
+      body.textContent = message;
+      
+      header.appendChild(titleElement);
+      header.appendChild(closeButton);
+      toast.appendChild(header);
+      toast.appendChild(body);
+      container.appendChild(toast);
+      
+      closeButton.addEventListener('click', function() {
+        container.removeChild(toast);
+      });
+      
+      setTimeout(function() {
+        if (toast.parentNode === container) {
+          container.removeChild(toast);
+        }
+      }, duration);
+    }
     
-    set header to make("<div></div>")
-    set header.className to headerClass
-    
-    append make("<strong class='me-auto'>" + title + "</strong>") to header
-    append make("<button type='button' class='btn-close " + (type ? "btn-close-white" : "") + "' data-bs-dismiss='toast'></button>") to header
-    
-    set body to make("<div class='toast-body'>" + message + "</div>")
-    
-    append header to toast
-    append body to toast
-    append toast to container
-    
-    set duration to duration || 5000
-    wait duration ms
-    remove toast
-  end
-
-  on htmx:afterOnLoad from body
-    if event.detail.xhr.status is 200
-      if event.detail.xhr.responseText contains "notification-success"
-        showNotification("success", "Успех", event.detail.xhr.responseText, 3000)
-      end
-    else if event.detail.xhr.status is not 200
-      showNotification("danger", "Ошибка", "Произошла ошибка при выполнении операции", 5000)
-    end
-  end
+    document.body.addEventListener('htmx:afterOnLoad', function(event) {
+      if (event.detail.xhr.status === 200) {
+        if (event.detail.xhr.responseText.includes('notification-success')) {
+          showNotification('success', 'Успех', event.detail.xhr.responseText, 3000);
+        }
+      } else {
+        showNotification('danger', 'Ошибка', 'Произошла ошибка при выполнении операции', 5000);
+      }
+    });
+  });
 </script>
 
 <style>
