@@ -1,22 +1,10 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Flagus - {{pageTitle}}</title>  
-  <meta name="description" content="{{pageDescription}}">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <link rel="preload" href="/assets/styles/styles.css" as="style">
-  <link rel="preload" href="/assets/styles/normalize.css" as="style">
-  <link rel="preload" href="https://unpkg.com/htmx.org@1.9.2" as="script">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/styles/normalize.css">
-  <link rel="stylesheet" href="/assets/styles/styles.css">
-  <script src="https://unpkg.com/htmx.org@1.9.2" defer></script>
-  <link rel="icon" href="/assets/images/favicon.ico" type="image/x-icon">
+  {{> head }}
 </head>
 <body class="bg-light d-flex align-items-center justify-content-center min-vh-100">
-  <div class="container">
+  <main class="container">
     <div class="row justify-content-center">
       <div class="col-md-10 col-lg-6">
         <div class="card shadow">
@@ -27,9 +15,8 @@
         {{> footer }}
       </div>
     </div>
-  </div>
+  </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
-  <script src="/assets/javascript/main.js" defer></script>
+  {{> scripts }}
 </body>
 </html>

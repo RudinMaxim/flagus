@@ -26,6 +26,8 @@ export async function registerClient(app: FastifyInstance): Promise<void> {
         sidebar: 'components/sidebar.hbs',
         footer: 'components/footer.hbs',
         notifications: 'components/notifications.hbs',
+        head: 'partials/head.hbs',
+        scripts: 'partials/scripts.hbs',
       },
     },
   });
