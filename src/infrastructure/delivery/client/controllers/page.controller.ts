@@ -1,11 +1,9 @@
 import { FastifyRequest, FastifyReply, FastifyError } from 'fastify';
+import { injectable } from 'inversify';
 import { BaseController } from './base.controller';
 
+@injectable()
 export class PageController extends BaseController {
-  constructor() {
-    super();
-  }
-
   async login(request: FastifyRequest, reply: FastifyReply): Promise<FastifyReply> {
     try {
       if ((request as any).user) {

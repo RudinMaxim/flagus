@@ -3,15 +3,12 @@ import { FastifyInstance } from 'fastify';
 import fastifyStatic from '@fastify/static';
 import fastifyView from '@fastify/view';
 import handlebars from 'handlebars';
-import { PageController, DashboardController } from './controllers';
-import {
-  AuditService,
-  CategoryService,
-  FeatureFlagService,
-} from '../../../core/flag-manager/service';
+import { PageController } from './controllers';
+import { CategoryService, FeatureFlagService } from '../../../core/flag-manager/service';
 import { AuthMiddleware } from '../middlewares';
 import { registerHandlebarsHelpers } from '../../../shared/utils';
 import { TYPES } from '../../config/types';
+import { FlagController } from './controllers/flag.controller';
 
 export async function registerClient(app: FastifyInstance): Promise<void> {
   await app.register(fastifyView, {
@@ -44,37 +41,24 @@ export async function registerClient(app: FastifyInstance): Promise<void> {
 
   registerHandlebarsHelpers(handlebars);
 
-  const flagService = app.container.get<FeatureFlagService>(TYPES.FeatureFlagService);
-  const auditService = app.container.get<AuditService>(TYPES.AuditService);
-  const categoryService = app.container.get<CategoryService>(TYPES.CategoryService);
-
+  const pageController = app.container.get<PageController>(TYPES.PageController);
+  const flagController = app.container.get<FlagController>(TYPES.FlagController);
   const authMiddleware = app.container.get<AuthMiddleware>(TYPES.AuthMiddleware);
 
-  const controllers = {
-    page: new PageController(),
-    dashboard: new DashboardController({
-      flagService,
-      categoryService,
-      auditService,
-    }),
-  };
-
-  // app.addHook('onSend', (request, reply, payload, done) => {
-  //   reply.header('X-Content-Type-Options', 'nosniff');
-  //   reply.header('X-Frame-Options', 'DENY');
-  //   reply.header('X-XSS-Protection', '1; mode=block');
-  //   reply.header('Referrer-Policy', 'same-origin');
-  //   done(null, payload);
-  // });
-
-  app.get('/login', controllers.page.login.bind(controllers.page));
-  app.get('/setup', controllers.page.setup.bind(controllers.page));
+  app.get('/login', pageController.login.bind(pageController));
+  app.get('/setup', pageController.setup.bind(pageController));
 
   app.register(async instance => {
     instance.addHook('preHandler', authMiddleware.authenticateUI);
-    instance.get('/', controllers.dashboard.index.bind(controllers.dashboard));
+
+    instance.get('/', flagController.index.bind(flagController));
+    instance.get('/flags', flagController.index.bind(flagController));
+    instance.get('/flags/create', flagController.create.bind(flagController));
+    instance.get('/flags/:id', flagController.show.bind(flagController));
+    instance.get('/flags/:id/edit', flagController.edit.bind(flagController));
+    instance.post('/flags/:id/toggle', flagController.toggleStatus.bind(flagController));
   });
 
-  app.setErrorHandler(controllers.page.error.bind(controllers.page));
-  app.setNotFoundHandler(controllers.page.notFound.bind(controllers.page));
+  app.setErrorHandler(pageController.error.bind(pageController));
+  app.setNotFoundHandler(pageController.notFound.bind(pageController));
 }

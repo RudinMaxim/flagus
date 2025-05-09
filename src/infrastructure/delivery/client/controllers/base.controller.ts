@@ -3,13 +3,6 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 export abstract class BaseController {
   protected viewData: Record<string, any> = {};
 
-  constructor(protected services?: Record<string, any>) {
-    this.services = services || {};
-  }
-
-  /**
-   * Prepare common view data for all templates
-   */
   protected prepareViewData(request: FastifyRequest): Record<string, any> {
     const user = (request as any).user;
     const isAdmin = user?.role === 'ADMIN';
@@ -31,9 +24,6 @@ export abstract class BaseController {
     };
   }
 
-  /**
-   * Render a full page template
-   */
   protected async render(
     request: FastifyRequest,
     reply: FastifyReply,
@@ -47,21 +37,14 @@ export abstract class BaseController {
     return reply.view(template, { ...viewData, appVersion: '0.1.1', ...data }, { layout });
   }
 
-  /**
-   * Render a partial template (for HTMX responses)
-   */
   protected async renderPartial(
     reply: FastifyReply,
     template: string,
     data: Record<string, any> = {}
   ): Promise<FastifyReply> {
-    // For partials, we don't apply the layout
     return reply.view(template, data, { layout: false } as Record<string, any>);
   }
 
-  /**
-   * Set flash message to be displayed on the next request
-   */
   protected setFlashMessage(
     request: FastifyRequest,
     type: 'success' | 'danger' | 'warning' | 'info',
@@ -72,9 +55,6 @@ export abstract class BaseController {
     }
   }
 
-  /**
-   * Handle API errors consistently
-   */
   protected handleError(reply: FastifyReply, error: any): FastifyReply {
     const statusCode = error.statusCode || 500;
     const message = error.message || 'Internal Server Error';

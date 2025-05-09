@@ -94,46 +94,52 @@ export class AuthMiddleware {
   public authenticateUI = async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const accessToken = request.cookies.accessToken;
+      const refreshToken = request.cookies.refreshToken;
 
-      if (!accessToken) {
+      if (!accessToken && !refreshToken) {
+        return reply.redirect('/login');
+      }
+
+      if (accessToken) {
+        try {
+          const payload = this.tokenService.verifyAccessToken(accessToken);
+          request.user = payload;
+          return;
+        } catch (accessError) {
+          request.log.warn(accessError, 'Access token expired or invalid');
+        }
+      }
+
+      if (!refreshToken) {
         return reply.redirect('/login');
       }
 
       try {
-        const payload = this.tokenService.verifyAccessToken(accessToken);
-        request.user = payload;
-      } catch (error) {
-        const refreshToken = request.cookies.refreshToken;
+        const newTokens = await this.tokenService.refreshToken({ refreshToken });
 
-        if (!refreshToken) {
-          request.log.error('Отсутствует refresh token');
-          return reply.redirect('/login');
-        }
+        reply.setCookie('accessToken', newTokens.accessToken, {
+          path: '/',
+          secure: true,
+          sameSite: 'lax',
+          httpOnly: true,
+        });
+        reply.setCookie('refreshToken', newTokens.refreshToken, {
+          path: '/',
+          secure: true,
+          sameSite: 'lax',
+          httpOnly: true,
+        });
 
-        try {
-          const newTokens = await this.tokenService.refreshToken({ refreshToken });
+        const newPayload = this.tokenService.verifyAccessToken(newTokens.accessToken);
+        request.user = newPayload;
 
-          reply.setCookie('accessToken', newTokens.accessToken, {
-            path: '/',
-            secure: true,
-            sameSite: 'lax',
-          });
-
-          reply.setCookie('refreshToken', newTokens.refreshToken, {
-            path: '/',
-            secure: true,
-            sameSite: 'lax',
-          });
-
-          const newPayload = this.tokenService.verifyAccessToken(newTokens.accessToken);
-          request.user = newPayload;
-        } catch (refreshError) {
-          request.log.error(refreshError, 'Ошибка обновления токена');
-          return reply.redirect('/login');
-        }
+        return;
+      } catch (refreshError) {
+        request.log.error(refreshError, 'Ошибка обновления токена по refreshToken');
+        return reply.redirect('/login');
       }
     } catch (error) {
-      request.log.error(error, 'Ошибка аутентификации UI');
+      request.log.error(error, 'Unexpected error in authenticateUI');
       return reply.redirect('/login');
     }
   };
