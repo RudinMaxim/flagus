@@ -4,6 +4,7 @@ import {
   ICategoryRepository,
   IEnvironmentRepository,
   IFlagRepository,
+  IGroupRepository,
   IUserRepository,
 } from './interfaces';
 import {
@@ -11,6 +12,7 @@ import {
   CategoryRepository,
   EnvironmentRepository,
   FlagRepository,
+  GroupRepository,
   UserRepository,
 } from './repository';
 import { TYPES } from '../config/types';
@@ -23,4 +25,5 @@ export const persistenceModule = new ContainerModule(({ bind }) => {
   bind<IEnvironmentRepository>(TYPES.EnvironmentRepository)
     .to(EnvironmentRepository)
     .inSingletonScope();
+  bind<IGroupRepository>(TYPES.GroupRepository).to(GroupRepository).inSingletonScope();
 });

@@ -3,9 +3,7 @@ import { IUserRepository } from '../../../infrastructure/persistence';
 import * as bcrypt from 'bcrypt';
 import { TokenService } from './token.service';
 import { TYPES } from '../../../infrastructure/config/types';
-import { UserRole } from '../constants';
-import { AuthDTO, CreateUserDTO, LoginResponseDTO } from '../interfaces';
-import { User } from '../model';
+import { AuthDTO, CreateUserDTO, LoginResponseDTO, User, UserRole } from '../model';
 
 @injectable()
 export class AuthService {
@@ -16,20 +14,11 @@ export class AuthService {
 
   public async login(credentials: AuthDTO): Promise<LoginResponseDTO> {
     const user = await this.userRepository.findByEmail(credentials.email);
+    if (!user) throw new Error('Пользователь с таким email не найден');
+    if (!user.isActive) throw new Error('Пользователь деактивирован');
 
-    if (!user) {
-      throw new Error('Пользователь с таким email не найден');
-    }
-
-    if (!user.isActive) {
-      throw new Error('Пользователь деактивирован');
-    }
-
-    const isPasswordValid = await bcrypt.compare(credentials.password, user.passwordHash);
-
-    if (!isPasswordValid) {
-      throw new Error('Неверный пароль');
-    }
+    const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
+    if (!isValid) throw new Error('Неверный пароль');
 
     return {
       id: user.id,
@@ -43,22 +32,16 @@ export class AuthService {
   }
 
   public async createFirstAdmin(userData: CreateUserDTO): Promise<User> {
-    const isFirstUser = await this.isFirstUser();
+    if (!(await this.isFirstUser())) throw new Error('Администратор уже создан');
 
-    if (!isFirstUser) {
-      throw new Error('Администратор уже создан');
-    }
-
-    return await this.userRepository.create({
+    return this.userRepository.create({
       username: userData.username,
       email: userData.email,
       passwordHash: await bcrypt.hash(userData.password, 10),
       role: UserRole.ADMIN,
       isActive: true,
-      metadata: {
-        createdAt: new Date(),
-        createdBy: 'SYSTEM',
-      },
+      groupIds: [],
+      metadata: { createdAt: new Date(), createdBy: 'SYSTEM' },
     });
   }
 }

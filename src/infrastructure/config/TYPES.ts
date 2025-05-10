@@ -1,32 +1,51 @@
 export const TYPES = {
+  // ———————————————————————————————————————————————
+  // Примитивные сервисы и утилиты
+  // ———————————————————————————————————————————————
   Logger: Symbol.for('Logger'),
   Config: Symbol.for('Config'),
-  DataGateway: Symbol.for('DataGateway'),
+
+  // ———————————————————————————————————————————————
+  // Жизненный цикл
+  // ———————————————————————————————————————————————
   OnInit: Symbol.for('OnInit'),
   OnDestroy: Symbol.for('OnDestroy'),
-  DataGatewayFactory: Symbol.for('DataGatewayFactory'),
 
+  // ———————————————————————————————————————————————
+  // Фабрики и шлюзы данных
+  // ———————————————————————————————————————————————
+  DataGateway: Symbol.for('DataGateway'),
+  DataGatewayFactory: Symbol.for('DataGatewayFactory'),
+  SDKKeyFactory: Symbol.for('SDKKeyFactory'),
+
+  // ———————————————————————————————————————————————
+  // Репозитории (Data Access)
+  // ———————————————————————————————————————————————
   FlagRepository: Symbol.for('FlagRepository'),
   AuditRepository: Symbol.for('AuditRepository'),
   CategoryRepository: Symbol.for('CategoryRepository'),
   UserRepository: Symbol.for('UserRepository'),
-
-  EnvironmentService: Symbol.for('EnvironmentService'),
-
+  GroupRepository: Symbol.for('GroupRepository'),
   EnvironmentRepository: Symbol.for('EnvironmentRepository'),
-  SDKKeyFactory: Symbol.for('SDKKeyFactory'),
 
+  // ———————————————————————————————————————————————
+  // Службы (Services)
+  // ———————————————————————————————————————————————
+  EnvironmentService: Symbol.for('EnvironmentService'),
   AuditService: Symbol.for('AuditService'),
   FlagEvaluationService: Symbol.for('FlagEvaluationService'),
   FeatureFlagService: Symbol.for('FeatureFlagService'),
   CategoryService: Symbol.for('CategoryService'),
+  UserService: Symbol.for('UserService'),
+  AuthService: Symbol.for('AuthService'),
+  TokenService: Symbol.for('TokenService'),
+  GroupService: Symbol.for('GroupService'),
   FlagTTLService: Symbol.for('FlagTTLService'),
   FeatureFlagCleanupService: Symbol.for('FeatureFlagCleanupService'),
 
-  AuthService: Symbol.for('AuthService'),
-  TokenService: Symbol.for('TokenService'),
-  UserService: Symbol.for('UserService'),
-
+  // ———————————————————————————————————————————————
+  // HTTP-контроллеры
+  // ———————————————————————————————————————————————
   AuditHttpController: Symbol.for('AuditHttpController'),
   CategoryHttpController: Symbol.for('CategoryHttpController'),
   FlagHttpController: Symbol.for('FlagHttpController'),
@@ -34,8 +53,14 @@ export const TYPES = {
   AuthHttpController: Symbol.for('AuthHttpController'),
   EvaluateHttpController: Symbol.for('EvaluateHttpController'),
 
-  AuthMiddleware: Symbol.for('AuthMiddleware'),
-
+  // ———————————————————————————————————————————————
+  // Web/UI-контроллеры
+  // ———————————————————————————————————————————————
   PageController: Symbol.for('PageController'),
   FlagController: Symbol.for('FlagController'),
+
+  // ———————————————————————————————————————————————
+  // Middleware
+  // ———————————————————————————————————————————————
+  AuthMiddleware: Symbol.for('AuthMiddleware'),
 };

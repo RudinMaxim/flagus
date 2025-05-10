@@ -1,19 +1,19 @@
 import { injectable, inject } from 'inversify';
-import { User } from '../../../core/access/model/user.model';
+import { TUserRole, User } from '../../../core/access/model/user.model';
 import { TYPES } from '../../config/types';
 import { IUserRepository } from '../interfaces';
 import { BaseRepository } from '../../../shared/storage';
 import { DataGateway } from '../../../shared/storage/abstract';
 import { IMetadata } from '../../../shared/kernel';
 import crypto from 'crypto';
-import { TUserRole } from '../../../core/access/interfaces';
 
 interface UserRow {
   id: string;
   username: string;
   password_hash: string;
   email: string;
-  role: string;
+  role: TUserRole;
+  groupIds: string[];
   is_active: number;
   created_at: string;
   created_by: string;
@@ -251,7 +251,8 @@ export class UserRepository extends BaseRepository<User, string> implements IUse
       username: row.username,
       passwordHash: row.password_hash,
       email: row.email,
-      role: row.role as TUserRole,
+      role: row.role,
+      groupIds: row.groupIds,
       isActive: row.is_active == 1,
       metadata,
     });

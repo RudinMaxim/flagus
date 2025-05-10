@@ -1,8 +1,8 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { injectable, inject } from 'inversify';
-import { AuthDTO, RefreshTokenDTO, CreateUserDTO } from '../../../../../core/access/interfaces';
 import { AuthService, TokenService } from '../../../../../core/access/services';
 import { TYPES } from '../../../../config/types';
+import { AuthDTO, RefreshTokenDTO, CreateUserDTO } from '../../../../../core/access/model';
 
 @injectable()
 export class AuthHttpController {

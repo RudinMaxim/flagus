@@ -1,9 +1,9 @@
 import { injectable, inject } from 'inversify';
 import crypto from 'crypto';
 import { IEnvironmentRepository } from '../interfaces';
-import { Environment, SDKKeyType } from '../../../core/environment/model';
 import { BaseRepository, DataGateway } from '../../../shared/storage';
 import { TYPES } from '../../config/types';
+import { Environment, ISDKKey, SDKKeyType } from '../../../core/flag-manager/model';
 
 interface EnvironmentRow {
   id: string;
@@ -18,8 +18,8 @@ interface EnvironmentRow {
 interface SDKKeyRow {
   id: string;
   environment_id: string;
-  key: string;
-  type: string;
+  key: ISDKKey;
+  type: SDKKeyType;
   created_at: string;
   created_by: string;
   is_active: number;
@@ -111,10 +111,7 @@ export class EnvironmentRepository
     }
   }
 
-  private async insertSDKKey(
-    environmentId: string,
-    sdkKey: import('../../../core/environment/model').ISDKKey
-  ): Promise<void> {
+  private async insertSDKKey(environmentId: string, sdkKey: ISDKKey): Promise<void> {
     const sql = `
       INSERT INTO sdk_keys (
         id, environment_id, key, type, created_at, created_by, is_active
@@ -228,7 +225,7 @@ export class EnvironmentRepository
     // Map SDK keys
     const sdkKeys = sdkKeyRows.map(keyRow => ({
       key: keyRow.key,
-      type: keyRow.type as import('../../../core/environment/model').SDKKeyType,
+      type: keyRow.type,
       createdAt: parseDate(keyRow.created_at) || new Date(),
       createdBy: keyRow.created_by,
       isActive: keyRow.is_active === 1,
@@ -238,7 +235,7 @@ export class EnvironmentRepository
       id: row.id,
       name: row.name,
       description: row.description || undefined,
-      sdkKeys: sdkKeys,
+      sdkKeys: sdkKeys as unknown as ISDKKey[],
       metadata: {
         createdBy: row.created_by,
         createdAt,

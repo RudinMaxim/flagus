@@ -2,7 +2,7 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '../../../../config/types';
 import { FlagEvaluationService } from '../../../../../core/flag-manager/service';
-import { SDKKeyType } from '../../../../../core/environment/model';
+import { SDKKeyType } from '../../../../../core/flag-manager/model';
 
 @injectable()
 export class EvaluateHttpController {
