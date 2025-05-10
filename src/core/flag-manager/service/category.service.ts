@@ -4,7 +4,7 @@ import { CreateCategoryDTO, FlagCategory, UpdateCategoryDTO } from '../model';
 import { ServiceError } from '../../../shared/kernel';
 import { ILogger } from '../../../shared/logger';
 import { TYPES } from '../../../infrastructure/config/types';
-import { AuditService } from '../../observability/services/audit.service';
+import { AuditService } from '../../observability/services';
 import { AuditAction, TAuditAction } from '../../observability/model';
 
 @injectable()

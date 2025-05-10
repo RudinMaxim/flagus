@@ -3,7 +3,7 @@ import { TYPES } from '../../../infrastructure/config/types';
 import { IFlagRepository } from '../../../infrastructure/persistence';
 import { ServiceError } from '../../../shared/kernel';
 import { ILogger } from '../../../shared/logger';
-import { EnvironmentService } from '../../environment/service/environment.service';
+import { EnvironmentService } from './environment.service';
 import {
   CreateFlagDTO,
   FeatureFlag,
@@ -12,7 +12,7 @@ import {
   TFlagStatus,
   UpdateFlagDTO,
 } from '../model';
-import { AuditService } from '../../observability/services/audit.service';
+import { AuditService } from '../../observability/services';
 import { AuditAction, TAuditAction } from '../../observability/model';
 
 @injectable()

@@ -4,7 +4,7 @@ import { IEnvironmentRepository } from '../../../infrastructure/persistence/inte
 import { ILogger } from '../../../shared/logger';
 import { Environment, ISDKKey, SDKKeyType } from '../model';
 import { ServiceError } from '../../../shared/kernel';
-import { AuditService } from '../../observability/services/audit.service';
+import { AuditService } from '../../observability/services';
 import { AuditAction } from '../../observability/model';
 
 @injectable()

@@ -2,9 +2,8 @@ import { injectable, inject } from 'inversify';
 import { TYPES } from '../../../infrastructure/config/types';
 import { IFlagRepository } from '../../../infrastructure/persistence';
 import { ILogger } from '../../../shared/logger';
-import { EnvironmentService } from '../../environment/service/environment.service';
-import { FeatureFlag, FlagStatus, FlagType } from '../model';
-import { SDKKeyType } from '../../environment/model';
+import { EnvironmentService } from './environment.service';
+import { FeatureFlag, FlagStatus, FlagType, SDKKeyType } from '../model';
 import { ServiceError } from '../../../shared/kernel';
 
 @injectable()
