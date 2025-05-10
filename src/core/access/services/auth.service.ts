@@ -4,6 +4,7 @@ import * as bcrypt from 'bcrypt';
 import { TokenService } from './token.service';
 import { TYPES } from '../../../infrastructure/config/types';
 import { AuthDTO, CreateUserDTO, LoginResponseDTO, User, UserRole } from '../model';
+import { ServiceError } from '../../../shared/kernel';
 
 @injectable()
 export class AuthService {
@@ -14,11 +15,11 @@ export class AuthService {
 
   public async login(credentials: AuthDTO): Promise<LoginResponseDTO> {
     const user = await this.userRepository.findByEmail(credentials.email);
-    if (!user) throw new Error('Пользователь с таким email не найден');
-    if (!user.isActive) throw new Error('Пользователь деактивирован');
+    if (!user) throw new ServiceError('Auth', 'Пользователь с таким email не найден');
+    if (!user.isActive) throw new ServiceError('Auth', 'Пользователь деактивирован');
 
     const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
-    if (!isValid) throw new Error('Неверный пароль');
+    if (!isValid) throw new ServiceError('Auth', 'Неверный пароль');
 
     return {
       id: user.id,
@@ -32,7 +33,7 @@ export class AuthService {
   }
 
   public async createFirstAdmin(userData: CreateUserDTO): Promise<User> {
-    if (!(await this.isFirstUser())) throw new Error('Администратор уже создан');
+    if (!(await this.isFirstUser())) throw new ServiceError('Auth', 'Администратор уже создан');
 
     return this.userRepository.create({
       username: userData.username,
