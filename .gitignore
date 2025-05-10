@@ -34,3 +34,5 @@ Thumbs.db
 coverage/
 
 /package-lock.json
+
+/logs

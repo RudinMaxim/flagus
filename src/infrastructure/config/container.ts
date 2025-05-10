@@ -1,21 +1,32 @@
 import { Container } from 'inversify';
-import { ILogger, LoggerService } from '../../shared/logger';
+import { defaultConfig, ILogger, LoggerService } from '../../shared/logger';
 import { persistenceModule } from '../persistence';
 import { ConfigService } from './config';
 import { TYPES } from './types';
 import { flagManagerContainer } from '../../core/flag-manager';
-import { storageModule, OnInit, OnDestroy } from '../../shared/storage';
+import { storageModule } from '../../shared/storage';
 import { httpControllerModule } from '../delivery/api/v1/controllers';
 import { accessContainer } from '../../core/access';
 import { AuthMiddleware } from '../delivery/middlewares';
 import { observabilityContainer } from '../../core/observability';
 import { clientControllerModule } from '../delivery/client/controllers/client.controller.module';
 
+export interface OnInit {
+  onInit(): Promise<void>;
+}
+
+export interface OnDestroy {
+  onDestroy(): Promise<void>;
+}
+
 export async function createContainer(): Promise<Container> {
   const container = new Container();
 
-  container.bind<ILogger>(TYPES.Logger).to(LoggerService).inSingletonScope();
   container.bind<ConfigService>(TYPES.Config).to(ConfigService).inSingletonScope();
+  container
+    .bind<ILogger>(TYPES.Logger)
+    .toDynamicValue(() => new LoggerService(defaultConfig))
+    .inSingletonScope();
 
   container.load(storageModule);
   container.load(persistenceModule);

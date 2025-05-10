@@ -1,5 +1,5 @@
-import { ContainerModule, injectable } from 'inversify';
-import { TYPES } from './types';
+import { injectable } from 'inversify';
+import { defaultConfig } from '../../shared/logger';
 
 export interface ServerConfig {
   port: number;
@@ -37,6 +37,11 @@ export interface DatabaseConfig {
   };
 }
 
+export interface Migrations {
+  postgres: string;
+  sqlite: string;
+}
+
 export interface AppConfig {
   nodeEnv: string;
   apiKey: string;
@@ -47,6 +52,8 @@ export interface AppConfig {
   cors: CorsConfig;
   jwt: JwtConfig;
   database: DatabaseConfig;
+  migrations: Migrations;
+  logger: any;
 }
 
 @injectable()
@@ -68,6 +75,14 @@ export class ConfigService {
       cors: this.getCorsConfig(),
       jwt: this.getJwtConfig(),
       database: this.getDatabaseConfig(),
+      migrations: this.getMigrations(),
+      logger: {
+        ...defaultConfig,
+        level: process.env.LOG_LEVEL ? parseInt(process.env.LOG_LEVEL) : defaultConfig.level,
+        format: (process.env.LOG_FORMAT as any) || defaultConfig.format,
+        serviceName: process.env.SERVICE_NAME || defaultConfig.serviceName,
+        filePath: process.env.LOG_FILE_PATH || defaultConfig.filePath,
+      },
     };
   }
 
@@ -87,6 +102,13 @@ export class ConfigService {
     return {
       enabled: process.env.CORS_ENABLED !== 'false',
       origins: process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : '*',
+    };
+  }
+
+  private getMigrations(): Migrations {
+    return {
+      postgres: './migrations/postgres',
+      sqlite: './migrations/sqlite',
     };
   }
 
