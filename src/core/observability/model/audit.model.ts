@@ -1,5 +1,14 @@
 import { IEntity } from '../../../shared/kernel';
-import { TAuditAction } from '../interfaces';
+
+export const AuditAction = {
+  CREATE: 'create',
+  UPDATE: 'update',
+  DELETE: 'delete',
+  TOGGLE: 'toggle',
+  EXTEND_TTL: 'extend_ttl',
+} as const;
+
+export type TAuditAction = (typeof AuditAction)[keyof typeof AuditAction];
 
 interface IAuditLogProps {
   id: string;
@@ -35,4 +44,14 @@ export class AuditLog implements IEntity<string> {
     this.timestamp = props.timestamp;
     this.ipAddress = props.ipAddress;
   }
+}
+
+export interface CreateAuditLogDTO {
+  userId: string;
+  action: TAuditAction;
+  entityId: string;
+  entityType: string;
+  oldValue?: string;
+  newValue?: string;
+  ipAddress?: string;
 }

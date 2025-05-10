@@ -76,14 +76,6 @@ export async function categoryRoutes(fastify: FastifyInstance) {
 
   fastify.route({
     method: 'GET',
-    url: '/stats',
-    schema: schemas.getCtatsCategorySchema,
-    preHandler: [authMiddleware.authenticate.bind(authMiddleware)],
-    handler: categoryController.getCategoryStatistics.bind(categoryController),
-  });
-
-  fastify.route({
-    method: 'GET',
     url: '/:id/children-tree',
     schema: schemas.getChildrenTreeCategorySchema,
     preHandler: [authMiddleware.authenticate.bind(authMiddleware)],

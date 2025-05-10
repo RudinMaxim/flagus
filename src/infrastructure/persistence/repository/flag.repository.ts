@@ -1,12 +1,37 @@
 import { injectable, inject } from 'inversify';
 import crypto from 'crypto';
-import { FlagRow, IFlagRepository } from '../interfaces';
-import { FlagStatus } from '../../../core/flag-manager/constants';
-import { TFlagStatus, TFlagType, IFlagEnum, IFlagTTL } from '../../../core/flag-manager/interfaces';
-import { FeatureFlag } from '../../../core/flag-manager/model';
+import { IFlagRepository } from '../interfaces';
+import {
+  FeatureFlag,
+  FlagStatus,
+  IFlagEnum,
+  IFlagTTL,
+  TFlagStatus,
+  TFlagType,
+} from '../../../core/flag-manager/model';
 import { IMetadata } from '../../../shared/kernel';
 import { BaseRepository, DataGateway } from '../../../shared/storage';
 import { TYPES } from '../../config/types';
+
+interface FlagRow {
+  id: string;
+  key: string;
+  name: string;
+  description: string | null;
+  type: string;
+  status: string;
+  category_id: string | null;
+  created_at: string;
+  created_by: string;
+  updated_at: string | null;
+  updated_by: string | null;
+  expires_at: string;
+  enum_values: string;
+  selected_enum: string;
+  environment_id: string;
+  auto_delete: boolean | number;
+  client_ids_concat: string | null;
+}
 
 @injectable()
 export class FlagRepository extends BaseRepository<FeatureFlag, string> implements IFlagRepository {
@@ -432,11 +457,30 @@ export class FlagRepository extends BaseRepository<FeatureFlag, string> implemen
       type: row.type as TFlagType,
       status: row.status as TFlagStatus,
       categoryId: row.category_id || undefined,
+      environmentId: row.environment_id,
       enum: enumData,
       ttl,
       clientIds: clientIds.length > 0 ? clientIds : undefined,
       metadata,
     });
+  }
+
+  async findByEnvironment(environmentId: string): Promise<FeatureFlag[]> {
+    const sql = `
+    SELECT 
+      f.*,
+      ttl.expires_at, ttl.auto_delete,
+      GROUP_CONCAT(DISTINCT fc.client_id) AS client_ids_concat
+    FROM feature_flags f
+    LEFT JOIN flag_ttl ttl ON f.id = ttl.flag_id
+    LEFT JOIN flag_clients fc ON f.id = fc.flag_id
+    WHERE f.environment_id = ? 
+    GROUP BY f.id
+    ORDER BY f.name ASC
+  `;
+
+    const rows = await this.dataGateway.query<FlagRow>(sql, [environmentId]);
+    return rows.map(row => this.mapToEntity(row));
   }
 
   private buildBaseSelectQuery(whereClause?: string): string {

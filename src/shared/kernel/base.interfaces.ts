@@ -17,3 +17,10 @@ export interface IService<T, ID, CreateDTO, UpdateDTO> {
   update(id: ID, dto: UpdateDTO): Promise<T | null>;
   delete(id: ID): Promise<boolean>;
 }
+
+export class ServiceError extends Error {
+  constructor(service: string, message: string) {
+    super(message);
+    this.name = `${service}Error`;
+  }
+}

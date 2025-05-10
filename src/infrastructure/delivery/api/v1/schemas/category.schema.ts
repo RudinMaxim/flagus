@@ -213,33 +213,6 @@ export const deleteCategorySchema: FastifySchema = {
   },
 };
 
-// GET /categories/stats
-export const getCtatsCategorySchema: FastifySchema = {
-  description: 'Get category statistics',
-  tags: ['Categories'],
-  summary: 'Retrieve statistics for all categories',
-  security: [{ bearerAuth: [] }],
-  response: {
-    200: {
-      type: 'object',
-      properties: {
-        data: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              id: { type: 'string' },
-              name: { type: 'string' },
-              flagsCount: { type: 'integer' },
-            },
-          },
-        },
-      },
-    },
-    500: errorSchema,
-  },
-};
-
 // GET /categories/:id/children-tree
 export const getChildrenTreeCategorySchema: FastifySchema = {
   description: 'Get children tree of a category',

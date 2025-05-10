@@ -1,6 +1,29 @@
 import { IMetadata, IEntity } from '../../../shared/kernel';
-import { FlagStatus, FlagType } from '../constants';
-import { TFlagType, IFlagTTL, TFlagStatus, IFlagEnum } from '../interfaces';
+
+export const FlagType = {
+  BOOLEAN: 'boolean',
+  ENUM: 'enum',
+} as const;
+
+export const FlagStatus = {
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  SCHEDULED: 'scheduled',
+  ARCHIVED: 'archived',
+} as const;
+
+export type TFlagType = (typeof FlagType)[keyof typeof FlagType];
+export type TFlagStatus = (typeof FlagStatus)[keyof typeof FlagStatus];
+
+export interface IFlagTTL {
+  expiresAt: Date;
+  autoDelete: boolean;
+}
+
+export interface IFlagEnum {
+  selected?: string;
+  values: string[];
+}
 
 export interface IFeatureFlagProps {
   id: string;
@@ -12,6 +35,7 @@ export interface IFeatureFlagProps {
   status: TFlagStatus;
   enum?: IFlagEnum;
   categoryId?: string;
+  environmentId: string;
   clientIds?: string[];
   metadata: IMetadata;
 }
@@ -24,6 +48,7 @@ export class FeatureFlag implements IEntity<string> {
   type: TFlagType;
   status: TFlagStatus;
   categoryId?: string;
+  environmentId: string;
   enum?: IFlagEnum;
   ttl: IFlagTTL;
   clientIds?: string[];
@@ -37,6 +62,7 @@ export class FeatureFlag implements IEntity<string> {
     this.type = props.type;
     this.status = props.status;
     this.categoryId = props.categoryId;
+    this.environmentId = props.environmentId;
     this.enum = props.enum;
     this.ttl = props.ttl;
     this.clientIds = props.clientIds;
@@ -97,4 +123,29 @@ export class FeatureFlag implements IEntity<string> {
     }
     return Math.abs(hash);
   }
+}
+
+export interface CreateFlagDTO {
+  key: string;
+  name: string;
+  description?: string;
+  type: TFlagType;
+  status?: TFlagStatus;
+  categoryId?: string;
+  environmentId: string;
+  enum?: IFlagEnum;
+  clientIds?: string[];
+  createdBy: string;
+}
+
+export interface UpdateFlagDTO {
+  name?: string;
+  description?: string;
+  type?: TFlagType;
+  status?: TFlagStatus;
+  categoryId?: string;
+  environmentId?: string;
+  enum?: IFlagEnum;
+  clientIds?: string[];
+  updatedBy: string;
 }

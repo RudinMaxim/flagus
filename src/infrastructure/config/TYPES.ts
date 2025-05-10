@@ -11,6 +11,11 @@ export const TYPES = {
   CategoryRepository: Symbol.for('CategoryRepository'),
   UserRepository: Symbol.for('UserRepository'),
 
+  EnvironmentService: Symbol.for('EnvironmentService'),
+
+  EnvironmentRepository: Symbol.for('EnvironmentRepository'),
+  SDKKeyFactory: Symbol.for('SDKKeyFactory'),
+
   AuditService: Symbol.for('AuditService'),
   FlagEvaluationService: Symbol.for('FlagEvaluationService'),
   FeatureFlagService: Symbol.for('FeatureFlagService'),

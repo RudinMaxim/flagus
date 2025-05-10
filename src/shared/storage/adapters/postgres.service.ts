@@ -1,5 +1,5 @@
 import { injectable, inject } from 'inversify';
-import { Pool, PoolClient, PoolConfig } from 'pg';
+import { Pool, PoolClient } from 'pg';
 import { ConfigService } from '../../../infrastructure/config/config';
 import { TYPES } from '../../../infrastructure/config/types';
 import { ILogger } from '../../logger';
@@ -23,16 +23,7 @@ export class PostgresServiceImpl extends DataGateway<PoolClient> implements OnIn
     @inject(TYPES.Config) private readonly config: ConfigService
   ) {
     super();
-    const { postgres } = this.config.get('database');
-
-    const pgConfig: PoolConfig = {
-      host: postgres.host,
-      port: postgres.port,
-      user: postgres.user,
-      password: postgres.password,
-      database: postgres.database,
-    };
-    this.pool = new Pool(pgConfig);
+    this.pool = new Pool(this.config.get('database').postgres);
   }
 
   get client() {
@@ -90,7 +81,7 @@ export class PostgresServiceImpl extends DataGateway<PoolClient> implements OnIn
 
   protected async disconnect(): Promise<void> {
     try {
-      await this.client.release();
+      this.client.release();
       await this.pool.end();
       this.logger.info('PostgreSQL connection closed');
     } catch (error: unknown) {

@@ -1,10 +1,23 @@
 import { injectable, inject } from 'inversify';
 import crypto from 'crypto';
-import { CategoryRow, ICategoryRepository } from '../interfaces';
-import { TYPES } from '../../config/types';
+
 import { IMetadata } from '../../../shared/kernel';
 import { FlagCategory } from '../../../core/flag-manager/model';
 import { BaseRepository, DataGateway } from '../../../shared/storage';
+import { ICategoryRepository } from '../interfaces';
+import { TYPES } from '../../config/types';
+
+export interface CategoryRow {
+  id: string;
+  name: string;
+  description: string | undefined;
+  parent_id: string | undefined;
+  depth: number;
+  created_at: string;
+  created_by: string;
+  updated_at: string | null;
+  updated_by: string | null;
+}
 
 @injectable()
 export class CategoryRepository

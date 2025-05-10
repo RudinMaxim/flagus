@@ -2,11 +2,7 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '../../../../config/types';
 import { FeatureFlagService } from '../../../../../core/flag-manager/service';
-import {
-  CreateFlagDTO,
-  UpdateFlagDTO,
-  TFlagStatus,
-} from '../../../../../core/flag-manager/interfaces';
+import { CreateFlagDTO, UpdateFlagDTO, TFlagStatus } from '../../../../../core/flag-manager/model';
 
 @injectable()
 export class FlagHttpController {
@@ -104,14 +100,7 @@ export class FlagHttpController {
 
   async deleteFlag(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
     try {
-      const result = await this.flagService.delete(request.params.id);
-      if (!result) {
-        return reply.code(404).send({
-          statusCode: 404,
-          error: 'Not Found',
-          message: 'Flag not found',
-        });
-      }
+      await this.flagService.delete(request.params.id, request.user?.userId ?? 'system');
       return reply.code(204).send();
     } catch (error) {
       request.log.error(error, `Error deleting flag with ID: ${request.params.id}`);

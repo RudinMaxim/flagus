@@ -18,41 +18,9 @@ export async function auditRoutes(fastify: FastifyInstance) {
 
   fastify.route({
     method: 'GET',
-    url: '/:id',
-    schema: schemas.getAuditLogByIdSchema,
-    preHandler: [authMiddleware.authenticate.bind(authMiddleware)],
-    handler: auditController.getAuditLogById.bind(auditController),
-  });
-
-  fastify.route({
-    method: 'GET',
-    url: '/entity/:entityId',
-    schema: schemas.getAuditLogsByEntityIdSchema,
-    preHandler: [authMiddleware.authenticate.bind(authMiddleware)],
-    handler: auditController.getAuditLogsByEntityId.bind(auditController),
-  });
-
-  fastify.route({
-    method: 'GET',
-    url: '/user/:userId',
-    schema: schemas.getAuditLogsByUserIdSchema,
-    preHandler: [authMiddleware.authenticate.bind(authMiddleware)],
-    handler: auditController.getAuditLogsByUserId.bind(auditController),
-  });
-
-  fastify.route({
-    method: 'GET',
     url: '/export',
     schema: schemas.exportAuditLogsSchema,
     preHandler: [authMiddleware.authenticate.bind(authMiddleware)],
     handler: auditController.exportAuditLogs.bind(auditController),
-  });
-
-  fastify.route({
-    method: 'GET',
-    url: '/:id/diff',
-    schema: schemas.getAuditLogDiffSchema,
-    preHandler: [authMiddleware.authenticate.bind(authMiddleware)],
-    handler: auditController.getAuditLogDiff.bind(auditController),
   });
 }

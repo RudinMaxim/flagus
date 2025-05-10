@@ -2,7 +2,7 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '../../../../config/types';
 import { CategoryService } from '../../../../../core/flag-manager/service';
-import { CreateCategoryDTO, UpdateCategoryDTO } from '../../../../../core/flag-manager/interfaces';
+import { CreateCategoryDTO, UpdateCategoryDTO } from '../../../../../core/flag-manager/model';
 
 @injectable()
 export class CategoryHttpController {
@@ -160,14 +160,7 @@ export class CategoryHttpController {
 
   async deleteCategory(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
     try {
-      const result = await this.categoryService.delete(request.params.id);
-      if (!result) {
-        return reply.code(404).send({
-          statusCode: 404,
-          error: 'Not Found',
-          message: 'Category not found',
-        });
-      }
+      await this.categoryService.delete(request.params.id, request.user?.userId ?? 'system');
       return reply.code(204).send();
     } catch (error) {
       request.log.error(error, `Error deleting category with ID: ${request.params.id}`);
@@ -220,20 +213,6 @@ export class CategoryHttpController {
         statusCode: 500,
         error: 'Internal Server Error',
         message: 'Failed to move category',
-      });
-    }
-  }
-
-  async getCategoryStatistics(_request: FastifyRequest, reply: FastifyReply) {
-    try {
-      const stats = await this.categoryService.getCategoryStatistics();
-      return reply.code(200).send({ data: stats });
-    } catch (error) {
-      _request.log.error(error, 'Error fetching category statistics');
-      return reply.code(500).send({
-        statusCode: 500,
-        error: 'Internal Server Error',
-        message: 'Failed to fetch category statistics',
       });
     }
   }

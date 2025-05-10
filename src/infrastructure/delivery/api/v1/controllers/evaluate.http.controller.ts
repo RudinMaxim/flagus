@@ -1,18 +1,41 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '../../../../config/types';
-import { FeatureFlagService } from '../../../../../core/flag-manager/service';
+import { FlagEvaluationService } from '../../../../../core/flag-manager/service';
+import { SDKKeyType } from '../../../../../core/environment/model';
 
 @injectable()
 export class EvaluateHttpController {
-  constructor(@inject(TYPES.FeatureFlagService) private readonly flagService: FeatureFlagService) {}
+  constructor(
+    @inject(TYPES.FlagEvaluationService) private readonly flagService: FlagEvaluationService
+  ) {}
 
   async getClientFlags(
-    request: FastifyRequest<{ Params: { clientId: string } }>,
+    request: FastifyRequest<{
+      Params: { clientId: string; environmentId: string };
+      Headers: { 'x-sdk-key': string };
+    }>,
     reply: FastifyReply
   ) {
     try {
-      const flags = await this.flagService.getClientFlags(request.params.clientId);
+      const { clientId, environmentId } = request.params;
+      const sdkKey = request.headers['x-sdk-key'] as string;
+
+      if (!sdkKey) {
+        return reply.code(400).send({
+          statusCode: 400,
+          error: 'Bad Request',
+          message: 'SDK key is required',
+        });
+      }
+
+      const flags = await this.flagService.getAllFlagsForClient(
+        environmentId,
+        clientId,
+        sdkKey,
+        SDKKeyType.CLIENT
+      );
+
       return reply.code(200).send({ data: flags });
     } catch (error) {
       request.log.error(
@@ -29,18 +52,34 @@ export class EvaluateHttpController {
 
   async evaluateFlag(
     request: FastifyRequest<{
-      Params: { flagName: string; clientId: string };
+      Params: { flagName: string; clientId: string; environmentId: string };
+      Headers: { 'x-sdk-key': string };
     }>,
     reply: FastifyReply
   ) {
     try {
+      const { flagName, clientId, environmentId } = request.params;
+      const sdkKey = request.headers['x-sdk-key'] as string;
+
+      if (!sdkKey) {
+        return reply.code(400).send({
+          statusCode: 400,
+          error: 'Bad Request',
+          message: 'SDK key is required',
+        });
+      }
+
       const result = await this.flagService.evaluateFlag(
-        request.params.flagName,
-        request.params.clientId
+        environmentId,
+        flagName,
+        clientId,
+        sdkKey,
+        SDKKeyType.CLIENT
       );
+
       return reply.code(200).send({
         data: {
-          flagName: request.params.flagName,
+          flagName: flagName,
           isActive: result,
         },
       });

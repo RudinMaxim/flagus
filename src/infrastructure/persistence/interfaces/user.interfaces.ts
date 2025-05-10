@@ -1,19 +1,6 @@
 import { IRepository } from '../../../shared/kernel';
 import { User } from '../../../core/access/model/user.model';
 
-export interface UserRow {
-  id: string;
-  username: string;
-  password_hash: string;
-  email: string;
-  role: string;
-  is_active: number;
-  created_at: string;
-  created_by: string;
-  updated_at?: string;
-  updated_by?: string;
-}
-
 export interface IUserRepository extends IRepository<User, string> {
   findById(id: string): Promise<User | null>;
   findByEmail(email: string): Promise<User | null>;

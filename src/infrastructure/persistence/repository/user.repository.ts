@@ -1,12 +1,25 @@
 import { injectable, inject } from 'inversify';
 import { User } from '../../../core/access/model/user.model';
 import { TYPES } from '../../config/types';
-import { IUserRepository, UserRow } from '../interfaces';
+import { IUserRepository } from '../interfaces';
 import { BaseRepository } from '../../../shared/storage';
 import { DataGateway } from '../../../shared/storage/abstract';
 import { IMetadata } from '../../../shared/kernel';
 import crypto from 'crypto';
 import { TUserRole } from '../../../core/access/interfaces';
+
+interface UserRow {
+  id: string;
+  username: string;
+  password_hash: string;
+  email: string;
+  role: string;
+  is_active: number;
+  created_at: string;
+  created_by: string;
+  updated_at?: string;
+  updated_by?: string;
+}
 
 @injectable()
 export class UserRepository extends BaseRepository<User, string> implements IUserRepository {

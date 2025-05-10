@@ -17,6 +17,8 @@ import { EvaluateHttpController } from '../delivery/api/v1/controllers/evaluate.
 import { AuthMiddleware } from '../delivery/middlewares';
 import { PageController } from '../delivery/client/controllers';
 import { FlagController } from '../delivery/client/controllers/flag.controller';
+import { observabilityContainer } from '../../core/observability';
+import { environmentContainer } from '../../core/environment';
 
 export async function createContainer(): Promise<Container> {
   const container = new Container();
@@ -28,6 +30,8 @@ export async function createContainer(): Promise<Container> {
   container.load(persistenceModule);
   container.load(flagManagerContainer);
   container.load(accessContainer);
+  container.load(observabilityContainer);
+  container.load(environmentContainer);
 
   container
     .bind<AuditHttpController>(TYPES.AuditHttpController)
