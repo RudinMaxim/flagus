@@ -11,8 +11,8 @@ Easily deployable in a single Docker container, Flagus is ideal for small to med
 | Component            | Technology        |
 |----------------------|-------------------|
 | HTTP-server          | Fastify          |
-| Language             | TypeScript       |
-| Database             | SQLite           |
+| Language             | TypeScript        |
+| Database             | SQLite/Postgres* |
 | Client side          | HTMX             |
 
 ---
