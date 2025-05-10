@@ -4,3 +4,4 @@ export * from './category.http.controller';
 export * from './flag.http.controller';
 export * from './user.http.controller';
 export * from './http.controller.module';
+export * from './group.http.controller';

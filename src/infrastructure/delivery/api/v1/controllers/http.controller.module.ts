@@ -6,6 +6,7 @@ import { CategoryHttpController } from './category.http.controller';
 import { EvaluateHttpController } from './evaluate.http.controller';
 import { FlagHttpController } from './flag.http.controller';
 import { UserHttpController } from './user.http.controller';
+import { GroupHttpController } from './group.http.controller';
 
 export const httpControllerModule = new ContainerModule(({ bind }) => {
   bind<AuditHttpController>(TYPES.AuditHttpController).to(AuditHttpController).inSingletonScope();
@@ -18,4 +19,5 @@ export const httpControllerModule = new ContainerModule(({ bind }) => {
     .inSingletonScope();
   bind<FlagHttpController>(TYPES.FlagHttpController).to(FlagHttpController).inSingletonScope();
   bind<UserHttpController>(TYPES.UserHttpController).to(UserHttpController).inSingletonScope();
+  bind<GroupHttpController>(TYPES.GroupHttpController).to(GroupHttpController).inSingletonScope();
 });

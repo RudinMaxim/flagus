@@ -52,6 +52,7 @@ export const TYPES = {
   UserHttpController: Symbol.for('UserHttpController'),
   AuthHttpController: Symbol.for('AuthHttpController'),
   EvaluateHttpController: Symbol.for('EvaluateHttpController'),
+  GroupHttpController: Symbol.for('GroupHttpController'),
 
   // ———————————————————————————————————————————————
   // Web/UI-контроллеры

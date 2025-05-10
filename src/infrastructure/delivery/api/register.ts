@@ -7,6 +7,7 @@ import {
   categoryRoutes,
   evaluateRoutes,
   flagRoutes,
+  groupRoutes,
   userRoutes,
 } from './v1/routes';
 import { healthRoutes } from './common/health.route';
@@ -66,6 +67,10 @@ export async function registerApi(fastify: FastifyInstance) {
           {
             name: 'Users',
             description: 'Endpoints for managing users',
+          },
+          {
+            name: 'Groups',
+            description: 'Endpoints for managing groups',
           },
           {
             name: 'System',
@@ -129,6 +134,7 @@ export async function registerApi(fastify: FastifyInstance) {
               adminApi.register(categoryRoutes, { prefix: '/categories' });
               adminApi.register(auditRoutes, { prefix: '/audit' });
               adminApi.register(userRoutes, { prefix: '/users' });
+              adminApi.register(groupRoutes, { prefix: '/group' });
             });
           });
         },
