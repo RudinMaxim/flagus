@@ -2,15 +2,24 @@ import { inject, injectable } from 'inversify';
 import jwa from 'jwa';
 import { TYPES } from '../../../infrastructure/config/types';
 import { ConfigService } from '../../../infrastructure/config/config';
-import { TJwtPayload, TokenDTO } from '../interfaces';
-import { User } from '../model';
+import { RefreshTokenDTO, TJwtPayload, TokenDTO, User } from '../model';
+import { IUserRepository } from '../../../infrastructure/persistence';
+import { ServiceError } from '../../../shared/kernel';
 
 @injectable()
 export class TokenService {
-  private readonly signer;
+  private readonly signer = jwa('HS256');
 
-  constructor(@inject(TYPES.Config) private readonly config: ConfigService) {
-    this.signer = jwa('HS256');
+  constructor(
+    @inject(TYPES.Config) private readonly config: ConfigService,
+    @inject(TYPES.UserRepository) private readonly userRepository: IUserRepository
+  ) {}
+
+  public async refreshToken(request: RefreshTokenDTO): Promise<TokenDTO> {
+    const decoded = this.verifyRefreshToken(request.refreshToken);
+    const user = await this.userRepository.findById(decoded.userId);
+    if (!user || !user.isActive) throw new ServiceError('Token', 'Недействительный токен');
+    return this.generateTokens(user);
   }
 
   public generateTokens(user: User): TokenDTO {
@@ -20,30 +29,36 @@ export class TokenService {
       userId: user.id,
       email: user.email,
       role: user.role,
-      exp: this.expiryTimestamp(Number(this.config.JWT_ACCESS_EXPIRES)),
+      groups: user.groupIds,
+      exp: this.expiryTimestamp(Number(this.config.get('jwt').accessExpires)),
     };
 
     const refreshPayload: TJwtPayload = {
       userId: user.id,
-      exp: this.expiryTimestamp(Number(this.config.JWT_REFRESH_EXPIRES)),
+      exp: this.expiryTimestamp(Number(this.config.get('jwt').refreshExpires)),
     };
 
-    const accessToken = this.buildToken(header, accessPayload, this.config.JWT_ACCESS_SECRET);
-    const refreshToken = this.buildToken(header, refreshPayload, this.config.JWT_REFRESH_SECRET);
+    const accessToken = this.buildToken(header, accessPayload, this.config.get('jwt').accessSecret);
+    const refreshToken = this.buildToken(
+      header,
+      refreshPayload,
+      this.config.get('jwt').refreshSecret
+    );
 
     return { accessToken, refreshToken };
   }
 
   public verifyAccessToken(token: string) {
-    return this.verifyToken<TJwtPayload>(token, this.config.JWT_ACCESS_SECRET) as {
+    return this.verifyToken<TJwtPayload>(token, this.config.get('jwt').accessSecret) as {
       userId: string;
       email: string;
       role: string;
+      groups: string[];
     };
   }
 
-  public verifyRefreshToken(token: string) {
-    return this.verifyToken<TJwtPayload>(token, this.config.JWT_REFRESH_SECRET) as {
+  private verifyRefreshToken(token: string) {
+    return this.verifyToken<TJwtPayload>(token, this.config.get('jwt').refreshSecret) as {
       userId: string;
     };
   }
@@ -51,16 +66,12 @@ export class TokenService {
   private verifyToken<T extends TJwtPayload>(token: string, secret: string): Omit<T, 'exp'> {
     const [headerB64, payloadB64, sig] = token.split('.');
     const signed = [headerB64, payloadB64].join('.');
-
-    if (!this.signer.verify(signed, sig, secret)) {
-      throw new Error('Недействительный токен');
-    }
+    if (!this.signer.verify(signed, sig, secret))
+      throw new ServiceError('Token', 'Недействительный токен');
 
     const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString()) as T;
-
-    if (payload.exp < Math.floor(Date.now() / 1000)) {
-      throw new Error('Истекший токен');
-    }
+    if (payload.exp < Math.floor(Date.now() / 1000))
+      throw new ServiceError('Token', 'Истекший токен');
 
     const { exp, ...rest } = payload;
     return rest;

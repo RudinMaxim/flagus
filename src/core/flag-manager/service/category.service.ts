@@ -1,28 +1,20 @@
 import { injectable, inject } from 'inversify';
-import { TYPES } from '../../../infrastructure/config/types';
 import { ICategoryRepository } from '../../../infrastructure/persistence';
-import { IService } from '../../../shared/kernel';
-import { AuditAction } from '../constants';
-import { CreateCategoryDTO, UpdateCategoryDTO, TAuditAction } from '../interfaces';
-import { FlagCategory } from '../model';
-import { AuditService } from './audit.service';
-
-export class CategoryError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'CategoryError';
-  }
-}
+import { CreateCategoryDTO, FlagCategory, UpdateCategoryDTO } from '../model';
+import { ServiceError } from '../../../shared/kernel';
+import { ILogger } from '../../../shared/logger';
+import { TYPES } from '../../../infrastructure/config/types';
+import { AuditService } from '../../observability/services';
+import { AuditAction, TAuditAction } from '../../observability/model';
 
 @injectable()
-export class CategoryService
-  implements IService<FlagCategory, string, CreateCategoryDTO, UpdateCategoryDTO>
-{
+export class CategoryService {
   private readonly MAX_DEPTH = 3;
 
   constructor(
     @inject(TYPES.CategoryRepository) private readonly categoryRepository: ICategoryRepository,
-    @inject(TYPES.AuditService) private readonly auditService: AuditService
+    @inject(TYPES.AuditService) private readonly auditService: AuditService,
+    @inject(TYPES.Logger) private readonly logger: ILogger
   ) {}
 
   public async getAll(): Promise<FlagCategory[]> {
@@ -53,82 +45,67 @@ export class CategoryService
     return this.categoryRepository.getChildrenTree(rootId);
   }
 
-  public async getCategoryStatistics(): Promise<
-    { id: string; name: string; flagsCount: number }[]
-  > {
-    return this.categoryRepository.getCategoryStats();
-  }
-
-  public async create(dto: CreateCategoryDTO): Promise<FlagCategory> {
+  async create(dto: CreateCategoryDTO): Promise<FlagCategory> {
+    if (!dto.name || !dto.createdBy) throw new ServiceError('Category', 'Required fields missing');
     await this.validateCategoryName(dto.name);
-    const depth = await this.calculateDepth(dto.parentId);
 
+    const depth = await this.calculateDepth(dto.parentId);
     const category = new FlagCategory({
       id: crypto.randomUUID(),
       name: dto.name,
       description: dto.description,
       parentId: dto.parentId,
       depth,
-      metadata: {
-        createdBy: dto.createdBy,
-        createdAt: new Date(),
-      },
+      metadata: { createdBy: dto.createdBy, createdAt: new Date() },
     });
 
-    const createdCategory = await this.categoryRepository.create(category);
-    await this.logAudit(
-      AuditAction.CREATE,
-      dto.createdBy,
-      createdCategory.id,
-      null,
-      createdCategory
-    );
-
-    return createdCategory;
+    try {
+      const created = await this.categoryRepository.create(category);
+      await this.logAudit(AuditAction.CREATE, dto.createdBy, created.id, null, created);
+      return created;
+    } catch (error) {
+      this.logger.error('Category creation failed', error as Error, { dto });
+      throw new ServiceError('Category', `Creation failed: ${(error as Error).message}`);
+    }
   }
 
-  public async update(id: string, dto: UpdateCategoryDTO): Promise<FlagCategory | null> {
+  async update(id: string, dto: UpdateCategoryDTO): Promise<FlagCategory> {
     const category = await this.validateCategoryExists(id);
-
-    if (dto.name && dto.name !== category.name) {
-      await this.validateCategoryName(dto.name, id);
-    }
-
-    const updateData: Partial<FlagCategory> = { ...dto };
-
-    if (dto.parentId && dto.parentId !== category.parentId) {
+    if (dto.name && dto.name !== category.name) await this.validateCategoryName(dto.name, id);
+    if (dto.parentId && dto.parentId !== category.parentId)
       await this.validateParentCategory(id, dto.parentId);
-      const newDepth = await this.calculateDepth(dto.parentId);
-      updateData.depth = newDepth;
-    }
 
-    const oldValue = { ...category };
-    updateData.metadata = {
-      ...category.metadata,
-      updatedBy: dto.updatedBy,
-      updatedAt: new Date(),
+    const updateData: Partial<FlagCategory> = {
+      ...dto,
+      depth: dto.parentId ? await this.calculateDepth(dto.parentId) : category.depth,
+      metadata: { ...category.metadata, updatedBy: dto.updatedBy, updatedAt: new Date() },
     };
 
-    const updatedCategory = await this.categoryRepository.update(id, updateData);
-
-    if (updatedCategory) {
-      await this.logAudit(AuditAction.UPDATE, dto.updatedBy, id, oldValue, updatedCategory);
+    try {
+      const updated = await this.categoryRepository.update(id, updateData);
+      if (!updated) throw new ServiceError('Category', 'Update failed');
+      await this.logAudit(AuditAction.UPDATE, dto.updatedBy, id, category, updated);
+      return updated;
+    } catch (error) {
+      this.logger.error('Category update failed', error as Error, { id, dto });
+      throw new ServiceError('Category', `Update failed: ${(error as Error).message}`);
     }
-
-    return updatedCategory;
   }
 
-  public async delete(id: string, userId: string = 'system'): Promise<boolean> {
+  async delete(id: string, userId: string): Promise<void> {
     const category = await this.validateCategoryExists(id);
-    await this.validateNoSubcategories(id);
-
-    const result = await this.categoryRepository.delete(id);
-
-    if (result) {
-      await this.logAudit(AuditAction.DELETE, userId, id, category, null);
+    if ((await this.categoryRepository.findByParentId(id)).length > 0) {
+      throw new ServiceError('Category', 'Cannot delete category with subcategories');
     }
 
-    return result;
+    try {
+      if (!(await this.categoryRepository.delete(id)))
+        throw new ServiceError('Category', 'Deletion failed');
+      await this.logAudit(AuditAction.DELETE, userId, id, category, null);
+    } catch (error) {
+      this.logger.error('Category deletion failed', error as Error, { id });
+      throw new ServiceError('Category', `Deletion failed: ${(error as Error).message}`);
+    }
   }
 
   public async moveCategory(
@@ -162,72 +139,46 @@ export class CategoryService
   }
 
   private async validateCategoryName(name: string, excludeId?: string): Promise<void> {
-    const existingCategory = await this.categoryRepository.findByName(name);
-
-    if (existingCategory && (!excludeId || existingCategory.id !== excludeId)) {
-      throw new CategoryError(`Category with name ${name} already exists`);
+    const existing = await this.categoryRepository.findByName(name);
+    if (existing && (!excludeId || existing.id !== excludeId)) {
+      throw new ServiceError('Category', `Category '${name}' already exists`);
     }
   }
 
   private async validateCategoryExists(id: string): Promise<FlagCategory> {
     const category = await this.categoryRepository.findById(id);
-
-    if (!category) {
-      throw new CategoryError(`Category with id ${id} not found`);
-    }
-
+    if (!category) throw new ServiceError('Category', `Category '${id}' not found`);
     return category;
   }
 
   private async validateParentCategory(categoryId: string, parentId: string): Promise<void> {
-    if (categoryId === parentId) {
-      throw new CategoryError('Category cannot be its own parent');
+    if (categoryId === parentId)
+      throw new ServiceError('Category', 'Category cannot be its own parent');
+    const parent = await this.validateCategoryExists(parentId);
+    if (parent.depth + 1 > this.MAX_DEPTH) {
+      throw new ServiceError('Category', `Maximum depth (${this.MAX_DEPTH}) exceeded`);
     }
-
-    const parentCategory = await this.validateCategoryExists(parentId);
-
-    if (parentCategory.depth + 1 > this.MAX_DEPTH) {
-      throw new CategoryError(`Maximum category depth (${this.MAX_DEPTH}) exceeded`);
-    }
-
-    const childCategories = await this.categoryRepository.findByParentId(categoryId);
-    if (childCategories.some(cat => cat.id === parentId)) {
-      throw new CategoryError('Cyclic dependency detected in category hierarchy');
-    }
-
     const path = await this.categoryRepository.getFullPath(parentId);
     if (path.some(cat => cat.id === categoryId)) {
-      throw new CategoryError('Cyclic dependency detected in category hierarchy');
-    }
-  }
-
-  private async validateNoSubcategories(id: string): Promise<void> {
-    const subcategories = await this.categoryRepository.findByParentId(id);
-
-    if (subcategories.length > 0) {
-      throw new CategoryError('Cannot delete category with subcategories');
+      throw new ServiceError('Category', 'Cyclic dependency detected');
     }
   }
 
   private async calculateDepth(parentId?: string): Promise<number> {
     if (!parentId) return 0;
-
-    const parentCategory = await this.validateCategoryExists(parentId);
-    const newDepth = parentCategory.depth + 1;
-
-    if (newDepth > this.MAX_DEPTH) {
-      throw new CategoryError(`Maximum category depth (${this.MAX_DEPTH}) exceeded`);
-    }
-
-    return newDepth;
+    const parent = await this.validateCategoryExists(parentId);
+    const depth = parent.depth + 1;
+    if (depth > this.MAX_DEPTH)
+      throw new ServiceError('Category', `Maximum depth (${this.MAX_DEPTH}) exceeded`);
+    return depth;
   }
 
   private async logAudit(
     action: TAuditAction,
     userId: string,
     entityId: string,
-    oldValue: FlagCategory | null,
-    newValue: FlagCategory | null
+    oldValue: any,
+    newValue: any
   ): Promise<void> {
     await this.auditService.logAction({
       userId,

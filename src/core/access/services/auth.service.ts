@@ -3,9 +3,8 @@ import { IUserRepository } from '../../../infrastructure/persistence';
 import * as bcrypt from 'bcrypt';
 import { TokenService } from './token.service';
 import { TYPES } from '../../../infrastructure/config/types';
-import { UserRole } from '../constants';
-import { AuthDTO, TokenDTO, CreateUserDTO, RefreshTokenDTO } from '../interfaces';
-import { User } from '../model';
+import { AuthDTO, CreateUserDTO, LoginResponseDTO, User, UserRole } from '../model';
+import { ServiceError } from '../../../shared/kernel';
 
 @injectable()
 export class AuthService {
@@ -14,35 +13,19 @@ export class AuthService {
     @inject(TYPES.TokenService) private readonly tokenService: TokenService
   ) {}
 
-  public async login(credentials: AuthDTO): Promise<TokenDTO> {
+  public async login(credentials: AuthDTO): Promise<LoginResponseDTO> {
     const user = await this.userRepository.findByEmail(credentials.email);
+    if (!user) throw new ServiceError('Auth', 'Пользователь с таким email не найден');
+    if (!user.isActive) throw new ServiceError('Auth', 'Пользователь деактивирован');
 
-    if (!user) {
-      throw new Error('Пользователь с таким email не найден');
-    }
+    const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
+    if (!isValid) throw new ServiceError('Auth', 'Неверный пароль');
 
-    if (!user.isActive) {
-      throw new Error('Пользователь деактивирован');
-    }
-
-    const isPasswordValid = await bcrypt.compare(credentials.password, user.passwordHash);
-
-    if (!isPasswordValid) {
-      throw new Error('Неверный пароль');
-    }
-
-    return this.tokenService.generateTokens(user);
-  }
-
-  public async refreshToken(request: RefreshTokenDTO): Promise<TokenDTO> {
-    const decoded = this.tokenService.verifyRefreshToken(request.refreshToken);
-    const user = await this.userRepository.findById(decoded.userId);
-
-    if (!user || !user.isActive) {
-      throw new Error('Недействительный токен');
-    }
-
-    return this.tokenService.generateTokens(user);
+    return {
+      id: user.id,
+      role: user.role,
+      ...this.tokenService.generateTokens(user),
+    };
   }
 
   public async isFirstUser(): Promise<boolean> {
@@ -50,22 +33,16 @@ export class AuthService {
   }
 
   public async createFirstAdmin(userData: CreateUserDTO): Promise<User> {
-    const isFirstUser = await this.isFirstUser();
+    if (!(await this.isFirstUser())) throw new ServiceError('Auth', 'Администратор уже создан');
 
-    if (!isFirstUser) {
-      throw new Error('Администратор уже создан');
-    }
-
-    return await this.userRepository.create({
+    return this.userRepository.create({
       username: userData.username,
       email: userData.email,
       passwordHash: await bcrypt.hash(userData.password, 10),
       role: UserRole.ADMIN,
       isActive: true,
-      metadata: {
-        createdAt: new Date(),
-        createdBy: 'SYSTEM',
-      },
+      groupIds: [],
+      metadata: { createdAt: new Date(), createdBy: 'SYSTEM' },
     });
   }
 }

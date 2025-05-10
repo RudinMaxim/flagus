@@ -25,8 +25,9 @@ const userSchema = {
     id: { type: 'string' },
     username: { type: 'string' },
     email: { type: 'string', format: 'email' },
-    role: { type: 'string', enum: ['ADMIN', 'USER', 'MANAGER'] },
+    role: { type: 'string', enum: ['admin', 'editor', 'viewer'] },
     isActive: { type: 'boolean' },
+    groupIds: { type: 'array', items: { type: 'string' } },
     metadata: metadataSchema,
   },
 };
@@ -44,7 +45,7 @@ export const getAllUsersSchema: FastifySchema = {
       limit: { type: 'integer', minimum: 1 },
       sortBy: { type: 'string', enum: ['username', 'email', 'role', 'isActive', 'createdAt'] },
       sortOrder: { type: 'string', enum: ['asc', 'desc'] },
-      role: { type: 'string', enum: ['ADMIN', 'USER', 'MANAGER'] },
+      role: { type: 'string', enum: ['admin', 'editor', 'viewer'] },
       isActive: { type: 'boolean' },
     },
   },
@@ -169,8 +170,9 @@ export const updateUserSchema: FastifySchema = {
       username: { type: 'string', minLength: 3, maxLength: 50 },
       email: { type: 'string', format: 'email' },
       password: { type: 'string', minLength: 6 },
-      role: { type: 'string', enum: ['ADMIN', 'USER', 'MANAGER'] },
+      role: { type: 'string', enum: ['admin', 'editor', 'viewer'] },
       isActive: { type: 'boolean' },
+      groupIds: { type: 'array', items: { type: 'string' } },
       updatedBy: { type: 'string' },
     },
   },
@@ -202,6 +204,110 @@ export const deleteUserSchema: FastifySchema = {
   response: {
     204: {
       type: 'null',
+    },
+    404: errorSchema,
+    500: errorSchema,
+  },
+};
+
+// POST /groups/users/:userId/add
+export const addUserToGroupsSchema: FastifySchema = {
+  description: 'Add user to groups',
+  tags: ['Groups'],
+  summary: 'Add a user to multiple groups',
+  security: [{ bearerAuth: [] }],
+  params: {
+    type: 'object',
+    required: ['userId'],
+    properties: {
+      userId: { type: 'string' },
+    },
+  },
+  body: {
+    type: 'object',
+    required: ['groupIds', 'updatedBy'],
+    properties: {
+      groupIds: { type: 'array', items: { type: 'string' } },
+      updatedBy: { type: 'string' },
+    },
+  },
+  response: {
+    200: {
+      type: 'object',
+      properties: {
+        data: userSchema,
+        message: { type: 'string' },
+      },
+    },
+    404: errorSchema,
+    500: errorSchema,
+  },
+};
+
+// POST /groups/users/:userId/remove
+export const removeUserFromGroupsSchema: FastifySchema = {
+  description: 'Remove user from groups',
+  tags: ['Groups'],
+  summary: 'Remove a user from multiple groups',
+  security: [{ bearerAuth: [] }],
+  params: {
+    type: 'object',
+    required: ['userId'],
+    properties: {
+      userId: { type: 'string' },
+    },
+  },
+  body: {
+    type: 'object',
+    required: ['groupIds', 'updatedBy'],
+    properties: {
+      groupIds: { type: 'array', items: { type: 'string' } },
+      updatedBy: { type: 'string' },
+    },
+  },
+  response: {
+    200: {
+      type: 'object',
+      properties: {
+        data: userSchema,
+        message: { type: 'string' },
+      },
+    },
+    404: errorSchema,
+    500: errorSchema,
+  },
+};
+
+// GET /groups/users/:userId
+export const getUserGroupsSchema: FastifySchema = {
+  description: 'Get user groups',
+  tags: ['Groups'],
+  summary: 'Retrieve all groups a user belongs to',
+  security: [{ bearerAuth: [] }],
+  params: {
+    type: 'object',
+    required: ['userId'],
+    properties: {
+      userId: { type: 'string' },
+    },
+  },
+  response: {
+    200: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              name: { type: 'string' },
+              description: { type: ['string', 'null'] },
+              metadata: metadataSchema,
+            },
+          },
+        },
+      },
     },
     404: errorSchema,
     500: errorSchema,

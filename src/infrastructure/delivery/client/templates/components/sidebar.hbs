@@ -1,0 +1,87 @@
+<!-- Main Sidebar -->
+<div class="sidebar bg-dark text-white" id="sidebar" role="navigation" aria-label="Главное меню">
+  <!-- Logo Header -->
+  <div class="sidebar-header p-3 d-flex align-items-center justify-content-between">
+    <a href="/" class="text-decoration-none" aria-label="Главная страница">
+      <img src="/assets/media/img/logo.png" alt="Логотип" class="img-fluid" style="max-height: 40px;">
+    </a>
+    <button class="btn btn-sm text-white d-md-none sidebar-close" aria-label="Закрыть меню">
+      <i class="bi bi-x-lg" aria-hidden="true"></i>
+      <span class="visually-hidden">Закрыть</span>
+    </button>
+  </div>
+  
+  <!-- Main Navigation -->
+  <div class="sidebar-content overflow-auto">
+    <nav>
+      <ul class="nav flex-column" role="menu">
+        <li class="nav-item" role="none">
+          <a href="/flags" class="nav-link text-white d-flex align-items-center" 
+             hx-boost="true" 
+             role="menuitem"
+             aria-current="page"
+             tabindex="0">
+            <i class="bi bi-flag me-3" aria-hidden="true"></i>
+            <span>Флаги</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+  
+  <!-- Footer Section -->
+  <div class="sidebar-footer mt-auto border-top">
+    <ul class="nav flex-column" role="menu">
+      <li class="nav-item" role="none">
+        <a href="/settings/profile" class="nav-link text-white d-flex align-items-center" 
+           hx-boost="true" 
+           role="menuitem"
+           tabindex="0">
+          <i class="bi bi-person-circle me-3" aria-hidden="true"></i>
+          <span>Профиль</span>
+        </a>
+      </li>
+      <li class="nav-item" role="none">
+        <a href="/settings" class="nav-link text-white d-flex align-items-center" 
+           hx-boost="true" 
+           role="menuitem"
+           tabindex="0">
+          <i class="bi bi-gear me-3" aria-hidden="true"></i>
+          <span>Настройки</span>
+        </a>
+      </li>
+      <li class="nav-item" role="none">
+        <a href="/help" class="nav-link text-white d-flex align-items-center" 
+           hx-boost="true" 
+           role="menuitem"
+           tabindex="0">
+          <i class="bi bi-question-circle me-3" aria-hidden="true"></i>
+          <span>Помощь</span>
+        </a>
+      </li>
+      <li class="nav-item" role="none">
+        <a href="#" class="nav-link text-white d-flex align-items-center" 
+           hx-post="/api/v1/auth/logout" 
+           hx-confirm="Вы уверены, что хотите выйти?"
+           hx-target="body"
+           role="menuitem"
+           tabindex="0">
+          <i class="bi bi-box-arrow-right me-3" aria-hidden="true"></i>
+          <span>Выход</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!-- Mobile Toggle Button -->
+<div class="mobile-menu-toggle d-md-none position-fixed bottom-0 start-0 end-0 bg-dark text-white p-2 z-3">
+  <button class="btn btn-dark w-100 d-flex align-items-center justify-content-center" 
+          id="toggleSidebar" 
+          aria-expanded="false" 
+          aria-controls="sidebar" 
+          aria-label="Открыть меню">
+    <i class="bi bi-list me-2" aria-hidden="true"></i>
+    <span>Меню</span>
+  </button>
+</div>

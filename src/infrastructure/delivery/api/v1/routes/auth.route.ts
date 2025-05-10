@@ -3,7 +3,7 @@ import * as schemas from '../schemas/auth.schema';
 import { AuthHttpController } from '../controllers/auth.http.controller';
 import { TYPES } from '../../../../config/types';
 
-export default async function (fastify: FastifyInstance) {
+export async function authRoutes(fastify: FastifyInstance) {
   const authController = fastify.container.get<AuthHttpController>(TYPES.AuthHttpController);
 
   fastify.route({

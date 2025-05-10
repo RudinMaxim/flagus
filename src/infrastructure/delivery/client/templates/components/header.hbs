@@ -1,0 +1,69 @@
+<header class="header py-3 border-bottom">
+  <div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="header-title">
+        <h1 class="h4 mb-0 fw-bold">{{pageTitle}}</h1>
+        {{#if pageSubtitle}}
+          <p class="text-muted small mb-0">{{pageSubtitle}}</p>
+        {{/if}}
+      </div>
+      
+      <div class="header-actions d-flex align-items-center">
+        {{#if showEnvironmentSelector}}
+          <div class="env-selector me-3">
+            <div class="dropdown">
+              <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="envDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="environment-badge 
+                  {{#if (eq currentEnvironment 'production')}}bg-success{{/if}} 
+                  {{#if (eq currentEnvironment 'staging')}}bg-warning{{/if}} 
+                  {{#if (eq currentEnvironment 'development')}}bg-info{{/if}}">&nbsp;</span>
+                {{currentEnvironment}}
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="envDropdown">
+                <li>
+                  <a class="dropdown-item {{#if (eq currentEnvironment 'development')}}active{{/if}}" 
+                    href="#" 
+                    hx-post="/api/v1/user/environment" 
+                    hx-vals='{"environment": "development"}'
+                    hx-swap="none">
+                    <span class="environment-badge bg-info">&nbsp;</span> Development
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item {{#if (eq currentEnvironment 'staging')}}active{{/if}}" 
+                    href="#" 
+                    hx-post="/api/v1/user/environment" 
+                    hx-vals='{"environment": "staging"}'
+                    hx-swap="none">
+                    <span class="environment-badge bg-warning">&nbsp;</span> Staging
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item {{#if (eq currentEnvironment 'production')}}active{{/if}}" 
+                    href="#" 
+                    hx-post="/api/v1/user/environment" 
+                    hx-vals='{"environment": "production"}'
+                    hx-swap="none">
+                    <span class="environment-badge bg-success">&nbsp;</span> Production
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        {{/if}}
+        
+        {{#if actionButtons}}
+          {{#each actionButtons}}
+            <a href="{{this.url}}" class="btn btn-{{this.type}} ms-2" 
+               {{#if this.htmxAttr}}{{this.htmxAttr}}{{/if}}>
+              {{#if this.icon}}
+                <i class="bi bi-{{this.icon}} me-1"></i>
+              {{/if}}
+              {{this.text}}
+            </a>
+          {{/each}}
+        {{/if}}
+      </div>
+    </div>
+  </div>
+</header>

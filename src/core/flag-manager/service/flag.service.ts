@@ -1,45 +1,34 @@
 import { injectable, inject } from 'inversify';
 import { TYPES } from '../../../infrastructure/config/types';
 import { IFlagRepository } from '../../../infrastructure/persistence';
-import { IService } from '../../../shared/kernel';
+import { ServiceError } from '../../../shared/kernel';
 import { ILogger } from '../../../shared/logger';
-import { FlagStatus, AuditAction, FlagType } from '../constants';
-import { CreateFlagDTO, UpdateFlagDTO, TFlagStatus } from '../interfaces';
-import { FeatureFlag } from '../model';
-import { AuditService } from './audit.service';
-import { FlagEvaluationService } from './flag-evaluation.service';
-import { FlagTTLService } from './flag-ttl.service';
-
-export class FeatureFlagError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'FeatureFlagError';
-  }
-}
+import { EnvironmentService } from './environment.service';
+import {
+  CreateFlagDTO,
+  FeatureFlag,
+  FlagStatus,
+  FlagType,
+  TFlagStatus,
+  UpdateFlagDTO,
+} from '../model';
+import { AuditService } from '../../observability/services';
+import { AuditAction, TAuditAction } from '../../observability/model';
 
 @injectable()
-export class FeatureFlagService
-  implements IService<FeatureFlag, string, CreateFlagDTO, UpdateFlagDTO>
-{
+export class FeatureFlagService {
+  private ttlJobs: Map<string, { expiresAt: Date; notified: boolean }> = new Map();
+  private readonly TTL_INTERVAL_MS = 60 * 60 * 1000; // 1 час
+  private readonly TTL_NOTIFY_DAYS = 7 * 24 * 60 * 60 * 1000; // 7 дней
+  private ttlInterval?: NodeJS.Timeout;
+
   constructor(
     @inject(TYPES.FlagRepository) private readonly flagRepository: IFlagRepository,
     @inject(TYPES.AuditService) private readonly auditService: AuditService,
-    @inject(TYPES.FlagEvaluationService) private readonly evaluationService: FlagEvaluationService,
-    @inject(TYPES.FlagTTLService) private readonly flagTTLService: FlagTTLService,
+    @inject(TYPES.EnvironmentService) private readonly environmentService: EnvironmentService,
     @inject(TYPES.Logger) private readonly logger: ILogger
-  ) {}
-
-  async evaluateFlag(flagNameOrKey: string, clientId: string): Promise<boolean | string> {
-    if (!flagNameOrKey) throw new Error('Flag name or key is required');
-    if (!clientId) throw new Error('Client ID is required');
-
-    return this.evaluationService.evaluateFlag(flagNameOrKey, clientId);
-  }
-
-  async getClientFlags(clientId: string): Promise<Record<string, boolean | string>> {
-    if (!clientId) throw new Error('Client ID is required');
-
-    return this.evaluationService.getAllFlagsForClient(clientId);
+  ) {
+    this.startTTLMonitor();
   }
 
   async getAll(): Promise<FeatureFlag[]> {
@@ -75,16 +64,24 @@ export class FeatureFlagService
   }
 
   async create(dto: CreateFlagDTO): Promise<FeatureFlag> {
-    this.validateCreateDto(dto);
-
-    const existingFlag = await this.flagRepository.findByName(dto.name);
-    if (existingFlag) {
-      throw new Error(`Flag with name ${dto.name} already exists`);
+    if (!dto.environmentId || !dto.name || !dto.key || !dto.createdBy || !dto.type) {
+      throw new ServiceError('FeatureFlag', 'Required fields missing');
     }
 
-    const existingKey = await this.flagRepository.findByKey(dto.key);
-    if (existingKey) {
-      throw new Error(`Flag with key ${dto.key} already exists`);
+    await this.environmentService.validateEnvironmentExists(dto.environmentId);
+    const [existingName, existingKey] = await Promise.all([
+      this.flagRepository.findByName(dto.name),
+      this.flagRepository.findByKey(dto.key),
+    ]);
+
+    if (existingName?.environmentId === dto.environmentId) {
+      throw new ServiceError('FeatureFlag', `Flag '${dto.name}' already exists in environment`);
+    }
+    if (existingKey?.environmentId === dto.environmentId) {
+      throw new ServiceError('FeatureFlag', `Key '${dto.key}' already exists in environment`);
+    }
+    if (dto.type === FlagType.ENUM && (!dto.enum || !dto.enum.values.length)) {
+      throw new ServiceError('FeatureFlag', 'Enum flags require values');
     }
 
     const flag = new FeatureFlag({
@@ -95,181 +92,111 @@ export class FeatureFlagService
       type: dto.type,
       status: dto.status || FlagStatus.INACTIVE,
       categoryId: dto.categoryId,
+      environmentId: dto.environmentId,
       enum: dto.enum,
-      ttl: {
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        autoDelete: true,
-      },
+      ttl: { expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), autoDelete: true },
       clientIds: dto.clientIds,
-      metadata: {
-        createdBy: dto.createdBy,
-        createdAt: new Date(),
-      },
+      metadata: { createdBy: dto.createdBy, createdAt: new Date() },
     });
 
-    const createdFlag = await this.flagRepository.create(flag);
-
     try {
-      await this.auditService.logAction({
-        userId: dto.createdBy,
-        action: AuditAction.CREATE,
-        entityId: createdFlag.id,
-        entityType: 'feature_flag',
-        newValue: JSON.stringify(createdFlag),
-      });
+      const created = await this.flagRepository.create(flag);
+      await this.logAudit(AuditAction.CREATE, dto.createdBy, created.id, null, created);
+      this.registerFlagTTL(created);
+      return created;
     } catch (error) {
-      this.logger.error('Failed to log audit action', error as Error, {
-        action: AuditAction.CREATE,
-        entityId: createdFlag.id,
-        entityType: 'feature_flag',
-        newValue: JSON.stringify(createdFlag),
-      });
-      throw new FeatureFlagError(`Flag created but failed to log audit: ${error}`);
+      this.logger.error('Flag creation failed', error as Error, { dto });
+      throw new ServiceError('FeatureFlag', `Creation failed: ${(error as Error).message}`);
     }
-
-    if (createdFlag.ttl) {
-      this.flagTTLService.registerFlag(createdFlag);
-    }
-
-    return createdFlag;
   }
 
-  async update(id: string, dto: UpdateFlagDTO): Promise<FeatureFlag | null> {
-    if (!id) throw new Error('Flag ID is required');
-    this.validateUpdateDto(dto);
-
-    const flag = await this.flagRepository.findById(id);
-    if (!flag) {
-      return null;
-    }
+  async update(id: string, dto: UpdateFlagDTO): Promise<FeatureFlag> {
+    if (!id || !dto.updatedBy) throw new ServiceError('FeatureFlag', 'Required fields missing');
+    const flag = await this.validateFlagExists(id);
 
     if (dto.name && dto.name !== flag.name) {
-      const existingFlag = await this.flagRepository.findByName(dto.name);
-      if (existingFlag && existingFlag.id !== id) {
-        throw new Error(`Flag with name ${dto.name} already exists`);
+      const existing = await this.flagRepository.findByName(dto.name);
+      if (existing && existing.id !== id && existing.environmentId === flag.environmentId) {
+        throw new ServiceError('FeatureFlag', `Flag '${dto.name}' already exists in environment`);
       }
     }
-
-    const oldValue = JSON.stringify(flag);
-
-    const metadata = { ...flag.metadata };
-    metadata.updatedBy = dto.updatedBy;
-    metadata.updatedAt = new Date();
+    if (dto.type === FlagType.ENUM && (!dto.enum || !dto.enum.values.length)) {
+      throw new ServiceError('FeatureFlag', 'Enum flags require values');
+    }
 
     const updateData: Partial<FeatureFlag> = {
       ...dto,
-      metadata,
+      metadata: { ...flag.metadata, updatedBy: dto.updatedBy, updatedAt: new Date() },
     };
+    delete (updateData as any).key;
 
-    if ('key' in updateData) {
-      delete (updateData as any).key;
+    try {
+      const updated = await this.flagRepository.update(id, updateData);
+      if (!updated) throw new ServiceError('FeatureFlag', 'Update failed');
+      await this.logAudit(AuditAction.UPDATE, dto.updatedBy, id, flag, updated);
+      this.unregisterFlagTTL(id);
+      this.registerFlagTTL(updated);
+      return updated;
+    } catch (error) {
+      this.logger.error('Flag update failed', error as Error, { id, dto });
+      throw new ServiceError('FeatureFlag', `Update failed: ${(error as Error).message}`);
     }
-
-    const updatedFlag = await this.flagRepository.update(id, updateData);
-
-    if (updatedFlag) {
-      try {
-        await this.auditService.logAction({
-          userId: dto.updatedBy,
-          action: AuditAction.UPDATE,
-          entityId: id,
-          entityType: 'feature_flag',
-          oldValue,
-          newValue: JSON.stringify(updatedFlag),
-        });
-      } catch (error) {
-        this.logger.error('Failed to log audit action', error as Error, {
-          action: AuditAction.UPDATE,
-          entityId: id,
-          entityType: 'feature_flag',
-          oldValue,
-          newValue: JSON.stringify(updatedFlag),
-        });
-        throw new FeatureFlagError(`Flag updated but failed to log audit: ${error}`);
-      }
-    }
-
-    return updatedFlag;
   }
 
-  async delete(id: string, userId: string = 'system'): Promise<boolean> {
-    if (!id) throw new Error('Flag ID is required');
-
-    const flag = await this.flagRepository.findById(id);
-    if (!flag) {
-      return false;
+  async delete(id: string, userId: string): Promise<void> {
+    const flag = await this.validateFlagExists(id);
+    try {
+      if (!(await this.flagRepository.delete(id)))
+        throw new ServiceError('FeatureFlag', 'Deletion failed');
+      await this.logAudit(AuditAction.DELETE, userId, id, flag, null);
+      this.unregisterFlagTTL(id);
+    } catch (error) {
+      this.logger.error('Flag deletion failed', error as Error, { id });
+      throw new ServiceError('FeatureFlag', `Deletion failed: ${(error as Error).message}`);
     }
-
-    const result = await this.flagRepository.delete(id);
-
-    if (result) {
-      try {
-        await this.auditService.logAction({
-          userId,
-          action: AuditAction.DELETE,
-          entityId: id,
-          entityType: 'feature_flag',
-          oldValue: JSON.stringify(flag),
-        });
-      } catch (error) {
-        this.logger.error('Failed to log audit action', error as Error, {
-          action: AuditAction.DELETE,
-          entityId: id,
-          entityType: 'feature_flag',
-          oldValue: JSON.stringify(flag),
-        });
-        throw new FeatureFlagError(`Flag deleted but failed to log audit: ${error}`);
-      }
-
-      this.flagTTLService.unregisterFlag(id);
-    }
-
-    return result;
   }
 
-  async toggleStatus(id: string, status: TFlagStatus, userId: string): Promise<FeatureFlag | null> {
-    if (!id) throw new Error('Flag ID is required');
-    if (!userId) throw new Error('User ID is required');
-    if (!Object.values(FlagStatus).includes(status)) {
-      throw new Error(`Invalid status: ${status}`);
+  async toggleStatus(id: string, status: TFlagStatus, userId: string): Promise<FeatureFlag> {
+    if (!Object.values(FlagStatus).includes(status as any)) {
+      throw new ServiceError('FeatureFlag', `Invalid status: ${status}`);
     }
+    const flag = await this.validateFlagExists(id);
+    if (flag.status === status) return flag;
 
-    const flag = await this.flagRepository.findById(id);
-    if (!flag) {
-      return null;
+    try {
+      const updated = await this.flagRepository.toggleStatus(id, status);
+      if (!updated) throw new ServiceError('FeatureFlag', 'Status toggle failed');
+      await this.logAudit(AuditAction.TOGGLE, userId, id, flag, updated);
+      return updated;
+    } catch (error) {
+      this.logger.error('Flag status toggle failed', error as Error, { id, status });
+      throw new ServiceError('FeatureFlag', `Status toggle failed: ${(error as Error).message}`);
     }
+  }
 
-    if (flag.status === status) {
-      return flag;
-    }
+  async cleanupExpiredFlags(environmentId?: string): Promise<number> {
+    try {
+      const expiredFlags = await this.flagRepository.findExpiredFlags();
+      const filteredFlags = environmentId
+        ? expiredFlags.filter(
+            flag => flag.environmentId === environmentId && flag.shouldBeDeleted()
+          )
+        : expiredFlags.filter(flag => flag.shouldBeDeleted());
 
-    const oldValue = JSON.stringify(flag);
-
-    const updatedFlag = await this.flagRepository.toggleStatus(id, status);
-
-    if (updatedFlag) {
-      try {
-        await this.auditService.logAction({
-          userId,
-          action: AuditAction.TOGGLE,
-          entityId: id,
-          entityType: 'feature_flag',
-          oldValue,
-          newValue: JSON.stringify(updatedFlag),
-        });
-      } catch (error) {
-        this.logger.error('Failed to log audit action', error as Error, {
-          action: AuditAction.TOGGLE,
-          entityId: id,
-          entityType: 'feature_flag',
-          oldValue,
-          newValue: JSON.stringify(updatedFlag),
-        });
-        throw new FeatureFlagError(`Flag status toggled but failed to log audit: ${error}`);
+      let deletedCount = 0;
+      for (const flag of filteredFlags) {
+        if (await this.flagRepository.delete(flag.id)) {
+          await this.logAudit(AuditAction.DELETE, 'system', flag.id, flag, null);
+          this.unregisterFlagTTL(flag.id);
+          deletedCount++;
+        }
       }
+      this.logger.info(`Cleaned up ${deletedCount} expired flags`);
+      return deletedCount;
+    } catch (error) {
+      this.logger.error('Failed to clean up expired flags', error as Error, { environmentId });
+      return 0;
     }
-
-    return updatedFlag;
   }
 
   async resetTTL(id: string, userId: string): Promise<FeatureFlag | null> {
@@ -320,49 +247,88 @@ export class FeatureFlagService
           oldValue,
           newValue: JSON.stringify(updatedFlag),
         });
-        throw new FeatureFlagError(`Flag TTL reset but failed to log audit: ${error}`);
+        throw new ServiceError('FeatureFlag', `Flag TTL reset but failed to log audit: ${error}`);
       }
     }
 
     return updatedFlag;
   }
 
-  async cleanupExpiredFlags(): Promise<number> {
-    const expiredFlags = await this.flagRepository.findExpiredFlags();
-    let deletedCount = 0;
-
-    for (const flag of expiredFlags) {
-      if (flag.shouldBeDeleted()) {
-        await this.delete(flag.id, 'system');
-        deletedCount++;
-      } else {
-        await this.toggleStatus(flag.id, FlagStatus.ARCHIVED, 'system');
-      }
-    }
-
-    return deletedCount;
+  private startTTLMonitor(): void {
+    if (this.ttlInterval) return;
+    this.ttlInterval = setInterval(() => this.processTTLJobs(), this.TTL_INTERVAL_MS);
+    this.logger.info('TTL monitor started');
   }
 
-  private validateCreateDto(dto: CreateFlagDTO): void {
-    if (!dto.key) throw new Error('Flag key is required');
-    if (!dto.name) throw new Error('Flag name is required');
-    if (!dto.type) throw new Error('Flag type is required');
-    if (!dto.createdBy) throw new Error('Creator ID is required');
-
-    if (dto.type === FlagType.ENUM) {
-      if (!dto.enum) {
-        throw new Error('Enum type flags must have at least one enum value');
-      }
+  private stopTTLMonitor(): void {
+    if (this.ttlInterval) {
+      clearInterval(this.ttlInterval);
+      this.ttlInterval = undefined;
+      this.logger.info('TTL monitor stopped');
     }
   }
 
-  private validateUpdateDto(dto: UpdateFlagDTO): void {
-    if (!dto.updatedBy) throw new Error('Updater ID is required');
+  private registerFlagTTL(flag: FeatureFlag): void {
+    if (!flag.ttl?.expiresAt) return;
+    this.ttlJobs.set(flag.id, { expiresAt: flag.ttl.expiresAt, notified: false });
+    this.logger.debug(`Registered flag ${flag.id} for TTL`, { expiresAt: flag.ttl.expiresAt });
+  }
 
-    if (dto.type === FlagType.ENUM) {
-      if (!dto.enum?.values || dto.enum?.values.length < 1) {
-        throw new Error('Enum type flags must have at least one enum value');
-      }
+  private unregisterFlagTTL(flagId: string): void {
+    if (this.ttlJobs.delete(flagId)) {
+      this.logger.debug(`Unregistered flag ${flagId} from TTL`);
     }
+  }
+
+  private async processTTLJobs(): Promise<void> {
+    try {
+      const now = Date.now();
+      const toDelete: string[] = [];
+      const toNotify: string[] = [];
+
+      for (const [flagId, job] of this.ttlJobs) {
+        const timeLeft = job.expiresAt.getTime() - now;
+        if (timeLeft <= 0) toDelete.push(flagId);
+        else if (!job.notified && timeLeft <= this.TTL_NOTIFY_DAYS) {
+          toNotify.push(flagId);
+          job.notified = true;
+        }
+      }
+
+      if (toDelete.length) {
+        const deleted = await this.cleanupExpiredFlags();
+        this.logger.info(`Processed ${deleted} expired flags via TTL`);
+      }
+
+      if (toNotify.length) {
+        this.logger.info(`Notified for ${toNotify.length} flags nearing expiration`);
+        // Здесь можно добавить отправку уведомлений (email, webhook)
+      }
+    } catch (error) {
+      this.logger.error('Failed to process TTL jobs', error as Error);
+    }
+  }
+
+  private async validateFlagExists(id: string): Promise<FeatureFlag> {
+    const flag = await this.flagRepository.findById(id);
+    if (!flag) throw new ServiceError('FeatureFlag', `Flag '${id}' not found`);
+    return flag;
+  }
+
+  private async logAudit(
+    action: TAuditAction,
+    userId: string,
+    entityId: string,
+    oldValue: any,
+    newValue: any
+  ): Promise<void> {
+    await this.auditService.logAction({
+      userId,
+      action,
+      entityId,
+      entityType: 'feature_flag',
+      oldValue: oldValue ? JSON.stringify(oldValue) : undefined,
+      newValue: newValue ? JSON.stringify(newValue) : undefined,
+    });
   }
 }

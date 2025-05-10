@@ -15,6 +15,11 @@ export async function createApp(): Promise<FastifyInstance> {
     await (container as any).initialize();
   }
 
+  await app.register(import('@fastify/cookie'), {
+    hook: 'onRequest',
+    parseOptions: {},
+  });
+
   app.addHook('onClose', async () => {
     logger.info('Shutting down app...');
     if (typeof (container as any).cleanup === 'function') {

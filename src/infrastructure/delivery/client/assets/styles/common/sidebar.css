@@ -1,0 +1,42 @@
+:root {
+  --sidebar-width: 280px;
+  --swipe-threshold: 50px;
+  --overlay-bg: rgba(30, 30, 32, 0.98);
+  --content-bg: #1e1e1e;
+  --focus-ring: 0 0 0 3px rgba(0, 125, 250, 0.5);
+  --transition-speed: 0.35s;
+  --blur-intensity: 16px;
+  --border-radius: 12px;
+}
+
+.sidebar {
+  width: var(--sidebar-width);
+  height: 100vh;
+  transform: translateX(calc(-100% - 15px));
+  z-index: 1031; /* Выше оверлея */
+  transition: transform var(--transition-speed) cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+  background: var(--content-bg);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 5px 0 15px rgba(0, 0, 0, 0.3);
+}
+
+.sidebar.show {
+  transform: translateX(0);
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 0;
+  scrollbar-width: thin;
+}
+
+@media (min-width: 768px) {
+  .sidebar {
+    transform: none;
+    box-shadow: none;
+  }
+}

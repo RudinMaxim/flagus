@@ -94,7 +94,6 @@ export const checkFirstUserSchema: FastifySchema = {
   description: 'Check first user',
   tags: ['Authentication'],
   summary: 'Check if first admin user needs to be created',
-  security: [{ apiKey: [] }],
   response: {
     200: {
       type: 'object',
@@ -116,7 +115,6 @@ export const createFirstAdminSchema: FastifySchema = {
   description: 'Create first admin',
   tags: ['Authentication'],
   summary: 'Create the first administrator account',
-  security: [{ apiKey: [] }],
   body: {
     type: 'object',
     required: ['username', 'email', 'password'],

@@ -1,18 +1,32 @@
 import { FastifyInstance } from 'fastify';
 import { ConfigService } from '../../config/config';
-import apiRoutes from './v1/routes';
+import { TYPES } from '../../config/types';
+import {
+  auditRoutes,
+  authRoutes,
+  categoryRoutes,
+  evaluateRoutes,
+  flagRoutes,
+  groupRoutes,
+  userRoutes,
+} from './v1/routes';
+import { healthRoutes } from './common/health.route';
+import { AuthMiddleware } from '../middlewares';
 
-export async function registerApiRoutes(fastify: FastifyInstance, config: ConfigService) {
-  if (config.cors.enabled) {
+export async function registerApi(fastify: FastifyInstance) {
+  const config = fastify.container.get<ConfigService>(TYPES.Config);
+  const authMiddleware = fastify.container.get<AuthMiddleware>(TYPES.AuthMiddleware);
+
+  if (config.get('cors').enabled) {
     const fastifyCors = import('@fastify/cors');
     await fastify.register(fastifyCors, {
-      origin: config.cors.origins || true,
+      origin: config.get('cors').origins || true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
     });
   }
 
-  if (config.server.swagger.enabled) {
+  if (config.get('server').swagger.enabled) {
     await fastify.register(import('@fastify/swagger'), {
       openapi: {
         info: {
@@ -39,6 +53,10 @@ export async function registerApiRoutes(fastify: FastifyInstance, config: Config
             description: 'Endpoints for managing feature flags',
           },
           {
+            name: 'Environments',
+            description: 'Endpoints for managing environments',
+          },
+          {
             name: 'Categories',
             description: 'Endpoints for managing flag categories',
           },
@@ -53,6 +71,10 @@ export async function registerApiRoutes(fastify: FastifyInstance, config: Config
           {
             name: 'Users',
             description: 'Endpoints for managing users',
+          },
+          {
+            name: 'Groups',
+            description: 'Endpoints for managing groups',
           },
           {
             name: 'System',
@@ -79,16 +101,16 @@ export async function registerApiRoutes(fastify: FastifyInstance, config: Config
     });
 
     await fastify.register(import('@fastify/swagger-ui'), {
-      routePrefix: config.server.swagger.path,
+      routePrefix: config.get('server').swagger.path,
       uiConfig: {
         docExpansion: 'list',
         deepLinking: true,
       },
       uiHooks: {
-        onRequest: function (request, reply, next) {
+        onRequest: function (_request, _reply, next) {
           next();
         },
-        preHandler: function (request, reply, next) {
+        preHandler: function (_request, _reply, next) {
           next();
         },
       },
@@ -99,5 +121,32 @@ export async function registerApiRoutes(fastify: FastifyInstance, config: Config
     });
   }
 
-  await fastify.register(apiRoutes);
+  await fastify.register(
+    async rootApi => {
+      rootApi.register(
+        async v1Api => {
+          v1Api.register(healthRoutes, { prefix: '/health' });
+
+          v1Api.register(async protectedApi => {
+            protectedApi.register(authRoutes, { prefix: '/auth' });
+            protectedApi.register(evaluateRoutes, { prefix: '/evaluate' });
+
+            protectedApi.register(async adminApi => {
+              adminApi.addHook('onRequest', authMiddleware.authenticate);
+
+              adminApi.register(flagRoutes, { prefix: '/flags' });
+              adminApi.register(categoryRoutes, { prefix: '/categories' });
+              adminApi.register(auditRoutes, { prefix: '/audit' });
+              adminApi.register(userRoutes, { prefix: '/users' });
+              adminApi.register(groupRoutes, { prefix: '/group' });
+            });
+          });
+        },
+        { prefix: '/v1' }
+      );
+
+      // e.g., rootApi.register(async (v2Api) => { ... }, { prefix: '/v2' });
+    },
+    { prefix: '/api' }
+  );
 }

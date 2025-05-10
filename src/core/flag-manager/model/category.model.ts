@@ -26,3 +26,18 @@ export class FlagCategory implements IEntity<string> {
     this.metadata = props.metadata;
   }
 }
+
+export interface CreateCategoryDTO {
+  name: string;
+  description?: string;
+  parentId?: string;
+  createdBy: string;
+}
+
+export interface UpdateCategoryDTO {
+  name?: string;
+  description?: string;
+  parentId?: string;
+  updatedBy: string;
+  depth?: number;
+}

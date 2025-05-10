@@ -1,0 +1,96 @@
+<div class='setup-container'>
+  <div class='alert alert-info mb-4'>
+    <i class='bi bi-info-circle-fill me-2'></i>
+    Create your first administrator to get started with Flagus.
+  </div>
+
+  <div id='setupError' class='alert alert-danger d-none' role='alert'></div>
+
+  <form id='firstAdminForm' aria-labelledby='setupFormTitle'>
+    <h2 id='setupFormTitle' class='visually-hidden'>Administrator Creation Form</h2>
+
+    <div class='mb-3'>
+      <label for='username' class='form-label'>Username</label>
+      <input
+        type='text'
+        class='form-control'
+        id='username'
+        name='username'
+        autofocus
+        required
+        autocomplete='username'
+        aria-describedby='usernameHelp'
+      />
+    </div>
+
+    <div class='mb-3'>
+      <label for='email' class='form-label'>Email</label>
+      <input
+        type='email'
+        class='form-control'
+        id='email'
+        name='email'
+        required
+        autocomplete='email'
+        aria-describedby='emailHelp'
+      />
+    </div>
+
+    <div class='mb-3'>
+      <label for='password' class='form-label'>Password
+        <a href='#' id='generatePassword' class='ms-2 text-decoration-underline small'>Generate
+          password</a></label>
+      <div class='input-group'>
+        <input
+          type='password'
+          class='form-control'
+          id='password'
+          name='password'
+          required
+          autocomplete='new-password'
+          aria-describedby='passwordHelp'
+        />
+        <button
+          class='btn btn-outline-secondary'
+          type='button'
+          id='togglePassword'
+          aria-label='Показать/скрыть пароль'
+        >
+          <i class='bi bi-eye' aria-hidden='true'></i>
+        </button>
+      </div>
+      <div id='passwordHelp' class='form-text'></div>
+
+      <div class='mt-2'>
+        <label class='form-label small'>Password strength:</label>
+        <div class='progress' style='height: 20px;'>
+          <div
+            id='passwordStrength'
+            class='progress-bar'
+            role='progressbar'
+            style='width: 0%;'
+            aria-valuenow='0'
+            aria-valuemin='0'
+            aria-valuemax='100'
+          >
+          </div>
+        </div>
+        <div id='passwordFeedback' class='form-text text-danger mt-1'></div>
+      </div>
+    </div>
+
+    <div class='d-grid gap-2 mt-4'>
+      <button type='submit' class='btn btn-primary' id='submitButton'>
+        <span
+          class='spinner-border spinner-border-sm d-none'
+          id='setupSpinner'
+          role='status'
+          aria-hidden='true'
+        ></span>
+        <span id='setupButtonText'>Создать аккаунт администратора</span>
+      </button>
+    </div>
+  </form>
+</div>
+
+<script src='/assets/javascript/auth/setup.js' defer></script>

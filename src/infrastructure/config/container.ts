@@ -5,16 +5,11 @@ import { ConfigService } from './config';
 import { TYPES } from './types';
 import { flagManagerContainer } from '../../core/flag-manager';
 import { storageModule, OnInit, OnDestroy } from '../../shared/storage';
-import {
-  AuditHttpController,
-  AuthHttpController,
-  CategoryHttpController,
-  FlagHttpController,
-  UserHttpController,
-} from '../delivery/api/v1/controllers';
+import { httpControllerModule } from '../delivery/api/v1/controllers';
 import { accessContainer } from '../../core/access';
-import { AuthMiddleware } from '../delivery/middlewares/auth.middleware';
-import { EvaluateHttpController } from '../delivery/api/v1/controllers/evaluate.http.controller';
+import { AuthMiddleware } from '../delivery/middlewares';
+import { observabilityContainer } from '../../core/observability';
+import { clientControllerModule } from '../delivery/client/controllers/client.controller.module';
 
 export async function createContainer(): Promise<Container> {
   const container = new Container();
@@ -26,32 +21,9 @@ export async function createContainer(): Promise<Container> {
   container.load(persistenceModule);
   container.load(flagManagerContainer);
   container.load(accessContainer);
-
-  container
-    .bind<AuditHttpController>(TYPES.AuditHttpController)
-    .to(AuditHttpController)
-    .inSingletonScope();
-  container
-    .bind<CategoryHttpController>(TYPES.CategoryHttpController)
-    .to(CategoryHttpController)
-    .inSingletonScope();
-  container
-    .bind<FlagHttpController>(TYPES.FlagHttpController)
-    .to(FlagHttpController)
-    .inSingletonScope();
-  container
-    .bind<EvaluateHttpController>(TYPES.EvaluateHttpController)
-    .to(EvaluateHttpController)
-    .inSingletonScope();
-
-  container
-    .bind<AuthHttpController>(TYPES.AuthHttpController)
-    .to(AuthHttpController)
-    .inSingletonScope();
-  container
-    .bind<UserHttpController>(TYPES.UserHttpController)
-    .to(UserHttpController)
-    .inSingletonScope();
+  container.load(observabilityContainer);
+  container.load(httpControllerModule);
+  container.load(clientControllerModule);
 
   container.bind<AuthMiddleware>(TYPES.AuthMiddleware).to(AuthMiddleware).inSingletonScope();
 

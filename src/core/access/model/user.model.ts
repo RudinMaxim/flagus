@@ -1,5 +1,20 @@
 import { IMetadata, IEntity } from '../../../shared/kernel';
-import { TUserRole } from '../interfaces';
+
+export const UserRole = {
+  ADMIN: 'admin',
+  EDITOR: 'editor',
+  VIEWER: 'viewer',
+} as const;
+
+export type TJwtPayload = {
+  userId: string;
+  email?: string;
+  role?: TUserRole;
+  groups?: string[];
+  exp: number;
+};
+
+export type TUserRole = (typeof UserRole)[keyof typeof UserRole];
 
 export interface IUserProps {
   id: string;
@@ -8,6 +23,7 @@ export interface IUserProps {
   email: string;
   role: TUserRole;
   isActive: boolean;
+  groupIds: string[];
   metadata: IMetadata;
 }
 
@@ -18,6 +34,7 @@ export class User implements IEntity<string> {
   email: string;
   role: TUserRole;
   isActive: boolean;
+  groupIds: string[];
   metadata: IMetadata;
 
   constructor(props: IUserProps) {
@@ -27,6 +44,41 @@ export class User implements IEntity<string> {
     this.email = props.email;
     this.role = props.role;
     this.isActive = props.isActive;
+    this.groupIds = props.groupIds;
     this.metadata = props.metadata;
   }
+}
+
+export interface AuthDTO {
+  email: string;
+  password: string;
+}
+
+export interface TokenDTO extends RefreshTokenDTO {
+  accessToken: string;
+}
+
+export interface RefreshTokenDTO {
+  refreshToken: string;
+}
+
+export interface CreateUserDTO {
+  username: string;
+  password: string;
+  email: string;
+  role: TUserRole;
+}
+
+export interface UpdateUserDTO {
+  username?: string;
+  password?: string;
+  email?: string;
+  role?: TUserRole;
+  isActive?: boolean;
+  groupIds?: string[];
+}
+
+export interface LoginResponseDTO extends TokenDTO {
+  id: string;
+  role: string;
 }
