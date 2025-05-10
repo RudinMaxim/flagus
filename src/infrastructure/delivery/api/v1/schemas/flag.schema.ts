@@ -37,6 +37,7 @@ const flagSchema = {
     type: { type: 'string', enum: ['boolean', 'enum'] },
     status: { type: 'string', enum: ['active', 'inactive', 'scheduled', 'archived'] },
     categoryId: { type: ['string', 'null'] },
+    environmentId: { type: 'string' },
     enum: {
       type: 'object',
       properties: {
@@ -56,12 +57,43 @@ const flagSchema = {
   },
 };
 
+const sdkKeySchema = {
+  type: 'object',
+  properties: {
+    key: { type: 'string' },
+    type: { type: 'string', enum: ['client', 'server'] },
+    createdAt: { type: 'string', format: 'date-time' },
+    createdBy: { type: 'string' },
+    isActive: { type: 'boolean' },
+  },
+};
+
+const environmentSchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    name: { type: 'string' },
+    description: { type: ['string', 'null'] },
+    sdkKeys: {
+      type: 'array',
+      items: sdkKeySchema,
+    },
+    metadata: metadataSchema,
+  },
+};
+
 // GET /flags
 export const getAllFlagsSchema: FastifySchema = {
   description: 'Get all feature flags',
   tags: ['Feature Flags'],
   summary: 'Retrieve all feature flags with their configurations',
   security: [{ bearerAuth: [] }],
+  querystring: {
+    type: 'object',
+    properties: {
+      environmentId: { type: 'string' },
+    },
+  },
   response: {
     200: {
       type: 'object',
@@ -109,7 +141,7 @@ export const createFlagSchema: FastifySchema = {
   security: [{ bearerAuth: [] }],
   body: {
     type: 'object',
-    required: ['key', 'name', 'type', 'createdBy'],
+    required: ['key', 'name', 'type', 'createdBy', 'environmentId'],
     properties: {
       key: { type: 'string', pattern: '^[a-zA-Z0-9_-]+$', minLength: 1, maxLength: 100 },
       name: { type: 'string', minLength: 1, maxLength: 100 },
@@ -121,6 +153,7 @@ export const createFlagSchema: FastifySchema = {
         default: 'inactive',
       },
       categoryId: { type: ['string', 'null'], default: null },
+      environmentId: { type: 'string' },
       enumValues: {
         type: 'array',
         items: { type: 'string' },
@@ -165,6 +198,7 @@ export const updateFlagSchema: FastifySchema = {
       type: { type: 'string', enum: ['boolean', 'enum'] },
       status: { type: 'string', enum: ['active', 'inactive', 'scheduled', 'archived'] },
       categoryId: { type: ['string', 'null'] },
+      environmentId: { type: 'string' },
       enumValues: {
         type: 'array',
         items: { type: 'string' },
@@ -242,17 +276,16 @@ export const toggleFlagSchema: FastifySchema = {
   },
 };
 
-// GET /flags/client/:clientId
-export const getClientFlagsSchema: FastifySchema = {
-  description: 'Get client flags',
-  tags: ['Client SDK'],
-  summary: 'Retrieve all active flags for a specific client',
-  security: [{ apiKey: [] }],
-  params: {
+// GET /flags/expired
+export const getExpiredFlagsSchema: FastifySchema = {
+  description: 'Get expired flags',
+  tags: ['Feature Flags'],
+  summary: 'Get all expired flags',
+  security: [{ bearerAuth: [] }],
+  querystring: {
     type: 'object',
-    required: ['clientId'],
     properties: {
-      clientId: { type: 'string' },
+      environmentId: { type: 'string' },
     },
   },
   response: {
@@ -260,10 +293,8 @@ export const getClientFlagsSchema: FastifySchema = {
       type: 'object',
       properties: {
         data: {
-          type: 'object',
-          additionalProperties: {
-            oneOf: [{ type: 'boolean' }, { type: 'string' }],
-          },
+          type: 'array',
+          items: flagSchema,
         },
       },
     },
@@ -271,37 +302,44 @@ export const getClientFlagsSchema: FastifySchema = {
   },
 };
 
-// GET /flags/evaluate/:flagName/:clientId
-export const evaluateFlagSchema: FastifySchema = {
-  description: 'Evaluate flag for client',
-  tags: ['Client SDK'],
-  summary: 'Evaluate a specific flag for a given client',
-  security: [{ apiKey: [] }],
-  params: {
+// POST /flags/cleanup
+export const cleanupExpiredFlagsSchema = {
+  tags: ['Feature Flags'],
+  summary: 'Clean up expired feature flags',
+  description: 'Removes all expired feature flags that have autoDelete set to true',
+  security: [{ bearerAuth: [] }],
+  querystring: {
     type: 'object',
-    required: ['flagName', 'clientId'],
     properties: {
-      flagName: { type: 'string' },
-      clientId: { type: 'string' },
+      environmentId: { type: 'string' },
     },
   },
   response: {
     200: {
+      description: 'Successful response',
       type: 'object',
       properties: {
+        success: { type: 'boolean' },
         data: {
           type: 'object',
           properties: {
-            flagName: { type: 'string' },
-            isActive: {
-              oneOf: [{ type: 'boolean' }, { type: 'string' }],
+            deletedCount: { type: 'number' },
+            deletedFlags: {
+              type: 'array',
+              items: { type: 'string', format: 'uuid' },
             },
           },
         },
       },
     },
-    404: errorSchema,
-    500: errorSchema,
+    500: {
+      description: 'Internal Server Error',
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: false },
+        error: { type: 'string' },
+      },
+    },
   },
 };
 
@@ -337,11 +375,11 @@ export const resetTTLSchema: FastifySchema = {
   },
 };
 
-// GET /flags/expired
-export const getExpiredFlagsSchema: FastifySchema = {
-  description: 'Get expired flags',
-  tags: ['Feature Flags'],
-  summary: 'Get all expired flags',
+// Environment schemas
+export const getAllEnvironmentsSchema: FastifySchema = {
+  description: 'Get all environments',
+  tags: ['Environments'],
+  summary: 'Retrieve all environments',
   security: [{ bearerAuth: [] }],
   response: {
     200: {
@@ -349,7 +387,7 @@ export const getExpiredFlagsSchema: FastifySchema = {
       properties: {
         data: {
           type: 'array',
-          items: flagSchema,
+          items: environmentSchema,
         },
       },
     },
@@ -357,37 +395,215 @@ export const getExpiredFlagsSchema: FastifySchema = {
   },
 };
 
-// POST /flags/cleanup
-export const cleanupExpiredFlagsSchema = {
-  tags: ['Feature Flags'],
-  summary: 'Clean up expired feature flags',
-  description: 'Removes all expired feature flags that have autoDelete set to true',
+export const getEnvironmentByIdSchema: FastifySchema = {
+  description: 'Get environment by ID',
+  tags: ['Environments'],
+  summary: 'Retrieve a specific environment by its ID',
   security: [{ bearerAuth: [] }],
+  params: {
+    type: 'object',
+    required: ['id'],
+    properties: {
+      id: { type: 'string' },
+    },
+  },
   response: {
     200: {
-      description: 'Successful response',
       type: 'object',
       properties: {
-        success: { type: 'boolean' },
+        data: environmentSchema,
+      },
+    },
+    404: errorSchema,
+    500: errorSchema,
+  },
+};
+
+export const createEnvironmentSchema: FastifySchema = {
+  description: 'Create new environment',
+  tags: ['Environments'],
+  summary: 'Create a new environment',
+  security: [{ bearerAuth: [] }],
+  body: {
+    type: 'object',
+    required: ['name', 'createdBy'],
+    properties: {
+      name: { type: 'string', minLength: 1, maxLength: 100 },
+      description: { type: 'string', maxLength: 500 },
+      createdBy: { type: 'string' },
+    },
+  },
+  response: {
+    201: {
+      type: 'object',
+      properties: {
+        data: environmentSchema,
+      },
+    },
+    400: errorSchema,
+    409: errorSchema,
+    500: errorSchema,
+  },
+};
+
+export const generateSDKKeySchema: FastifySchema = {
+  description: 'Generate SDK key',
+  tags: ['Environments'],
+  summary: 'Generate a new SDK key for an environment',
+  security: [{ bearerAuth: [] }],
+  params: {
+    type: 'object',
+    required: ['id'],
+    properties: {
+      id: { type: 'string' },
+    },
+  },
+  body: {
+    type: 'object',
+    required: ['type', 'userId'],
+    properties: {
+      type: { type: 'string', enum: ['client', 'server'] },
+      userId: { type: 'string' },
+    },
+  },
+  response: {
+    200: {
+      type: 'object',
+      properties: {
         data: {
           type: 'object',
           properties: {
-            deletedCount: { type: 'number' },
-            deletedFlags: {
-              type: 'array',
-              items: { type: 'string', format: 'uuid' },
+            key: { type: 'string' },
+          },
+        },
+      },
+    },
+    400: errorSchema,
+    404: errorSchema,
+    500: errorSchema,
+  },
+};
+
+export const deactivateSDKKeySchema: FastifySchema = {
+  description: 'Deactivate SDK key',
+  tags: ['Environments'],
+  summary: 'Deactivate an SDK key for an environment',
+  security: [{ bearerAuth: [] }],
+  params: {
+    type: 'object',
+    required: ['id', 'key'],
+    properties: {
+      id: { type: 'string' },
+      key: { type: 'string' },
+    },
+  },
+  body: {
+    type: 'object',
+    required: ['userId'],
+    properties: {
+      userId: { type: 'string' },
+    },
+  },
+  response: {
+    200: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+      },
+    },
+    400: errorSchema,
+    404: errorSchema,
+    500: errorSchema,
+  },
+};
+
+export const getSDKKeysSchema: FastifySchema = {
+  description: 'Get SDK keys',
+  tags: ['Environments'],
+  summary: 'Get all SDK keys for an environment',
+  security: [{ bearerAuth: [] }],
+  params: {
+    type: 'object',
+    required: ['id'],
+    properties: {
+      id: { type: 'string' },
+    },
+  },
+  response: {
+    200: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'array',
+          items: sdkKeySchema,
+        },
+      },
+    },
+    404: errorSchema,
+    500: errorSchema,
+  },
+};
+
+// Modify client evaluation schemas to include environment ID
+export const getClientFlagsSchema: FastifySchema = {
+  description: 'Get client flags',
+  tags: ['Client SDK'],
+  summary: 'Retrieve all active flags for a specific client',
+  security: [{ apiKey: [] }],
+  params: {
+    type: 'object',
+    required: ['clientId', 'environmentId'],
+    properties: {
+      clientId: { type: 'string' },
+      environmentId: { type: 'string' },
+    },
+  },
+  response: {
+    200: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'object',
+          additionalProperties: {
+            oneOf: [{ type: 'boolean' }, { type: 'string' }],
+          },
+        },
+      },
+    },
+    500: errorSchema,
+  },
+};
+
+export const evaluateFlagSchema: FastifySchema = {
+  description: 'Evaluate flag for client',
+  tags: ['Client SDK'],
+  summary: 'Evaluate a specific flag for a given client',
+  security: [{ apiKey: [] }],
+  params: {
+    type: 'object',
+    required: ['flagName', 'clientId', 'environmentId'],
+    properties: {
+      flagName: { type: 'string' },
+      clientId: { type: 'string' },
+      environmentId: { type: 'string' },
+    },
+  },
+  response: {
+    200: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'object',
+          properties: {
+            flagName: { type: 'string' },
+            isActive: {
+              oneOf: [{ type: 'boolean' }, { type: 'string' }],
             },
           },
         },
       },
     },
-    500: {
-      description: 'Internal Server Error',
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: false },
-        error: { type: 'string' },
-      },
-    },
+    404: errorSchema,
+    500: errorSchema,
   },
 };

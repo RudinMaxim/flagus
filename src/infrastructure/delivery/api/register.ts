@@ -53,6 +53,10 @@ export async function registerApi(fastify: FastifyInstance) {
             description: 'Endpoints for managing feature flags',
           },
           {
+            name: 'Environments',
+            description: 'Endpoints for managing environments',
+          },
+          {
             name: 'Categories',
             description: 'Endpoints for managing flag categories',
           },

@@ -13,13 +13,14 @@ export class EvaluateHttpController {
   async getClientFlags(
     request: FastifyRequest<{
       Params: { clientId: string; environmentId: string };
-      Headers: { 'x-sdk-key': string };
+      Headers: { 'x-sdk-key': string; 'x-sdk-type': string };
     }>,
     reply: FastifyReply
   ) {
     try {
       const { clientId, environmentId } = request.params;
       const sdkKey = request.headers['x-sdk-key'] as string;
+      const sdkType = request.headers['x-sdk-type'] as SDKKeyType;
 
       if (!sdkKey) {
         return reply.code(400).send({
@@ -33,7 +34,7 @@ export class EvaluateHttpController {
         environmentId,
         clientId,
         sdkKey,
-        SDKKeyType.CLIENT
+        sdkType ?? SDKKeyType.CLIENT
       );
 
       return reply.code(200).send({ data: flags });
@@ -60,6 +61,7 @@ export class EvaluateHttpController {
     try {
       const { flagName, clientId, environmentId } = request.params;
       const sdkKey = request.headers['x-sdk-key'] as string;
+      const sdkType = request.headers['x-sdk-type'] as SDKKeyType;
 
       if (!sdkKey) {
         return reply.code(400).send({
@@ -74,7 +76,7 @@ export class EvaluateHttpController {
         flagName,
         clientId,
         sdkKey,
-        SDKKeyType.CLIENT
+        sdkType ?? SDKKeyType.CLIENT
       );
 
       return reply.code(200).send({
