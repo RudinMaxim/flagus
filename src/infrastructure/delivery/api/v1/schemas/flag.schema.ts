@@ -423,7 +423,7 @@ export const createEnvironmentSchema: FastifySchema = {
   description: 'Create new environment',
   tags: ['Environments'],
   summary: 'Create a new environment',
-  security: [{ bearerAuth: [] }],
+  // security: [{ bearerAuth: [] }],
   body: {
     type: 'object',
     required: ['name', 'createdBy'],

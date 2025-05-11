@@ -1,96 +1,279 @@
 <div class='setup-container'>
-  <div class='alert alert-info mb-4'>
-    <i class='bi bi-info-circle-fill me-2'></i>
-    Create your first administrator to get started with Flagus.
-  </div>
-
   <div id='setupError' class='alert alert-danger d-none' role='alert'></div>
 
-  <form id='firstAdminForm' aria-labelledby='setupFormTitle'>
-    <h2 id='setupFormTitle' class='visually-hidden'>Administrator Creation Form</h2>
-
-    <div class='mb-3'>
-      <label for='username' class='form-label'>Username</label>
-      <input
-        type='text'
-        class='form-control'
-        id='username'
-        name='username'
-        autofocus
-        required
-        autocomplete='username'
-        aria-describedby='usernameHelp'
-      />
+  <!-- Setup progress indicator -->
+  <div class='setup-progress mb-4'>
+    <div class='row'>
+      <div class='col-4 text-center step active' id='step1Indicator'>
+        <div class='circle'>1</div>
+        <div class='step-label'>Admin Account</div>
+      </div>
+      <div class='col-4 text-center step' id='step2Indicator'>
+        <div class='circle'>2</div>
+        <div class='step-label'>Environments</div>
+      </div>
+      <div class='col-4 text-center step' id='step3Indicator'>
+        <div class='circle'>3</div>
+        <div class='step-label'>Complete</div>
+      </div>
     </div>
-
-    <div class='mb-3'>
-      <label for='email' class='form-label'>Email</label>
-      <input
-        type='email'
-        class='form-control'
-        id='email'
-        name='email'
-        required
-        autocomplete='email'
-        aria-describedby='emailHelp'
-      />
+    <div class='progress mt-2'>
+      <div
+        class='progress-bar'
+        id='setupProgressBar'
+        role='progressbar'
+        style='width: 33%;'
+        aria-valuenow='33'
+        aria-valuemin='0'
+        aria-valuemax='100'
+      ></div>
     </div>
+  </div>
 
-    <div class='mb-3'>
-      <label for='password' class='form-label'>Password
-        <a href='#' id='generatePassword' class='ms-2 text-decoration-underline small'>Generate
-          password</a></label>
-      <div class='input-group'>
+  <!-- Step 1: Admin Account Form -->
+  <div id='step1Form'>
+    <form id='adminForm' aria-labelledby='setupFormTitle'>
+      <h2 id='setupFormTitle'>Create Administrator Account</h2>
+
+      <div class='mb-3'>
+        <label for='username' class='form-label'>Username</label>
         <input
-          type='password'
+          type='text'
           class='form-control'
-          id='password'
-          name='password'
+          id='username'
+          name='username'
+          autofocus
           required
-          autocomplete='new-password'
-          aria-describedby='passwordHelp'
+          autocomplete='username'
+          aria-describedby='usernameHelp'
         />
-        <button
-          class='btn btn-outline-secondary'
-          type='button'
-          id='togglePassword'
-          aria-label='Показать/скрыть пароль'
-        >
-          <i class='bi bi-eye' aria-hidden='true'></i>
+      </div>
+
+      <div class='mb-3'>
+        <label for='email' class='form-label'>Email</label>
+        <input
+          type='email'
+          class='form-control'
+          id='email'
+          name='email'
+          required
+          autocomplete='email'
+          aria-describedby='emailHelp'
+        />
+      </div>
+
+      <div class='mb-3'>
+        <label for='password' class='form-label'>Password
+          <a href='#' id='generatePassword' class='ms-2 text-decoration-underline small'>Generate
+            password</a>
+        </label>
+        <div class='input-group'>
+          <input
+            type='password'
+            class='form-control'
+            id='password'
+            name='password'
+            required
+            autocomplete='new-password'
+            aria-describedby='passwordHelp'
+          />
+          <button
+            class='btn btn-outline-secondary'
+            type='button'
+            id='togglePassword'
+            aria-label='Show/hide password'
+          >
+            <i class='bi bi-eye' aria-hidden='true'></i>
+          </button>
+        </div>
+        <div id='passwordHelp' class='form-text'></div>
+
+        <div class='mt-2'>
+          <label class='form-label small'>Password strength:</label>
+          <div class='progress' style='height: 20px;'>
+            <div
+              id='passwordStrength'
+              class='progress-bar'
+              role='progressbar'
+              style='width: 0%;'
+              aria-valuenow='0'
+              aria-valuemin='0'
+              aria-valuemax='100'
+            >
+            </div>
+          </div>
+          <div id='passwordFeedback' class='form-text text-danger mt-1'></div>
+        </div>
+      </div>
+
+      <div class='d-grid gap-2 mt-4'>
+        <button type='submit' class='btn btn-primary' id='submitAdminButton'>
+          <span
+            class='spinner-border spinner-border-sm d-none'
+            id='adminSpinner'
+            role='status'
+            aria-hidden='true'
+          ></span>
+          <span id='adminButtonText'>Continue to Environment Setup</span>
         </button>
       </div>
-      <div id='passwordHelp' class='form-text'></div>
+    </form>
+  </div>
 
-      <div class='mt-2'>
-        <label class='form-label small'>Password strength:</label>
-        <div class='progress' style='height: 20px;'>
-          <div
-            id='passwordStrength'
-            class='progress-bar'
-            role='progressbar'
-            style='width: 0%;'
-            aria-valuenow='0'
-            aria-valuemin='0'
-            aria-valuemax='100'
-          >
+  <!-- Step 2: Environment Setup Form -->
+  <div id='step2Form' class='d-none'>
+    <form id='environmentForm' aria-labelledby='environmentFormTitle'>
+      <h2 id='environmentFormTitle'>Environment Setup</h2>
+
+      <p class='text-muted mb-4'>
+        Configure environments for feature flags. These environments will be used to manage feature
+        flags across different stages.
+      </p>
+
+      <div class='mb-4'>
+        <label class='d-block mb-2'>Predefined Environments</label>
+        <div class='predefined-environments'>
+          <div class='form-check form-check-inline mb-2'>
+            <input
+              class='form-check-input predefined-env'
+              type='checkbox'
+              value='development'
+              id='envDevelopment'
+              checked
+            />
+            <label class='form-check-label' for='envDevelopment'>Development</label>
+          </div>
+          <div class='form-check form-check-inline mb-2'>
+            <input
+              class='form-check-input predefined-env'
+              type='checkbox'
+              value='staging'
+              id='envStaging'
+              checked
+            />
+            <label class='form-check-label' for='envStaging'>Staging</label>
+          </div>
+          <div class='form-check form-check-inline mb-2'>
+            <input
+              class='form-check-input predefined-env'
+              type='checkbox'
+              value='production'
+              id='envProduction'
+              checked
+            />
+            <label class='form-check-label' for='envProduction'>Production</label>
+          </div>
+          <div class='form-check form-check-inline mb-2'>
+            <input
+              class='form-check-input predefined-env'
+              type='checkbox'
+              value='test'
+              id='envTest'
+            />
+            <label class='form-check-label' for='envTest'>Test</label>
           </div>
         </div>
-        <div id='passwordFeedback' class='form-text text-danger mt-1'></div>
       </div>
-    </div>
 
-    <div class='d-grid gap-2 mt-4'>
-      <button type='submit' class='btn btn-primary' id='submitButton'>
-        <span
-          class='spinner-border spinner-border-sm d-none'
-          id='setupSpinner'
-          role='status'
-          aria-hidden='true'
-        ></span>
-        <span id='setupButtonText'>Создать аккаунт администратора</span>
+      <h3 class='h5 mb-3'>Custom Environments <small class='text-muted'>(Optional)</small></h3>
+
+      <div id='customEnvironments'>
+        <!-- Custom environments will be added here -->
+      </div>
+
+      <button type='button' id='addCustomEnvButton' class='btn btn-outline-secondary btn-sm mb-4'>
+        <i class='bi bi-plus'></i>
+        Add Custom Environment
       </button>
+
+      <template id='customEnvTemplate'>
+        <div class='custom-environment card mb-3'>
+          <div class='card-body'>
+            <div class='mb-3'>
+              <label class='form-label'>Environment Name</label>
+              <input
+                type='text'
+                class='form-control custom-env-name'
+                required
+                placeholder='E.g., QA, Demo'
+              />
+            </div>
+            <div class='mb-3'>
+              <label class='form-label'>Description
+                <span class='text-muted'>(Optional)</span></label>
+              <textarea
+                class='form-control custom-env-description'
+                rows='2'
+                placeholder='Environment description'
+              ></textarea>
+            </div>
+            <button type='button' class='btn btn-sm btn-outline-danger remove-custom-env'>
+              <i class='bi bi-trash'></i>
+              Remove
+            </button>
+          </div>
+        </div>
+      </template>
+
+      <div class='d-flex justify-content-between mt-4'>
+        <button type='button' class='btn btn-outline-secondary' id='backToAdminButton'>
+          <i class='bi bi-arrow-left'></i>
+          Back
+        </button>
+        <button type='submit' class='btn btn-primary' id='submitEnvironmentButton'>
+          <span
+            class='spinner-border spinner-border-sm d-none'
+            id='envSpinner'
+            role='status'
+            aria-hidden='true'
+          ></span>
+          <span id='envButtonText'>Complete Setup</span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Step 3: Setup Complete -->
+  <div id='step3Complete' class='d-none text-center'>
+    <div class='mb-4'>
+      <i class='bi bi-check-circle-fill text-success' style='font-size: 5rem;'></i>
     </div>
-  </form>
+    <h2>Setup Complete!</h2>
+    <p class='lead mb-4'>Your Flagus instance has been successfully configured.</p>
+    <div class='d-grid gap-2'>
+      <a href='/login' class='btn btn-primary'>Proceed to Login</a>
+    </div>
+  </div>
 </div>
+
+<style>
+  .setup-progress .step {
+    position: relative;
+  }
+
+  .setup-progress .circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    border: 1px solid #ced4da;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 8px;
+    font-weight: bold;
+  }
+
+  .setup-progress .step.active .circle,
+  .setup-progress .step.complete .circle {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: white;
+  }
+
+  .setup-progress .step.complete .circle:after {
+    content: '✓';
+  }
+</style>
 
 <script src='/assets/javascript/auth/setup.js' defer></script>

@@ -91,11 +91,11 @@ export async function flagRoutes(fastify: FastifyInstance) {
     handler: environmentController.getEnvironmentById.bind(environmentController),
   });
 
+  // TODO: Уязвисость, связано с setup.js
   fastify.route({
     method: 'POST',
     url: '/environments',
     schema: schemas.createEnvironmentSchema,
-    preHandler: [authMiddleware.authenticate.bind(authMiddleware)],
     handler: environmentController.createEnvironment.bind(environmentController),
   });
 

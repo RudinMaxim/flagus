@@ -131,15 +131,11 @@ export async function registerApi(fastify: FastifyInstance) {
             protectedApi.register(authRoutes, { prefix: '/auth' });
             protectedApi.register(evaluateRoutes, { prefix: '/evaluate' });
 
-            protectedApi.register(async adminApi => {
-              adminApi.addHook('onRequest', authMiddleware.authenticate);
-
-              adminApi.register(flagRoutes, { prefix: '/flags' });
-              adminApi.register(categoryRoutes, { prefix: '/categories' });
-              adminApi.register(auditRoutes, { prefix: '/audit' });
-              adminApi.register(userRoutes, { prefix: '/users' });
-              adminApi.register(groupRoutes, { prefix: '/group' });
-            });
+            protectedApi.register(flagRoutes, { prefix: '/flags' });
+            protectedApi.register(categoryRoutes, { prefix: '/categories' });
+            protectedApi.register(auditRoutes, { prefix: '/audit' });
+            protectedApi.register(userRoutes, { prefix: '/users' });
+            protectedApi.register(groupRoutes, { prefix: '/group' });
           });
         },
         { prefix: '/v1' }
