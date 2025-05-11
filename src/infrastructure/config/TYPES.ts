@@ -15,6 +15,7 @@ export const TYPES = {
   // Фабрики и шлюзы данных
   // ———————————————————————————————————————————————
   DataGateway: Symbol.for('DataGateway'),
+  MigrationService: Symbol.for('MigrationService'),
   DataGatewayFactory: Symbol.for('DataGatewayFactory'),
   SDKKeyFactory: Symbol.for('SDKKeyFactory'),
 

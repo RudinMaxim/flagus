@@ -1,10 +1,17 @@
 import { ContainerModule } from 'inversify';
-import { TYPES } from '../../infrastructure/config/types';
-import { OnInit, OnDestroy } from './abstract';
 import { DataGatewayFactory } from './adapters';
+import { TYPES } from '../../infrastructure/config/types';
+import { OnInit, OnDestroy } from '../../infrastructure/config/container';
+import { MigrationService } from './service/migration.service';
+
+export enum DatabaseType {
+  POSTGRES = 'postgres',
+  SQLITE = 'sqlite',
+}
 
 export const storageModule = new ContainerModule(({ bind }) => {
   bind<DataGatewayFactory>(TYPES.DataGatewayFactory).to(DataGatewayFactory);
+  bind<MigrationService>(TYPES.MigrationService).to(MigrationService);
 
   bind(TYPES.DataGateway)
     .toDynamicValue(ctx => {

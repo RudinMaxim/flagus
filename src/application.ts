@@ -3,6 +3,7 @@ import { ILogger } from './shared/logger';
 import { registerRoutes } from './infrastructure/delivery';
 import { createContainer } from './infrastructure/config/container';
 import { TYPES } from './infrastructure/config/types';
+import { MigrationService } from './shared/storage';
 
 export async function createApp(): Promise<FastifyInstance> {
   const app = Fastify({ logger: true });
@@ -14,6 +15,8 @@ export async function createApp(): Promise<FastifyInstance> {
   if (typeof (container as any).initialize === 'function') {
     await (container as any).initialize();
   }
+
+  await container.get<MigrationService>(TYPES.MigrationService).runMigrations();
 
   await app.register(import('@fastify/cookie'), {
     hook: 'onRequest',

@@ -1,72 +1,79 @@
-export interface OnInit {
-  onInit(): Promise<void>;
-}
-
-export interface OnDestroy {
-  onDestroy(): Promise<void>;
-}
+import { DatabaseType } from '../storage.module';
 
 export abstract class DataGateway<T = any> {
   /**
-   * Получает клиент базы данных
-   * @returns {T} Клиент
+   * Gets the database type
+   * @returns {DatabaseType} The type of database
+   */
+  public abstract get type(): DatabaseType;
+
+  /**
+   * Gets the database client
+   * @returns {T} Client
    */
   public abstract get client(): T;
 
   /**
-   * Выполняет SQL запрос и возвращает результат
-   * @param {string} sql - SQL запрос
-   * @param {any[]} params - Параметры запроса
-   * @returns {Promise<T, P[]>} Массив результатов запроса
+   * Executes a SQL query and returns results
+   * @param {string} sql - SQL query
+   * @param {any[]} params - Query parameters
+   * @returns {Promise<T[]>} Array of query results
    */
   public abstract query<T, P = any>(sql: string, params?: P[]): Promise<T[]>;
 
   /**
-   * Выполняет SQL запрос без возврата результатов
-   * @param {string} sql - SQL запрос
-   * @param {any[]} params - Параметры запроса
-   * @returns {Promise<T, P>} Результат выполнения запроса
+   * Executes a SQL query without returning results
+   * @param {string} sql - SQL query
+   * @param {any[]} params - Query parameters
+   * @returns {Promise<T>} Execution result
    */
   public abstract execute<T, P = any>(sql: string, params?: P[]): Promise<T>;
 
   /**
-   * Выполняет SQL запрос и возвращает один результат
-   * @param {string} sql - SQL запрос
-   * @param {any[]} params - Параметры запроса
-   * @returns {Promise<T | null>} Результат запроса или null, если ничего не найдено
+   * Executes a SQL query and returns a single result
+   * @param {string} sql - SQL query
+   * @param {any[]} params - Query parameters
+   * @returns {Promise<T | null>} Single result or null if not found
    */
   public abstract getOne<T, P = any>(sql: string, params?: P[]): Promise<T | null>;
 
   /**
-   * Начинает транзакцию
+   * Executes a multi-statement SQL script
+   * @param {string} sql - SQL script
+   * @returns {Promise<void>}
+   */
+  public abstract runScript(sql: string): Promise<void>;
+
+  /**
+   * Begins a transaction
    * @returns {Promise<void>}
    */
   public abstract beginTransaction(): Promise<void>;
 
   /**
-   * Подтверждает транзакцию
+   * Commits a transaction
    * @returns {Promise<void>}
    */
   public abstract commit(): Promise<void>;
 
   /**
-   * Откатывает транзакцию
+   * Rolls back a transaction
    * @returns {Promise<void>}
    */
   public abstract rollback(): Promise<void>;
 
   /**
-   * Инициализация соединения
+   * Establishes database connection
    */
   protected abstract connect(): Promise<void>;
 
   /**
-   * Закрытие соединения
+   * Closes database connection
    */
   protected abstract disconnect(): Promise<void>;
 
   /**
-   * Инициализация
+   * Initializes the gateway
    */
   protected abstract initialize(): void;
 }

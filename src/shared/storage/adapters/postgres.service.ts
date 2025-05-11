@@ -3,7 +3,9 @@ import { Pool, PoolClient } from 'pg';
 import { ConfigService } from '../../../infrastructure/config/config';
 import { TYPES } from '../../../infrastructure/config/types';
 import { ILogger } from '../../logger';
-import { DataGateway, OnInit, OnDestroy } from '../abstract';
+import { DataGateway } from '../abstract';
+import { OnInit, OnDestroy } from '../../../infrastructure/config/container';
+import { DatabaseType } from '../storage.module';
 
 export interface IPostgres {
   host: string;
@@ -24,6 +26,10 @@ export class PostgresServiceImpl extends DataGateway<PoolClient> implements OnIn
   ) {
     super();
     this.pool = new Pool(this.config.get('database').postgres);
+  }
+
+  public get type(): DatabaseType {
+    return DatabaseType.POSTGRES;
   }
 
   get client() {
@@ -54,6 +60,10 @@ export class PostgresServiceImpl extends DataGateway<PoolClient> implements OnIn
   public async getOne<T = any>(sql: string, params: any[] = []): Promise<T | null> {
     const result = await this.client.query(sql, params);
     return (result.rows[0] as T) || null;
+  }
+
+  public async runScript(sql: string): Promise<void> {
+    await this.client.query(sql);
   }
 
   public async beginTransaction(): Promise<void> {
@@ -92,6 +102,6 @@ export class PostgresServiceImpl extends DataGateway<PoolClient> implements OnIn
   }
 
   protected async initialize(): Promise<void> {
-    // Инициализация схемы или миграции могут быть добавлены здесь
+    // Initialization logic (e.g., schema setup) can be added here
   }
 }

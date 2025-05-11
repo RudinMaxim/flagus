@@ -1,10 +1,12 @@
 import { injectable, inject } from 'inversify';
 import sqlite3 from 'sqlite3';
 import { Database } from 'sqlite3';
-import { DataGateway, OnDestroy, OnInit } from '../abstract';
+import { DataGateway } from '../abstract';
 import { ILogger } from '../../logger';
 import { ConfigService } from '../../../infrastructure/config/config';
 import { TYPES } from '../../../infrastructure/config/types';
+import { OnInit, OnDestroy } from '../../../infrastructure/config/container';
+import { DatabaseType } from '../storage.module';
 
 export interface ISQLite {
   database: string;
@@ -19,6 +21,10 @@ export class SQLiteServiceImpl extends DataGateway<Database> implements OnInit, 
     @inject(TYPES.Config) private readonly config: ConfigService
   ) {
     super();
+  }
+
+  public get type(): DatabaseType {
+    return DatabaseType.SQLITE;
   }
 
   get client() {
@@ -74,6 +80,18 @@ export class SQLiteServiceImpl extends DataGateway<Database> implements OnInit, 
     });
   }
 
+  public async runScript(sql: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.db.exec(sql, err => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+
   public async beginTransaction(): Promise<void> {
     return this.execute('BEGIN TRANSACTION;').then(() => {});
   }
@@ -107,7 +125,6 @@ export class SQLiteServiceImpl extends DataGateway<Database> implements OnInit, 
     try {
       await this.query('SELECT 1');
       this.logger.info('SQLite connection established');
-
       await this.execute('PRAGMA foreign_keys = ON;');
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.stack : 'Unknown error';
