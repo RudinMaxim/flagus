@@ -1,501 +1,324 @@
 import { injectable, inject } from 'inversify';
-import crypto from 'crypto';
+import { TYPES } from '../../../infrastructure/config/types';
+import { ILogger } from '../../../shared/logger';
+import { FeatureFlag, TFlagStatus, TFlagType, FlagStatus } from '../../../core/flag-manager/model';
+import { DataGateway } from '../../../shared/storage';
 import { IFlagRepository } from '../interfaces';
-import {
-  FeatureFlag,
-  FlagStatus,
-  IFlagEnum,
-  IFlagTTL,
-  TFlagStatus,
-  TFlagType,
-} from '../../../core/flag-manager/model';
-import { IMetadata } from '../../../shared/kernel';
-import { BaseRepository, DataGateway } from '../../../shared/storage';
-import { TYPES } from '../../config/types';
 
-interface FlagRow {
+// Interface for raw database row
+interface IFlagRow {
   id: string;
   key: string;
   name: string;
-  description: string | null;
   type: string;
+  description?: string;
+  expires_at?: string;
+  auto_delete?: number;
   status: string;
-  category_id: string | null;
-  created_at: string;
+  enum?: string;
+  category_id?: string;
+  environment_id?: string;
+  client_ids?: string;
   created_by: string;
-  updated_at: string | null;
-  updated_by: string | null;
-  expires_at: string;
-  enum_values: string;
-  selected_enum: string;
-  environment_id: string;
-  auto_delete: boolean | number;
-  client_ids_concat: string | null;
+  created_at: string;
+  updated_by?: string;
+  updated_at?: string;
 }
 
 @injectable()
-export class FlagRepository extends BaseRepository<FeatureFlag, string> implements IFlagRepository {
-  constructor(@inject(TYPES.DataGateway) dataGateway: DataGateway) {
-    super(dataGateway, 'feature_flags', 'id');
-  }
+export class FlagRepository implements IFlagRepository {
+  constructor(
+    @inject(TYPES.DataGateway) private readonly dataGateway: DataGateway,
+    @inject(TYPES.Logger) private readonly logger: ILogger
+  ) {}
 
-  async findAll(): Promise<FeatureFlag[]> {
-    const sql = this.buildBaseSelectQuery();
-    const rows = await this.dataGateway.query<FlagRow>(sql);
-    return rows.map(row => this.mapToEntity(row));
-  }
-
-  async findById(id: string): Promise<FeatureFlag | null> {
+  async create(entity: FeatureFlag): Promise<FeatureFlag> {
     const sql = `
-      SELECT 
-        f.*,
-        ttl.expires_at, ttl.auto_delete,
-        GROUP_CONCAT(DISTINCT fc.client_id) AS client_ids_concat
-      FROM feature_flags f
-      LEFT JOIN flag_ttl ttl ON f.id = ttl.flag_id
-      LEFT JOIN flag_clients fc ON f.id = fc.flag_id
-      WHERE f.id = ?
-      GROUP BY f.id
+      INSERT INTO feature_flags (
+        id, key, name, type, description, expires_at, auto_delete, status,
+        enum, category_id, environment_id, client_ids, created_by, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
-
-    const row = await this.dataGateway.getOne<FlagRow>(sql, [id]);
-    return row ? this.mapToEntity(row) : null;
-  }
-
-  async create(entity: Omit<FeatureFlag, 'id'>): Promise<FeatureFlag> {
-    await this.dataGateway.beginTransaction();
+    const params = [
+      entity.id,
+      entity.key,
+      entity.name,
+      entity.type,
+      entity.description,
+      entity.ttl?.expiresAt.toISOString(),
+      entity.ttl?.autoDelete ? 1 : 0,
+      entity.status,
+      entity.enum ? JSON.stringify(entity.enum) : null,
+      entity.categoryId,
+      entity.environmentId,
+      entity.clientIds ? JSON.stringify(entity.clientIds) : null,
+      entity.metadata.createdBy,
+      entity.metadata.createdAt.toISOString(),
+    ];
 
     try {
-      const flagId = crypto.randomUUID();
-      const flagSql = `
-        INSERT INTO feature_flags (
-          id, key, name, description, type, status, category_id, 
-          enum_values, selected_enum, created_at, created_by
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `;
-
-      const now = new Date();
-      await this.dataGateway.execute(flagSql, [
-        flagId,
-        entity.key,
-        entity.name,
-        entity.description || null,
-        entity.type,
-        entity.status,
-        entity.categoryId || null,
-        entity.enum ? JSON.stringify(entity.enum.values) : null,
-        entity.enum?.selected || null,
-        now,
-        entity.metadata.createdBy,
-      ]);
-
-      if (entity.ttl) {
-        const ttlSql = `
-          INSERT INTO flag_ttl (flag_id, expires_at, auto_delete)
-          VALUES (?, ?, ?)
-        `;
-        await this.dataGateway.execute(ttlSql, [
-          flagId,
-          entity.ttl.expiresAt,
-          entity.ttl.autoDelete ? 1 : 0,
-        ]);
-      }
-
-      if (entity.clientIds && entity.clientIds.length > 0) {
-        for (const clientId of entity.clientIds) {
-          const clientSql = `
-            INSERT INTO flag_clients (flag_id, client_id)
-            VALUES (?, ?)
-          `;
-          await this.dataGateway.execute(clientSql, [flagId, clientId]);
-        }
-      }
-
-      await this.dataGateway.commit();
-
-      const result = await this.findById(flagId);
-      if (!result) {
-        throw new Error(`Failed to retrieve created feature flag with ID: ${flagId}`);
-      }
-      return result;
+      await this.dataGateway.execute(sql, params);
+      return entity;
     } catch (error) {
-      await this.dataGateway.rollback();
-      throw error;
+      this.logger.error('Failed to create feature flag', error as Error, { flagId: entity.id });
+      throw new Error('Failed to create feature flag');
     }
   }
 
-  async update(id: string, entity: Partial<FeatureFlag>): Promise<FeatureFlag | null> {
-    await this.dataGateway.beginTransaction();
+  async update(id: string, data: Partial<FeatureFlag>): Promise<FeatureFlag | null> {
+    const existing = await this.findById(id);
+    if (!existing) return null;
+
+    const updates: string[] = [];
+    const params: any[] = [];
+    const updatedAt = new Date().toISOString();
+
+    if (data.name) {
+      updates.push('name = ?');
+      params.push(data.name);
+    }
+    if (data.description !== undefined) {
+      updates.push('description = ?');
+      params.push(data.description);
+    }
+    if (data.type) {
+      updates.push('type = ?');
+      params.push(data.type);
+    }
+    if (data.status) {
+      updates.push('status = ?');
+      params.push(data.status);
+    }
+    if (data.enum) {
+      updates.push('enum = ?');
+      params.push(JSON.stringify(data.enum));
+    }
+    if (data.categoryId !== undefined) {
+      updates.push('category_id = ?');
+      params.push(data.categoryId);
+    }
+    if (data.environmentId !== undefined) {
+      updates.push('environment_id = ?');
+      params.push(data.environmentId);
+    }
+    if (data.clientIds !== undefined) {
+      updates.push('client_ids = ?');
+      params.push(data.clientIds ? JSON.stringify(data.clientIds) : null);
+    }
+    if (data.ttl) {
+      updates.push('expires_at = ?, auto_delete = ?');
+      params.push(data.ttl.expiresAt.toISOString(), data.ttl.autoDelete ? 1 : 0);
+    }
+    if (data.metadata?.updatedBy) {
+      updates.push('updated_by = ?, updated_at = ?');
+      params.push(data.metadata.updatedBy, updatedAt);
+    }
+
+    if (updates.length === 0) return existing;
+
+    const sql = `UPDATE feature_flags SET ${updates.join(', ')} WHERE id = ?`;
+    params.push(id);
 
     try {
-      const updateFields: string[] = [];
-      const updateValues = [];
-
-      if (entity.name !== undefined) {
-        updateFields.push('name = ?');
-        updateValues.push(entity.name);
-      }
-
-      if (entity.description !== undefined) {
-        updateFields.push('description = ?');
-        updateValues.push(entity.description);
-      }
-
-      if (entity.type !== undefined) {
-        updateFields.push('type = ?');
-        updateValues.push(entity.type);
-      }
-
-      if (entity.status !== undefined) {
-        updateFields.push('status = ?');
-        updateValues.push(entity.status);
-      }
-
-      if (entity.categoryId !== undefined) {
-        updateFields.push('category_id = ?');
-        updateValues.push(entity.categoryId);
-      }
-
-      if (entity.enum !== undefined) {
-        updateFields.push('enum_values = ?');
-        updateValues.push(entity.enum.values ? JSON.stringify(entity.enum.values) : null);
-
-        updateFields.push('selected_enum = ?');
-        updateValues.push(entity.enum.selected || null);
-      }
-
-      updateFields.push('updated_at = ?');
-      updateValues.push(new Date());
-
-      if (entity.metadata?.updatedBy) {
-        updateFields.push('updated_by = ?');
-        updateValues.push(entity.metadata.updatedBy);
-      }
-
-      if (updateFields.length > 0) {
-        const flagSql = `
-          UPDATE feature_flags 
-          SET ${updateFields.join(', ')} 
-          WHERE id = ?
-        `;
-        await this.dataGateway.execute(flagSql, [...updateValues, id]);
-      }
-
-      if (entity.ttl) {
-        const ttlExists = await this.dataGateway.getOne<{ count: number }>(
-          'SELECT COUNT(*) as count FROM flag_ttl WHERE flag_id = ?',
-          [id]
-        );
-
-        if (ttlExists && ttlExists.count > 0) {
-          await this.dataGateway.execute(
-            'UPDATE flag_ttl SET expires_at = ?, auto_delete = ? WHERE flag_id = ?',
-            [entity.ttl.expiresAt, entity.ttl.autoDelete ? 1 : 0, id]
-          );
-        } else {
-          await this.dataGateway.execute(
-            'INSERT INTO flag_ttl (flag_id, expires_at, auto_delete) VALUES (?, ?, ?)',
-            [id, entity.ttl.expiresAt, entity.ttl.autoDelete ? 1 : 0]
-          );
-        }
-      }
-
-      if (entity.clientIds !== undefined) {
-        await this.dataGateway.execute('DELETE FROM flag_clients WHERE flag_id = ?', [id]);
-
-        if (entity.clientIds.length > 0) {
-          for (const clientId of entity.clientIds) {
-            await this.dataGateway.execute(
-              'INSERT INTO flag_clients (flag_id, client_id) VALUES (?, ?)',
-              [id, clientId]
-            );
-          }
-        }
-      }
-
-      await this.dataGateway.commit();
-      return this.findById(id);
+      await this.dataGateway.execute(sql, params);
+      return await this.findById(id);
     } catch (error) {
-      await this.dataGateway.rollback();
-      throw error;
+      this.logger.error('Failed to update feature flag', error as Error, { flagId: id });
+      throw new Error('Failed to update feature flag');
     }
   }
 
   async delete(id: string): Promise<boolean> {
-    await this.dataGateway.beginTransaction();
-
+    const sql = 'DELETE FROM feature_flags WHERE id = ?';
     try {
-      await this.dataGateway.execute('DELETE FROM flag_clients WHERE flag_id = ?', [id]);
-      await this.dataGateway.execute('DELETE FROM flag_ttl WHERE flag_id = ?', [id]);
-
-      const result = await this.dataGateway.execute<{ changes: number }>(
-        `DELETE FROM ${this.tableName} WHERE id = ?`,
-        [id]
-      );
-
-      await this.dataGateway.commit();
-
-      return result.changes > 0;
+      const result = await this.dataGateway.execute(sql, [id]);
+      return !!result;
     } catch (error) {
-      await this.dataGateway.rollback();
-      throw error;
+      this.logger.error('Failed to delete feature flag', error as Error, { flagId: id });
+      throw new Error('Failed to delete feature flag');
+    }
+  }
+
+  async findAll(): Promise<FeatureFlag[]> {
+    const sql = 'SELECT * FROM feature_flags';
+    try {
+      const rows = await this.dataGateway.query<IFlagRow>(sql);
+      return rows.map(this.mapToFeatureFlag);
+    } catch (error) {
+      this.logger.error('Failed to fetch all feature flags', error as Error);
+      throw new Error('Failed to fetch feature flags');
+    }
+  }
+
+  async findById(id: string): Promise<FeatureFlag | null> {
+    const sql = 'SELECT * FROM feature_flags WHERE id = ?';
+    try {
+      const row = await this.dataGateway.getOne<IFlagRow>(sql, [id]);
+      return row ? this.mapToFeatureFlag(row) : null;
+    } catch (error) {
+      this.logger.error('Failed to fetch feature flag by ID', error as Error, { flagId: id });
+      throw new Error('Failed to fetch feature flag');
     }
   }
 
   async findByName(name: string): Promise<FeatureFlag | null> {
-    const sql = `
-      SELECT 
-        f.*,
-        ttl.expires_at, ttl.auto_delete,
-        GROUP_CONCAT(DISTINCT fc.client_id) AS client_ids_concat
-      FROM feature_flags f
-      LEFT JOIN flag_ttl ttl ON f.id = ttl.flag_id
-      LEFT JOIN flag_clients fc ON f.id = fc.flag_id
-      WHERE f.name = ? 
-      GROUP BY f.id
-      LIMIT 1
-    `;
-
-    const row = await this.dataGateway.getOne<FlagRow>(sql, [name]);
-    return row ? this.mapToEntity(row) : null;
-  }
-
-  async findByKey(key: string): Promise<FeatureFlag | null> {
-    const sql = `
-      SELECT 
-        f.*,
-        ttl.expires_at, ttl.auto_delete,
-        GROUP_CONCAT(DISTINCT fc.client_id) AS client_ids_concat
-      FROM feature_flags f
-      LEFT JOIN flag_ttl ttl ON f.id = ttl.flag_id
-      LEFT JOIN flag_clients fc ON f.id = fc.flag_id
-      WHERE f.key = ? 
-      GROUP BY f.id
-      LIMIT 1
-    `;
-
-    const row = await this.dataGateway.getOne<FlagRow>(sql, [key]);
-    return row ? this.mapToEntity(row) : null;
+    const sql = 'SELECT * FROM feature_flags WHERE name = ?';
+    try {
+      const row = await this.dataGateway.getOne<IFlagRow>(sql, [name]);
+      return row ? this.mapToFeatureFlag(row) : null;
+    } catch (error) {
+      this.logger.error('Failed to fetch feature flag by name', error as Error, { name });
+      throw new Error('Failed to fetch feature flag');
+    }
   }
 
   async findByStatus(status: TFlagStatus): Promise<FeatureFlag[]> {
-    const sql = `
-      SELECT 
-        f.*,
-        ttl.expires_at, ttl.auto_delete,
-        GROUP_CONCAT(DISTINCT fc.client_id) AS client_ids_concat
-      FROM feature_flags f
-      LEFT JOIN flag_ttl ttl ON f.id = ttl.flag_id
-      LEFT JOIN flag_clients fc ON f.id = fc.flag_id
-      WHERE f.status = ? 
-      GROUP BY f.id
-      ORDER BY f.name ASC
-    `;
-
-    const rows = await this.dataGateway.query<FlagRow>(sql, [status]);
-    return rows.map(row => this.mapToEntity(row));
+    const sql = 'SELECT * FROM feature_flags WHERE status = ?';
+    try {
+      const rows = await this.dataGateway.query<IFlagRow>(sql, [status]);
+      return rows.map(this.mapToFeatureFlag);
+    } catch (error) {
+      this.logger.error('Failed to fetch feature flags by status', error as Error, { status });
+      throw new Error('Failed to fetch feature flags');
+    }
   }
 
   async findByCategory(categoryId: string): Promise<FeatureFlag[]> {
-    const sql = `
-      SELECT 
-        f.*,
-        ttl.expires_at, ttl.auto_delete,
-        GROUP_CONCAT(DISTINCT fc.client_id) AS client_ids_concat
-      FROM feature_flags f
-      LEFT JOIN flag_ttl ttl ON f.id = ttl.flag_id
-      LEFT JOIN flag_clients fc ON f.id = fc.flag_id
-      WHERE f.category_id = ? 
-      GROUP BY f.id
-      ORDER BY f.name ASC
-    `;
-
-    const rows = await this.dataGateway.query<FlagRow>(sql, [categoryId]);
-    return rows.map(row => this.mapToEntity(row));
+    const sql = 'SELECT * FROM feature_flags WHERE category_id = ?';
+    try {
+      const rows = await this.dataGateway.query<IFlagRow>(sql, [categoryId]);
+      return rows.map(this.mapToFeatureFlag);
+    } catch (error) {
+      this.logger.error('Failed to fetch feature flags by category', error as Error, {
+        categoryId,
+      });
+      throw new Error('Failed to fetch feature flags');
+    }
   }
 
   async findByType(type: TFlagType): Promise<FeatureFlag[]> {
-    const sql = `
-      SELECT 
-        f.*,
-        ttl.expires_at, ttl.auto_delete,
-        GROUP_CONCAT(DISTINCT fc.client_id) AS client_ids_concat
-      FROM feature_flags f
-      LEFT JOIN flag_ttl ttl ON f.id = ttl.flag_id
-      LEFT JOIN flag_clients fc ON f.id = fc.flag_id
-      WHERE f.type = ? 
-      GROUP BY f.id
-      ORDER BY f.name ASC
-    `;
+    const sql = 'SELECT * FROM feature_flags WHERE type = ?';
+    try {
+      const rows = await this.dataGateway.query<IFlagRow>(sql, [type]);
+      return rows.map(this.mapToFeatureFlag);
+    } catch (error) {
+      this.logger.error('Failed to fetch feature flags by type', error as Error, { type });
+      throw new Error('Failed to fetch feature flags');
+    }
+  }
 
-    const rows = await this.dataGateway.query<FlagRow>(sql, [type]);
-    return rows.map(row => this.mapToEntity(row));
+  async findByKey(key: string, environmentId: string): Promise<FeatureFlag | null> {
+    const sql = 'SELECT * FROM feature_flags WHERE key = ? AND environment_id = ?';
+    try {
+      const row = await this.dataGateway.getOne<IFlagRow>(sql, [key, environmentId]);
+      return row ? this.mapToFeatureFlag(row) : null;
+    } catch (error) {
+      this.logger.error('Failed to fetch feature flag by key and environment', error as Error, {
+        key,
+        environmentId,
+      });
+      throw new Error('Failed to fetch feature flag');
+    }
   }
 
   async toggleStatus(id: string, status: TFlagStatus): Promise<FeatureFlag | null> {
-    const updateSql = `
-      UPDATE ${this.tableName} 
-      SET status = ?, updated_at = ? 
-      WHERE id = ?
-    `;
-    await this.dataGateway.execute(updateSql, [status, new Date(), id]);
-    return this.findById(id);
+    const sql = 'UPDATE feature_flags SET status = ?, updated_at = ? WHERE id = ?';
+    const updatedAt = new Date().toISOString();
+    try {
+      await this.dataGateway.execute(sql, [status, updatedAt, id]);
+      return await this.findById(id);
+    } catch (error) {
+      this.logger.error('Failed to toggle feature flag status', error as Error, {
+        flagId: id,
+        status,
+      });
+      throw new Error('Failed to toggle feature flag status');
+    }
   }
 
   async findActiveFlags(): Promise<FeatureFlag[]> {
-    return this.findByStatus(FlagStatus.ACTIVE);
+    const sql =
+      'SELECT * FROM feature_flags WHERE status = ? AND (expires_at IS NULL OR expires_at > ?)';
+    try {
+      const rows = await this.dataGateway.query<IFlagRow>(sql, [
+        FlagStatus.ACTIVE,
+        new Date().toISOString(),
+      ]);
+      return rows.map(this.mapToFeatureFlag);
+    } catch (error) {
+      this.logger.error('Failed to fetch active feature flags', error as Error);
+      throw new Error('Failed to fetch active feature flags');
+    }
   }
 
   async findActiveFlagsForClient(clientId: string): Promise<FeatureFlag[]> {
     const sql = `
-      SELECT 
-        f.*,
-        ttl.expires_at, ttl.auto_delete,
-        GROUP_CONCAT(DISTINCT fc.client_id) AS client_ids_concat
-      FROM feature_flags f
-      LEFT JOIN flag_ttl ttl ON f.id = ttl.flag_id
-      JOIN flag_clients fc ON f.id = fc.flag_id
-      WHERE f.status = ? AND fc.client_id = ?
-      GROUP BY f.id
-      ORDER BY f.name ASC
+      SELECT * FROM feature_flags 
+      WHERE status = ? 
+      AND (expires_at IS NULL OR expires_at > ?)
+      AND (client_ids IS NULL OR client_ids LIKE ?)
     `;
-
-    const rows = await this.dataGateway.query<FlagRow>(sql, [FlagStatus.ACTIVE, clientId]);
-    return rows.map(row => this.mapToEntity(row));
+    try {
+      const rows = await this.dataGateway.query<IFlagRow>(sql, [
+        FlagStatus.ACTIVE,
+        new Date().toISOString(),
+        `%${clientId}%`,
+      ]);
+      return rows.map(this.mapToFeatureFlag);
+    } catch (error) {
+      this.logger.error('Failed to fetch active feature flags for client', error as Error, {
+        clientId,
+      });
+      throw new Error('Failed to fetch active feature flags for client');
+    }
   }
 
   async findExpiredFlags(): Promise<FeatureFlag[]> {
-    const sql = `
-      SELECT 
-        f.*,
-        ttl.expires_at, ttl.auto_delete,
-        GROUP_CONCAT(DISTINCT fc.client_id) AS client_ids_concat
-      FROM feature_flags f
-      JOIN flag_ttl ttl ON f.id = ttl.flag_id
-      LEFT JOIN flag_clients fc ON f.id = fc.flag_id
-      WHERE ttl.expires_at < ?
-      GROUP BY f.id
-      ORDER BY f.name ASC
-    `;
-
-    const rows = await this.dataGateway.query<FlagRow>(sql, [new Date()]);
-    return rows.map(row => this.mapToEntity(row));
-  }
-
-  async findAutoDeleteFlags(): Promise<FeatureFlag[]> {
-    const sql = `
-      SELECT 
-        f.*,
-        ttl.expires_at, ttl.auto_delete,
-        GROUP_CONCAT(DISTINCT fc.client_id) AS client_ids_concat
-      FROM feature_flags f
-      JOIN flag_ttl ttl ON f.id = ttl.flag_id
-      LEFT JOIN flag_clients fc ON f.id = fc.flag_id
-      WHERE ttl.expires_at < ? AND ttl.auto_delete = 1
-      GROUP BY f.id
-      ORDER BY f.name ASC
-    `;
-
-    const rows = await this.dataGateway.query<FlagRow>(sql, [new Date()]);
-    return rows.map(row => this.mapToEntity(row));
-  }
-
-  private mapToEntity(row: FlagRow): FeatureFlag {
-    const parseDate = (dateStr: string | null | undefined): Date | undefined => {
-      if (!dateStr) return undefined;
-      try {
-        const timestamp = parseFloat(dateStr);
-        if (!isNaN(timestamp)) {
-          return new Date(timestamp);
-        }
-        return new Date(dateStr);
-      } catch (e) {
-        return undefined;
-      }
-    };
-
-    const expiresAt = parseDate(row.expires_at)!;
-    const createdAt = parseDate(row.created_at) || new Date();
-    const updatedAt = parseDate(row.updated_at);
-
-    const clientIds: string[] =
-      row.client_ids_concat && typeof row.client_ids_concat === 'string'
-        ? row.client_ids_concat.split(',')
-        : [];
-
-    let enumData: IFlagEnum | undefined = undefined;
-
-    if (row.enum_values && typeof row.enum_values === 'string') {
-      try {
-        const values = JSON.parse(row.enum_values);
-        enumData = {
-          values: values,
-          selected: row.selected_enum || undefined,
-        };
-      } catch (e) {
-        // If parsing fails, leave enumData as undefined
-      }
+    const sql = 'SELECT * FROM feature_flags WHERE expires_at IS NOT NULL AND expires_at < ?';
+    try {
+      const rows = await this.dataGateway.query<IFlagRow>(sql, [new Date().toISOString()]);
+      return rows.map(this.mapToFeatureFlag);
+    } catch (error) {
+      this.logger.error('Failed to fetch expired feature flags', error as Error);
+      throw new Error('Failed to fetch expired feature flags');
     }
+  }
 
-    const ttl: IFlagTTL = {
-      expiresAt,
-      autoDelete: row.auto_delete === 1 || row.auto_delete === true,
-    };
+  async findByEnvironment(environmentId: string): Promise<FeatureFlag[]> {
+    const sql = 'SELECT * FROM feature_flags WHERE environment_id = ?';
+    try {
+      const rows = await this.dataGateway.query<IFlagRow>(sql, [environmentId]);
+      return rows.map(this.mapToFeatureFlag);
+    } catch (error) {
+      this.logger.error('Failed to fetch feature flags by environment', error as Error, {
+        environmentId,
+      });
+      throw new Error('Failed to fetch feature flags by environment');
+    }
+  }
 
-    const metadata: IMetadata = {
-      createdBy: row.created_by,
-      createdAt,
-      updatedBy: row.updated_by || undefined,
-      updatedAt,
-    };
-
+  private mapToFeatureFlag(row: IFlagRow): FeatureFlag {
     return new FeatureFlag({
       id: row.id,
       key: row.key,
       name: row.name,
-      description: row.description || undefined,
       type: row.type as TFlagType,
+      description: row.description,
+      ttl: {
+        expiresAt: new Date(row.expires_at!),
+        autoDelete: !!row.auto_delete,
+      },
       status: row.status as TFlagStatus,
-      categoryId: row.category_id || undefined,
-      environmentId: row.environment_id,
-      enum: enumData,
-      ttl,
-      clientIds: clientIds.length > 0 ? clientIds : undefined,
-      metadata,
+      enum: row.enum ? JSON.parse(row.enum) : undefined,
+      categoryId: row.category_id,
+      environmentId: row.environment_id!,
+      clientIds: row.client_ids ? JSON.parse(row.client_ids) : undefined,
+      metadata: {
+        createdBy: row.created_by,
+        createdAt: new Date(row.created_at),
+        updatedBy: row.updated_by,
+        updatedAt: row.updated_at ? new Date(row.updated_at) : undefined,
+      },
     });
-  }
-
-  async findByEnvironment(environmentId: string): Promise<FeatureFlag[]> {
-    const sql = `
-    SELECT 
-      f.*,
-      ttl.expires_at, ttl.auto_delete,
-      GROUP_CONCAT(DISTINCT fc.client_id) AS client_ids_concat
-    FROM feature_flags f
-    LEFT JOIN flag_ttl ttl ON f.id = ttl.flag_id
-    LEFT JOIN flag_clients fc ON f.id = fc.flag_id
-    WHERE f.environment_id = ? 
-    GROUP BY f.id
-    ORDER BY f.name ASC
-  `;
-
-    const rows = await this.dataGateway.query<FlagRow>(sql, [environmentId]);
-    return rows.map(row => this.mapToEntity(row));
-  }
-
-  private buildBaseSelectQuery(whereClause?: string): string {
-    return `
-      SELECT 
-        f.*,
-        ttl.expires_at, 
-        ttl.auto_delete,
-        GROUP_CONCAT(DISTINCT fc.client_id) AS client_ids_concat
-      FROM feature_flags f
-      LEFT JOIN flag_ttl ttl ON f.id = ttl.flag_id
-      LEFT JOIN flag_clients fc ON f.id = fc.flag_id
-      ${whereClause ? `WHERE ${whereClause}` : ''}
-      GROUP BY f.id
-      ORDER BY f.name ASC
-    `;
   }
 }

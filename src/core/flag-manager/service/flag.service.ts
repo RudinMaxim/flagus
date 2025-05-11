@@ -45,9 +45,10 @@ export class FeatureFlagService {
     return this.flagRepository.findByName(name);
   }
 
-  async getByKey(key: string): Promise<FeatureFlag | null> {
+  async getByKey(key: string, environmentId: string): Promise<FeatureFlag | null> {
     if (!key) throw new Error('Flag key is required');
-    return this.flagRepository.findByKey(key);
+    if (!environmentId) throw new Error('Flag environmentId is required');
+    return this.flagRepository.findByKey(key, environmentId);
   }
 
   async getByCategory(categoryId: string): Promise<FeatureFlag[]> {
@@ -71,7 +72,7 @@ export class FeatureFlagService {
     await this.environmentService.validateEnvironmentExists(dto.environmentId);
     const [existingName, existingKey] = await Promise.all([
       this.flagRepository.findByName(dto.name),
-      this.flagRepository.findByKey(dto.key),
+      this.flagRepository.findByKey(dto.key, dto.environmentId),
     ]);
 
     if (existingName?.environmentId === dto.environmentId) {

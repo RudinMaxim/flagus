@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS feature_flags (
     status TEXT NOT NULL,
     enum TEXT,
     category_id TEXT,
-    environment_id TEXT,
+    environment_id TEXT UNIQUE,
     client_ids TEXT,
     created_by TEXT NOT NULL,
     created_at TEXT NOT NULL,

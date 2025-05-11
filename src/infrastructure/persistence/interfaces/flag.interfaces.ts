@@ -6,7 +6,7 @@ export interface IFlagRepository extends IRepository<FeatureFlag, string> {
   findByStatus(status: TFlagStatus): Promise<FeatureFlag[]>;
   findByCategory(categoryId: string): Promise<FeatureFlag[]>;
   findByType(type: TFlagType): Promise<FeatureFlag[]>;
-  findByKey(key: string): Promise<FeatureFlag | null>;
+  findByKey(key: string, environmentId: string): Promise<FeatureFlag | null>;
   toggleStatus(id: string, status: TFlagStatus): Promise<FeatureFlag | null>;
   findActiveFlags(): Promise<FeatureFlag[]>;
   findActiveFlagsForClient(clientId: string): Promise<FeatureFlag[]>;
