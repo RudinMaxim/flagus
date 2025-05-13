@@ -1,21 +1,8 @@
 {
-  "name": "flagus",
+  "name": "bot",
   "version": "1.0.0",
-  "description": "Flagus is a lightweight, open-source feature flag management service designed for simplicity and speed.",
-  "homepage": "https://github.com/RudinMaxim/flagus#readme",
   "main": "dist/index.js",
   "author": "Maxim Rudin",
-  "license": "MIT",
-  "keywords": [
-    "Feature Flags"
-  ],
-  "bugs": {
-    "url": "https://github.com/RudinMaxim/flagus/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/RudinMaxim/flagus.git"
-  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "node -r tsconfig-paths/register dist/index.js",
@@ -23,43 +10,22 @@
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
     "format": "prettier --write \"src/**/*.{ts,js,json}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,js,json}\"",
-    "seed:table": "node scripts/seed/table.js",
-    "seed:data": "node scripts/seed/data.js",
-    "prepare": "husky install"
+    "format:check": "prettier --check \"src/**/*.{ts,js,json}\""
   },
   "dependencies": {
-    "@fastify/cookie": "^11.0.2",
-    "@fastify/cors": "^11.0.1",
-    "@fastify/swagger": "^9.5.0",
-    "@fastify/swagger-ui": "^5.2.2",
-    "@fastify/view": "^11.1.0",
-    "bcrypt": "^5.1.1",
     "dotenv": "^16.5.0",
     "fastify": "^5.0.0",
-    "handlebars": "^4.7.8",
     "inversify": "^7.5.1",
-    "jwa": "^2.0.1",
-    "pg": "^8.15.6",
-    "reflect-metadata": "^0.2.2",
-    "sqlite3": "^5.1.6"
+    "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
-    "@types/bcrypt": "^5.0.2",
-    "@types/jwa": "^2.0.3",
-    "@types/pg": "^8.15.1",
     "@types/node": "^20.17.32",
-    "@typescript-eslint/eslint-plugin": "^6.0.0",
-    "@typescript-eslint/parser": "^6.0.0",
+    "@typescript-eslint/parser": "^6.21.0",
     "eslint": "^8.44.0",
-    "eslint-config-prettier": "^8.8.0",
-    "eslint-plugin-prettier": "^5.0.0",
-    "husky": "^8.0.3",
     "lint-staged": "^13.2.3",
     "nodemon": "^3.0.1",
     "prettier": "^3.0.0",
     "ts-node": "^10.9.1",
-    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.1.6"
   },
   "lint-staged": {

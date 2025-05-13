@@ -18,6 +18,7 @@ export const TYPES = {
   MigrationService: Symbol.for('MigrationService'),
   DataGatewayFactory: Symbol.for('DataGatewayFactory'),
   SDKKeyFactory: Symbol.for('SDKKeyFactory'),
+  RouteRegistry: Symbol.for('RouteRegistry'),
 
   // ———————————————————————————————————————————————
   // Репозитории (Data Access)
