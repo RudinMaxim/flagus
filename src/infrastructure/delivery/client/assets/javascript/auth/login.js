@@ -1,4 +1,3 @@
-// Shared login strategy - reusable across login and setup
 async function loginAndSaveTokens(email, password, rememberMe = false) {
   const formData = { email, password, rememberMe };
     const response = await fetch('/api/v1/auth/login', {
@@ -33,7 +32,6 @@ async function loginAndSaveTokens(email, password, rememberMe = false) {
     window.location.href = '/';
 }
 
-// Utility to verify cookie persistence
 function checkCookies(accessToken, refreshToken) {
   const cookies = document.cookie;
   return (

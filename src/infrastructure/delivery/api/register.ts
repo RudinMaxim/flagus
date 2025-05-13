@@ -11,11 +11,9 @@ import {
   userRoutes,
 } from './v1/routes';
 import { healthRoutes } from './common/health.route';
-import { AuthMiddleware } from '../middlewares';
 
 export async function registerApi(fastify: FastifyInstance) {
   const config = fastify.container.get<ConfigService>(TYPES.Config);
-  const authMiddleware = fastify.container.get<AuthMiddleware>(TYPES.AuthMiddleware);
 
   if (config.get('cors').enabled) {
     const fastifyCors = import('@fastify/cors');

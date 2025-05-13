@@ -35,16 +35,38 @@ export class GroupRepository extends BaseRepository<Group, string> implements IG
       SELECT 
         g.*,
         GROUP_CONCAT(DISTINCT gp.permission_id) AS permissions_concat,
-        GROUP_CONCAT(DISTINCT gu.user_id) AS users_concat
+        GROUP_CONCAT(DISTINCT ug.user_id) AS users_concat
       FROM groups g
       LEFT JOIN group_permissions gp ON g.id = gp.group_id
-      LEFT JOIN group_users gu ON g.id = gu.group_id
+      LEFT JOIN user_groups ug ON g.id = ug.group_id
       WHERE g.id = ?
       GROUP BY g.id
     `;
 
     const row = await this.dataGateway.getOne<GroupRow>(sql, [id]);
     return row ? this.mapToEntity(row) : null;
+  }
+
+  async getByUserId(userId: string): Promise<Group[]> {
+    if (!userId) {
+      throw new Error('User ID is required');
+    }
+
+    const sql = `
+    SELECT 
+      g.*,
+      GROUP_CONCAT(DISTINCT gp.permission_id) AS permissions_concat,
+      GROUP_CONCAT(DISTINCT ug.user_id) AS users_concat
+    FROM groups g
+    INNER JOIN user_groups ug ON g.id = ug.group_id
+    LEFT JOIN group_permissions gp ON g.id = gp.group_id
+    WHERE ug.user_id = ?
+    GROUP BY g.id
+    ORDER BY g.name ASC
+  `;
+
+    const rows = await this.dataGateway.query<GroupRow>(sql, [userId]);
+    return rows.map(row => this.mapToEntity(row));
   }
 
   async create(entity: Omit<Group, 'id'>): Promise<Group> {
@@ -126,8 +148,8 @@ export class GroupRepository extends BaseRepository<Group, string> implements IG
     await this.dataGateway.beginTransaction();
 
     try {
+      await this.dataGateway.execute('DELETE FROM user_groups WHERE group_id = ?', [id]);
       await this.dataGateway.execute('DELETE FROM group_permissions WHERE group_id = ?', [id]);
-      await this.dataGateway.execute('DELETE FROM group_users WHERE group_id = ?', [id]);
 
       const result = await this.dataGateway.execute<{ changes: number }>(
         `DELETE FROM ${this.tableName} WHERE id = ?`,
@@ -148,10 +170,10 @@ export class GroupRepository extends BaseRepository<Group, string> implements IG
       SELECT 
         g.*,
         GROUP_CONCAT(DISTINCT gp.permission_id) AS permissions_concat,
-        GROUP_CONCAT(DISTINCT gu.user_id) AS users_concat
+        GROUP_CONCAT(DISTINCT ug.user_id) AS users_concat
       FROM groups g
       LEFT JOIN group_permissions gp ON g.id = gp.group_id
-      LEFT JOIN group_users gu ON g.id = gu.group_id
+      LEFT JOIN user_groups ug ON g.id = ug.group_id
       WHERE g.name = ? 
       GROUP BY g.id
       LIMIT 1
@@ -171,10 +193,10 @@ export class GroupRepository extends BaseRepository<Group, string> implements IG
       SELECT 
         g.*,
         GROUP_CONCAT(DISTINCT gp.permission_id) AS permissions_concat,
-        GROUP_CONCAT(DISTINCT gu.user_id) AS users_concat
+        GROUP_CONCAT(DISTINCT ug.user_id) AS users_concat
       FROM groups g
       LEFT JOIN group_permissions gp ON g.id = gp.group_id
-      LEFT JOIN group_users gu ON g.id = gu.group_id
+      LEFT JOIN user_groups ug ON g.id = ug.group_id
       WHERE g.id IN (${placeholders})
       GROUP BY g.id
     `;
@@ -226,10 +248,10 @@ export class GroupRepository extends BaseRepository<Group, string> implements IG
       SELECT 
         g.*,
         GROUP_CONCAT(DISTINCT gp.permission_id) AS permissions_concat,
-        GROUP_CONCAT(DISTINCT gu.user_id) AS users_concat
+        GROUP_CONCAT(DISTINCT ug.user_id) AS users_concat
       FROM groups g
       LEFT JOIN group_permissions gp ON g.id = gp.group_id
-      LEFT JOIN group_users gu ON g.id = gu.group_id
+      LEFT JOIN user_groups ug ON g.id = ug.group_id
       ${whereClause}
       GROUP BY g.id
       ORDER BY g.${sortBy} ${sortOrder}
@@ -279,10 +301,10 @@ export class GroupRepository extends BaseRepository<Group, string> implements IG
       SELECT 
         g.*,
         GROUP_CONCAT(DISTINCT gp.permission_id) AS permissions_concat,
-        GROUP_CONCAT(DISTINCT gu.user_id) AS users_concat
+        GROUP_CONCAT(DISTINCT ug.user_id) AS users_concat
       FROM groups g
       LEFT JOIN group_permissions gp ON g.id = gp.group_id
-      LEFT JOIN group_users gu ON g.id = gu.group_id
+      LEFT JOIN user_groups ug ON g.id = ug.group_id
       ${whereClause ? `WHERE ${whereClause}` : ''}
       GROUP BY g.id
       ORDER BY g.name ASC

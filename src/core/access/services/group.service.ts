@@ -1,4 +1,5 @@
 import { injectable, inject } from 'inversify';
+import crypto from 'crypto';
 import { TYPES } from '../../../infrastructure/config/types';
 import { Group } from '../model/group.model';
 import { IGroupRepository } from '../../../infrastructure/persistence';
@@ -24,6 +25,10 @@ export class GroupService {
 
   async getGroupById(id: string): Promise<Group | null> {
     return this.groupRepository.findById(id);
+  }
+
+  async getByUserId(id: string): Promise<Group[]> {
+    return this.groupRepository.getByUserId(id);
   }
 
   async listGroups(options?: {

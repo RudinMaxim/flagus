@@ -1,0 +1,118 @@
+<div class='container-fluid'>
+  <div class='row'>
+    <div class='col-12'>
+      <div class='card shadow-sm'>
+        <div class='card-body'>
+          <h5 class='card-title mb-4'>System Roles</h5>
+
+          <div class='row row-cols-1 row-cols-md-3 g-4'>
+            <div class='col'>
+              <div class='card h-100 border-0 shadow-sm'>
+                <div class='card-body'>
+                  <div class='d-flex align-items-center mb-3'>
+                    <span class='badge bg-danger me-2'>ADMIN</span>
+                    <h5 class='card-title mb-0'>Administrator</h5>
+                  </div>
+                  <p class='card-text'>Full system access with all permissions including user
+                    management, role assignment, and system configuration.</p>
+                  <ul class='list-group list-group-flush'>
+                    <li class='list-group-item px-0'>
+                      <i class='bi bi-check-circle-fill text-success me-2'></i>
+                      User management
+                    </li>
+                    <li class='list-group-item px-0'>
+                      <i class='bi bi-check-circle-fill text-success me-2'></i>
+                      Group management
+                    </li>
+                    <li class='list-group-item px-0'>
+                      <i class='bi bi-check-circle-fill text-success me-2'></i>
+                      Feature flag management
+                    </li>
+                    <li class='list-group-item px-0'>
+                      <i class='bi bi-check-circle-fill text-success me-2'></i>
+                      System configuration
+                    </li>
+                    <li class='list-group-item px-0'>
+                      <i class='bi bi-check-circle-fill text-success me-2'></i>
+                      Audit log access
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class='col'>
+              <div class='card h-100 border-0 shadow-sm'>
+                <div class='card-body'>
+                  <div class='d-flex align-items-center mb-3'>
+                    <span class='badge bg-warning me-2'>EDITOR</span>
+                    <h5 class='card-title mb-0'>Editor</h5>
+                  </div>
+                  <p class='card-text'>Can create and modify feature flags and other resources, but
+                    cannot manage users or system settings.</p>
+                  <ul class='list-group list-group-flush'>
+                    <li class='list-group-item px-0'>
+                      <i class='bi bi-check-circle-fill text-success me-2'></i>
+                      Feature flag management
+                    </li>
+                    <li class='list-group-item px-0'>
+                      <i class='bi bi-check-circle-fill text-success me-2'></i>
+                      Toggle feature flags
+                    </li>
+                    <li class='list-group-item px-0'>
+                      <i class='bi bi-check-circle-fill text-success me-2'></i>
+                      View audit logs
+                    </li>
+                    <li class='list-group-item px-0'>
+                      <i class='bi bi-x-circle-fill text-danger me-2'></i>
+                      User management
+                    </li>
+                    <li class='list-group-item px-0'>
+                      <i class='bi bi-x-circle-fill text-danger me-2'></i>
+                      System configuration
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class='col'>
+              <div class='card h-100 border-0 shadow-sm'>
+                <div class='card-body'>
+                  <div class='d-flex align-items-center mb-3'>
+                    <span class='badge bg-info me-2'>VIEWER</span>
+                    <h5 class='card-title mb-0'>Viewer</h5>
+                  </div>
+                  <p class='card-text'>Read-only access to the system. Can view feature flags and
+                    other resources but cannot make changes.</p>
+                  <ul class='list-group list-group-flush'>
+                    <li class='list-group-item px-0'>
+                      <i class='bi bi-check-circle-fill text-success me-2'></i>
+                      View feature flags
+                    </li>
+                    <li class='list-group-item px-0'>
+                      <i class='bi bi-check-circle-fill text-success me-2'></i>
+                      View audit logs
+                    </li>
+                    <li class='list-group-item px-0'>
+                      <i class='bi bi-x-circle-fill text-danger me-2'></i>
+                      Feature flag management
+                    </li>
+                    <li class='list-group-item px-0'>
+                      <i class='bi bi-x-circle-fill text-danger me-2'></i>
+                      User management
+                    </li>
+                    <li class='list-group-item px-0'>
+                      <i class='bi bi-x-circle-fill text-danger me-2'></i>
+                      System configuration
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -4,6 +4,7 @@ import { IRepository } from '../../../shared/kernel';
 export interface IGroupRepository extends IRepository<Group, string> {
   findByName(name: string): Promise<Group | null>;
   findByIds(ids: Array<string>): Promise<Group[]>;
+  getByUserId(id: string): Promise<Group[]>;
   list(options?: {
     skip?: number;
     limit?: number;

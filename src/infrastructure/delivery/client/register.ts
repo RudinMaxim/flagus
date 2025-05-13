@@ -19,8 +19,9 @@ class RouterFactory {
 
   static createProtectedRouter(app: FastifyInstance): ProtectedRouter {
     const flagController = app.container.get(TYPES.FlagController);
+    const iamController = app.container.get(TYPES.IAMController);
     const authMiddleware = app.container.get<AuthMiddleware>(TYPES.AuthMiddleware);
-    return new ProtectedRouter(flagController, authMiddleware);
+    return new ProtectedRouter(flagController, iamController, authMiddleware);
   }
 
   static createErrorRouter(app: FastifyInstance): ErrorRouter {
@@ -41,6 +42,7 @@ class PublicRouter implements IRouter {
 class ProtectedRouter implements IRouter {
   constructor(
     private flagController: any,
+    private iamController: any,
     private authMiddleware: AuthMiddleware
   ) {}
 
@@ -48,6 +50,7 @@ class ProtectedRouter implements IRouter {
     app.register(async instance => {
       instance.addHook('preHandler', this.authMiddleware.authenticateUI);
 
+      // Feature Flag Routes
       instance.get('/', this.flagController.index.bind(this.flagController));
       instance.get('/flags', this.flagController.index.bind(this.flagController));
       instance.get('/flags/create', this.flagController.create.bind(this.flagController));
@@ -57,6 +60,11 @@ class ProtectedRouter implements IRouter {
         '/flags/:id/toggle',
         this.flagController.toggleStatus.bind(this.flagController)
       );
+
+      // IAM Routes
+      instance.get('/iam/users', this.iamController.usersList.bind(this.iamController));
+      instance.get('/iam/roles', this.iamController.rolesIndex.bind(this.iamController));
+      instance.get('/iam/groups', this.iamController.groupsList.bind(this.iamController));
     });
   }
 }

@@ -33,6 +33,7 @@ export class FlagController extends BaseController {
         flags: flagsResult,
         layout: 'layouts/main.hbs',
         categories,
+        showEnvironmentSelector: true,
       });
     } catch (error) {
       return this.handleError(reply, error);

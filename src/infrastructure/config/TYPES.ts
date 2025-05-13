@@ -62,6 +62,7 @@ export const TYPES = {
   // ———————————————————————————————————————————————
   PageController: Symbol.for('PageController'),
   FlagController: Symbol.for('FlagController'),
+  IAMController: Symbol.for('IAMController'),
 
   // ———————————————————————————————————————————————
   // Middleware
