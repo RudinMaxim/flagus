@@ -4,7 +4,7 @@ export abstract class BaseController {
   protected viewData: Record<string, any> = {};
 
   protected prepareViewData(request: FastifyRequest): Record<string, any> {
-    const user = (request as any).user;
+    const user = request.user;
     const isAdmin = user?.role === 'ADMIN';
     const currentPath = request.url;
 

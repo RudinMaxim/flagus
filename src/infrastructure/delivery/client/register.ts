@@ -6,6 +6,9 @@ import handlebars from 'handlebars';
 import { AuthMiddleware } from '../middlewares';
 import { registerHandlebarsHelpers } from '../../../shared/utils';
 import { TYPES } from '../../config/types';
+import { IAMController } from './controllers/iam.controller';
+import { FlagController } from './controllers/flag.controller';
+import { PageController } from './controllers';
 
 interface IRouter {
   register(app: FastifyInstance): void;
@@ -13,13 +16,13 @@ interface IRouter {
 
 class RouterFactory {
   static createPublicRouter(app: FastifyInstance): PublicRouter {
-    const pageController = app.container.get(TYPES.PageController);
+    const pageController = app.container.get<PageController>(TYPES.PageController);
     return new PublicRouter(pageController);
   }
 
   static createProtectedRouter(app: FastifyInstance): ProtectedRouter {
-    const flagController = app.container.get(TYPES.FlagController);
-    const iamController = app.container.get(TYPES.IAMController);
+    const flagController = app.container.get<FlagController>(TYPES.FlagController);
+    const iamController = app.container.get<IAMController>(TYPES.IAMController);
     const authMiddleware = app.container.get<AuthMiddleware>(TYPES.AuthMiddleware);
     return new ProtectedRouter(flagController, iamController, authMiddleware);
   }
@@ -31,7 +34,7 @@ class RouterFactory {
 }
 
 class PublicRouter implements IRouter {
-  constructor(private pageController: any) {}
+  constructor(private pageController: PageController) {}
 
   register(app: FastifyInstance): void {
     app.get('/login', this.pageController.login.bind(this.pageController));
@@ -41,8 +44,8 @@ class PublicRouter implements IRouter {
 
 class ProtectedRouter implements IRouter {
   constructor(
-    private flagController: any,
-    private iamController: any,
+    private flagController: FlagController,
+    private iamController: IAMController,
     private authMiddleware: AuthMiddleware
   ) {}
 

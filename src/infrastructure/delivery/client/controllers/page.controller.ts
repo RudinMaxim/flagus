@@ -48,6 +48,7 @@ export class PageController extends BaseController {
     request: FastifyRequest,
     reply: FastifyReply
   ): Promise<FastifyReply> {
+    console.error(err);
     const errorId = crypto.randomUUID();
     return this.render(request, reply, 'pages/errors/500', {
       layout: 'layouts/error',

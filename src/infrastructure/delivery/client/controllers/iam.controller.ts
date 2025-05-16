@@ -16,13 +16,8 @@ export class IAMController extends BaseController {
   async usersList(request: FastifyRequest, reply: FastifyReply): Promise<FastifyReply> {
     try {
       const query = request.query as any;
-      const { users, total } = await this.userService.listUsers({
-        skip: query.page || 1,
-        limit: query.limit || 10,
-        filter: query.filter || {},
-      });
+      const { users, total } = await this.userService.listUsers();
 
-      // For each user, fetch their groups
       for (const user of users) {
         const userGroups = await this.groupService.getByUserId(user.id);
         user.groupIds = userGroups ? userGroups.map(group => group.id) : [];
@@ -35,7 +30,7 @@ export class IAMController extends BaseController {
         pagination: {
           total: total,
           page: query.page,
-          pages: total / query.page,
+          pages: Math.ceil(total / (query.limit || 10)),
         },
         actionButtons: [
           {
@@ -43,7 +38,7 @@ export class IAMController extends BaseController {
             icon: 'people',
             type: 'outline-primary',
             url: '#',
-            htmxAttr: 'data-bs-toggle="modal" data-bs-target="#createGroupModal"',
+            htmxAttr: `data-bs-toggle="modal" data-bs-target="#createGroupModal"`,
           },
           {
             text: 'Create User',
@@ -54,6 +49,7 @@ export class IAMController extends BaseController {
           },
         ],
         showEnvironmentSelector: true,
+        currentEnvironment: 'development',
       });
     } catch (error) {
       return this.handleError(reply, error);
@@ -88,9 +84,16 @@ export class IAMController extends BaseController {
         pagination: {
           total: total,
           page: query.page,
-          pages: total / query.page,
+          pages: Math.ceil(total / (query.limit || 10)),
         },
         actionButtons: [
+          {
+            text: 'Help',
+            icon: 'question-circle',
+            type: 'outline-info',
+            url: '#',
+            htmxAttr: 'data-bs-toggle="modal" data-bs-target="#helpModal"',
+          },
           {
             text: 'Create Group',
             icon: 'people',

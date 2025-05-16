@@ -1,31 +1,7 @@
 <div class="container-fluid py-4">
-  <div class="row mb-4">
-    <div class="col-12 d-flex justify-content-between align-items-center">
-      <h1 class="h3">User Management</h1>
-      <div>
-        <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#createUserModal">
-          <i class="bi bi-person-plus me-1"></i> Add User
-        </button>
-        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#createGroupModal">
-          <i class="bi bi-people me-1"></i> Add Group
-        </button>
-      </div>
-    </div>
-  </div>
-
   <div class="row">
     <div class="col-12">
       <div class="card shadow-sm">
-        <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-3">
-          <h2 class="card-title h5 mb-0">Users</h2>
-          <div class="input-group input-group-sm" style="max-width: 300px;">
-            <span class="input-group-text bg-transparent border-end-0">
-              <i class="bi bi-search"></i>
-            </span>
-            <input type="text" class="form-control border-start-0" id="userSearch" 
-                  placeholder="Search users..." aria-label="Search users">
-          </div>
-        </div>
         <div class="card-body">
           <div class="table-responsive">
             <table class="table table-hover align-middle" id="usersTable">
@@ -44,9 +20,6 @@
                     <tr>
                       <td>
                         <div class="d-flex align-items-center">
-                          <div class="avatar avatar-sm bg-light rounded-circle me-2 d-flex align-items-center justify-content-center">
-                            <span class="text-secondary">{{firstChar this.username}}</span>
-                          </div>
                           <span>{{this.username}}</span>
                         </div>
                       </td>
@@ -63,7 +36,7 @@
                         {{/if}}
                       </td>
                       <td>
-                        <span class="badge 
+                        <span class="
                           {{#if (eq this.role 'ADMIN')}}bg-danger{{/if}}
                           {{#if (eq this.role 'EDITOR')}}bg-warning text-dark{{/if}}
                           {{#if (eq this.role 'VIEWER')}}bg-info text-dark{{/if}}">
@@ -76,15 +49,6 @@
                              aria-label="Edit {{this.username}}" title="Edit user">
                             <i class="bi bi-pencil-square"></i>
                           </a>
-                          <button type="button" class="btn btn-outline-danger"
-                            aria-label="Delete {{this.username}}"
-                            title="Delete user"
-                            hx-delete="/api/v1/users/{{this.id}}"
-                            hx-confirm="Are you sure you want to delete {{this.username}}?"
-                            hx-target="closest tr"
-                            hx-swap="outerHTML swap:1s">
-                            <i class="bi bi-trash"></i>
-                          </button>
                         </div>
                       </td>
                     </tr>
@@ -258,7 +222,7 @@
   });
 
   // User search functionality
-  document.getElementById('userSearch').addEventListener('input', function() {
+  document.getElementById('userSearch')?.addEventListener('input', function() {
     const searchTerm = this.value.toLowerCase();
     const rows = document.querySelectorAll('#usersTable tbody tr:not(#no-users-row)');
     let visibleCount = 0;
@@ -386,12 +350,6 @@
       toastEl.remove();
     });
   }
-
-  // Helper function to get first character for avatar
-  function firstChar(str) {
-    return str ? str.charAt(0).toUpperCase() : '?';
-  }
-  Handlebars.registerHelper('firstChar', firstChar);
 
   // Initialize tooltips
   var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
