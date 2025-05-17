@@ -1,5 +1,3 @@
-import Handlebars from 'handlebars';
-
 export function registerHandlebarsHelpers(handlebars: typeof Handlebars): void {
   handlebars.registerHelper('eq', function (a, b) {
     return a === b;
@@ -90,5 +88,9 @@ export function registerHandlebarsHelpers(handlebars: typeof Handlebars): void {
     }
 
     return result;
+  });
+
+  handlebars.registerHelper('array', function (...items) {
+    return items.slice(0, -1);
   });
 }

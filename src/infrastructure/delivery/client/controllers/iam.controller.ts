@@ -62,6 +62,7 @@ export class IAMController extends BaseController {
         pageTitle: 'Role Management',
         pageSubtitle: 'System roles and permissions',
         showEnvironmentSelector: true,
+        currentEnvironment: 'development',
       });
     } catch (error) {
       return this.handleError(reply, error);
@@ -71,11 +72,7 @@ export class IAMController extends BaseController {
   async groupsList(request: FastifyRequest, reply: FastifyReply): Promise<FastifyReply> {
     try {
       const query = request.query as any;
-      const { groups, total } = await this.groupService.listGroups({
-        skip: query.page || 1,
-        limit: query.limit || 10,
-        filter: query.filter || {},
-      });
+      const { groups, total } = await this.groupService.listGroups();
 
       return this.render(request, reply, 'pages/users/groups', {
         pageTitle: 'Group Management',
@@ -88,13 +85,6 @@ export class IAMController extends BaseController {
         },
         actionButtons: [
           {
-            text: 'Help',
-            icon: 'question-circle',
-            type: 'outline-info',
-            url: '#',
-            htmxAttr: 'data-bs-toggle="modal" data-bs-target="#helpModal"',
-          },
-          {
             text: 'Create Group',
             icon: 'people',
             type: 'primary',
@@ -103,6 +93,7 @@ export class IAMController extends BaseController {
           },
         ],
         showEnvironmentSelector: true,
+        currentEnvironment: 'development',
       });
     } catch (error) {
       return this.handleError(reply, error);
