@@ -1,4 +1,4 @@
-import { Environment, SDKKeyType } from '../../../core/environment/model';
+import { SDKKeyType, Environment } from '../../../core/flag-manager/model';
 
 export interface IEnvironmentRepository {
   addSDKKey(
