@@ -63,7 +63,7 @@ export class AuditRepository extends BaseRepository<AuditLog, string> implements
         entity.entityType,
         JSON.stringify(entity.oldValue),
         JSON.stringify(entity.newValue),
-        entity.timestamp || now.toISOString(),
+        entity.timestamp || now,
         entity.ipAddress || null,
       ]);
 
@@ -192,10 +192,7 @@ export class AuditRepository extends BaseRepository<AuditLog, string> implements
       WHERE timestamp BETWEEN ? AND ? 
       ORDER BY timestamp DESC
     `;
-    const rows = await this.dataGateway.query<AuditLogRow>(sql, [
-      startDate.toISOString(),
-      endDate.toISOString(),
-    ]);
+    const rows = await this.dataGateway.query<AuditLogRow>(sql, [startDate, endDate]);
     return rows.map(row => this.mapToEntity(row));
   }
 

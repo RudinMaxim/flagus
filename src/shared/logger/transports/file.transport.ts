@@ -55,7 +55,7 @@ export class FileTransport implements ITransport {
   }
 
   private rotateLogFiles(): void {
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const timestamp = new Date();
     const rotatedFile = path.join(this.filePath, `${this.serviceName}-${timestamp}.log`);
     fs.renameSync(this.logFile, rotatedFile);
 

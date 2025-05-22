@@ -111,7 +111,7 @@ export class AuditHttpController {
         userId,
       });
 
-      const filename = `audit_logs_${new Date().toISOString().replace(/[:.]/g, '-')}.csv`;
+      const filename = `audit_logs_${new Date()}.csv`;
 
       return reply
         .code(200)

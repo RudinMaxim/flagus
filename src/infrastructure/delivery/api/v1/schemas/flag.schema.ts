@@ -13,16 +13,16 @@ const metadataSchema = {
   type: 'object',
   properties: {
     createdBy: { type: 'string' },
-    createdAt: { type: 'string', format: 'date-time' },
+    createdAt: { type: 'number' },
     updatedBy: { type: ['string', 'null'] },
-    updatedAt: { type: ['string', 'null'], format: 'date-time' },
+    updatedAt: { type: ['number', 'null'] },
   },
 };
 
 const ttlSchema = {
   type: 'object',
   properties: {
-    expiresAt: { type: 'string', format: 'date-time' },
+    expiresAt: { type: 'number' },
     autoDelete: { type: 'boolean', default: true },
   },
 };
@@ -95,15 +95,15 @@ export const getAllFlagsSchema: FastifySchema = {
     },
   },
   response: {
-    200: {
-      type: 'object',
-      properties: {
-        data: {
-          type: 'array',
-          items: flagSchema,
-        },
-      },
-    },
+    // 200: {
+    //   type: 'object',
+    //   properties: {
+    //     data: {
+    //       type: 'array',
+    //       items: flagSchema,
+    //     },
+    //   },
+    // },
     500: errorSchema,
   },
 };

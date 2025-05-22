@@ -96,7 +96,7 @@ export class GroupRepository extends BaseRepository<Group, string> implements IG
 
     try {
       const groupId = crypto.randomUUID();
-      const now = new Date().toISOString();
+      const now = new Date();
 
       const groupSql = `
         INSERT INTO groups (
@@ -164,7 +164,7 @@ export class GroupRepository extends BaseRepository<Group, string> implements IG
       }
 
       updateFields.push('updated_at = ?');
-      const now = new Date().toISOString();
+      const now = new Date();
       updateValues.push(now);
 
       if (entity.metadata?.updatedBy) {

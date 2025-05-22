@@ -45,7 +45,7 @@ export class FlagRepository implements IFlagRepository {
       entity.name,
       entity.type,
       entity.description,
-      entity.ttl?.expiresAt.toISOString(),
+      entity.ttl?.expiresAt,
       entity.ttl?.autoDelete ? 1 : 0,
       entity.status,
       entity.enum ? JSON.stringify(entity.enum) : null,
@@ -53,7 +53,7 @@ export class FlagRepository implements IFlagRepository {
       entity.environmentId,
       entity.clientIds ? JSON.stringify(entity.clientIds) : null,
       entity.metadata.createdBy,
-      entity.metadata.createdAt.toISOString(),
+      entity.metadata.createdAt,
     ];
 
     try {
@@ -71,7 +71,7 @@ export class FlagRepository implements IFlagRepository {
 
     const updates: string[] = [];
     const params: any[] = [];
-    const updatedAt = new Date().toISOString();
+    const updatedAt = new Date();
 
     if (data.name) {
       updates.push('name = ?');
@@ -107,7 +107,7 @@ export class FlagRepository implements IFlagRepository {
     }
     if (data.ttl) {
       updates.push('expires_at = ?, auto_delete = ?');
-      params.push(data.ttl.expiresAt.toISOString(), data.ttl.autoDelete ? 1 : 0);
+      params.push(data.ttl.expiresAt, data.ttl.autoDelete ? 1 : 0);
     }
     if (data.metadata?.updatedBy) {
       updates.push('updated_by = ?, updated_at = ?');
@@ -223,7 +223,7 @@ export class FlagRepository implements IFlagRepository {
 
   async toggleStatus(id: string, status: TFlagStatus): Promise<FeatureFlag | null> {
     const sql = 'UPDATE feature_flags SET status = ?, updated_at = ? WHERE id = ?';
-    const updatedAt = new Date().toISOString();
+    const updatedAt = new Date();
     try {
       await this.dataGateway.execute(sql, [status, updatedAt, id]);
       return await this.findById(id);
@@ -240,10 +240,7 @@ export class FlagRepository implements IFlagRepository {
     const sql =
       'SELECT * FROM feature_flags WHERE status = ? AND (expires_at IS NULL OR expires_at > ?)';
     try {
-      const rows = await this.dataGateway.query<IFlagRow>(sql, [
-        FlagStatus.ACTIVE,
-        new Date().toISOString(),
-      ]);
+      const rows = await this.dataGateway.query<IFlagRow>(sql, [FlagStatus.ACTIVE, new Date()]);
       return rows.map(this.mapToFeatureFlag);
     } catch (error) {
       this.logger.error('Failed to fetch active feature flags', error as Error);
@@ -261,7 +258,7 @@ export class FlagRepository implements IFlagRepository {
     try {
       const rows = await this.dataGateway.query<IFlagRow>(sql, [
         FlagStatus.ACTIVE,
-        new Date().toISOString(),
+        new Date(),
         `%${clientId}%`,
       ]);
       return rows.map(this.mapToFeatureFlag);
@@ -276,7 +273,7 @@ export class FlagRepository implements IFlagRepository {
   async findExpiredFlags(): Promise<FeatureFlag[]> {
     const sql = 'SELECT * FROM feature_flags WHERE expires_at IS NOT NULL AND expires_at < ?';
     try {
-      const rows = await this.dataGateway.query<IFlagRow>(sql, [new Date().toISOString()]);
+      const rows = await this.dataGateway.query<IFlagRow>(sql, [new Date()]);
       return rows.map(this.mapToFeatureFlag);
     } catch (error) {
       this.logger.error('Failed to fetch expired feature flags', error as Error);

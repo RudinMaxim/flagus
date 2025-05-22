@@ -44,7 +44,7 @@ export class LoggerService implements ILogger {
   }
 
   private log(level: string, message: string, error?: Error, meta?: Record<string, unknown>): void {
-    const timestamp = new Date().toISOString();
+    const timestamp = new Date();
 
     const entry: LogEntry = {
       timestamp,
