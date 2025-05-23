@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { ConfigService } from '../../config/config';
 import { TYPES } from '../../config/types';
+import formbody from '@fastify/formbody';
 import {
   auditRoutes,
   authRoutes,
@@ -118,6 +119,8 @@ export async function registerApi(fastify: FastifyInstance) {
       transformSpecificationClone: true,
     });
   }
+
+  fastify.register(formbody);
 
   await fastify.register(
     async rootApi => {

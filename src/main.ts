@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import './shared/kernel/global.types';
+import './global.types';
 import 'tsconfig-paths/register';
 import * as dotenv from 'dotenv';
 import { createApp } from './application';
